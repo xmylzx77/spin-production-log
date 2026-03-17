@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spin Production Log</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-primary: #1a1a2e;
+    --bg-secondary: #16213e;
+    --bg-card: #1f2b47;
+    --bg-input: #253352;
+    --accent: #2e7d6e;
+    --accent-hover: #359e8a;
+    --text-primary: #e8e8e8;
+    --text-secondary: #a0aec0;
+    --border: #2d3a56;
+    --shadow: rgba(0, 0, 0, 0.35);
+    --danger: #e74c3c;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  header {
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    padding: 1.25rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 8px var(--shadow);
+  }
+
+  header h1 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--accent-hover);
+  }
+
+  header nav button {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1.2rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  header nav button:hover { background: var(--accent-hover); }
+
+  main {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+  }
+
+  .view { display: none; }
+  .view.active { display: block; }
+
+  .card {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 16px var(--shadow);
+    border: 1px solid var(--border);
+  }
+
+  .card h2 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    color: var(--text-primary);
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+  }
+
+  .form-group { display: flex; flex-direction: column; }
+  .form-group.full-width { grid-column: 1 / -1; }
+
+  label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-secondary);
+    margin-bottom: 0.4rem;
+  }
+
+  input, select, textarea {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.65rem 0.85rem;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(46, 125, 110, 0.25);
+  }
+
+  input::placeholder, textarea::placeholder { color: #5a6a8a; }
+  select { cursor: pointer; appearance: auto; }
+  textarea { resize: vertical; min-height: 80px; }
+
+  .form-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+  }
+
+  .btn {
+    border: none;
+    padding: 0.65rem 1.5rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    font-family: inherit;
+  }
+
+  .btn:active { transform: scale(0.97); }
+  .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+
+  .btn-secondary {
+    background: var(--bg-input);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover:not(:disabled) { background: var(--border); }
+
+  .table-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .table-toolbar h2 {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+
+  .table-toolbar .btn-group { display: flex; gap: 0.5rem; }
+
+  .table-wrapper {
+    overflow-x: auto;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+
+  thead { background: var(--bg-secondary); }
+
+  th {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 0.7rem 1rem;
+    border-top: 1px solid var(--border);
+    color: var(--text-primary);
+    vertical-align: top;
+  }
+
+  tbody tr:hover { background: rgba(46, 125, 110, 0.07); }
+
+  td.notes-cell {
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-secondary);
+  }
+
+  .empty-state p { font-size: 1rem; margin-bottom: 1rem; }
+
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: var(--accent);
+    color: #fff;
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    box-shadow: 0 4px 12px var(--shadow);
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.3s, transform 0.3s;
+    pointer-events: none;
+    z-index: 100;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  .loading {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary);
+  }
+
+  .spinner {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 2.5px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+
+  .loading .spinner {
+    border: 2.5px solid rgba(160,174,192,0.3);
+    border-top-color: var(--accent-hover);
+    width: 24px;
+    height: 24px;
+    margin-right: 10px;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  @media (max-width: 640px) {
+    header { padding: 1rem; }
+    header h1 { font-size: 1.1rem; }
+    main { padding: 0 1rem; margin: 1rem auto; }
+    .card { padding: 1.25rem; }
+    .form-grid { grid-template-columns: 1fr; }
+    .table-toolbar { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Spin Production Log</h1>
+  <nav>
+    <button id="navBtn" onclick="toggleView()">View Log</button>
+  </nav>
+</header>
+
+<main>
+  <!-- LOG ENTRY FORM -->
+  <div id="formView" class="view active">
+    <div class="card">
+      <h2>New Log Entry</h2>
+      <form id="entryForm" class="form-grid" onsubmit="return handleSubmit(event)">
+        <div class="form-group">
+          <label for="name">Name</label>
+          <input type="text" id="name" placeholder="Operator name" required>
+        </div>
+        <div class="form-group">
+          <label for="date">Date</label>
+          <input type="date" id="date" required>
+        </div>
+        <div class="form-group">
+          <label for="type">Type</label>
+          <select id="type" required>
+            <option value="" disabled selected>Select type</option>
+            <option value="Baffle 1st OP">Baffle 1st OP</option>
+            <option value="Baffle 2nd OP">Baffle 2nd OP</option>
+            <option value="Apron">Apron</option>
+            <option value="Skirt">Skirt</option>
+            <option value="Hood">Hood</option>
+            <option value="Blade Bottom">Blade Bottom</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="size">Size</label>
+          <select id="size" required>
+            <option value="" disabled selected>Select size</option>
+            <option value="11">11</option>
+            <option value="13">13</option>
+            <option value="15">15</option>
+            <option value="18">18</option>
+            <option value="20">20</option>
+            <option value="24">24</option>
+            <option value="30">30</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="scrap">#Scrap</label>
+          <input type="number" id="scrap" min="0" placeholder="0" required>
+        </div>
+        <div class="form-group">
+          <label for="parts">#Parts</label>
+          <input type="number" id="parts" min="0" placeholder="0" required>
+        </div>
+        <div class="form-group full-width">
+          <label for="notes">Notes</label>
+          <textarea id="notes" placeholder="Optional notes..."></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="reset" class="btn btn-secondary">Clear</button>
+          <button type="submit" id="submitBtn" class="btn btn-primary">Submit Entry</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- PRODUCTION LOG TABLE -->
+  <div id="logView" class="view">
+    <div class="card">
+      <div class="table-toolbar">
+        <h2>Production Log</h2>
+        <div class="btn-group">
+          <button class="btn btn-secondary" onclick="exportToExcel()">Export to Excel</button>
+          <button class="btn btn-primary" onclick="toggleView()">+ New Entry</button>
+        </div>
+      </div>
+      <div id="loadingState" class="loading" style="display:none;"><span class="spinner"></span>Loading entries...</div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Size</th>
+              <th>#Scrap</th>
+              <th>#Parts</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="logBody"></tbody>
+        </table>
+      </div>
+      <div id="emptyState" class="empty-state" style="display:none;">
+        <p>No entries yet. Start by adding a new log entry.</p>
+        <button class="btn btn-primary" onclick="toggleView()">+ New Entry</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div id="toast" class="toast"></div>
+
+<script>
+  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyIgHvQUN9w45uvDYBiCeoHcZydLkwvV-5or8Yf44nw2VsKUq7v1qGSD5N6xWZPF9cXBQ/exec';
+
+  let cachedEntries = [];
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  function toggleView() {
+    const formView = document.getElementById('formView');
+    const logView = document.getElementById('logView');
+    const navBtn = document.getElementById('navBtn');
+    const isForm = formView.classList.contains('active');
+
+    formView.classList.toggle('active', !isForm);
+    logView.classList.toggle('active', isForm);
+    navBtn.textContent = isForm ? 'New Entry' : 'View Log';
+
+    if (isForm) loadEntries();
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner"></span>Submitting...';
+
+    const entry = {
+      name: document.getElementById('name').value.trim(),
+      date: document.getElementById('date').value,
+      type: document.getElementById('type').value,
+      size: document.getElementById('size').value,
+      scrap: parseInt(document.getElementById('scrap').value, 10),
+      parts: parseInt(document.getElementById('parts').value, 10),
+      notes: document.getElementById('notes').value.trim()
+    };
+
+    try {
+      await fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(entry)
+      });
+
+      document.getElementById('entryForm').reset();
+      document.getElementById('date').value = new Date().toISOString().split('T')[0];
+      showToast('Entry saved successfully');
+    } catch (err) {
+      showToast('Error saving entry. Check connection.');
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Submit Entry';
+    }
+
+    return false;
+  }
+
+  function esc(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  function formatDate(val) {
+    if (!val) return '';
+    // Handle Google Sheets date format
+    if (typeof val === 'string' && val.includes('T')) {
+      return val.split('T')[0];
+    }
+    return String(val);
+  }
+
+  async function loadEntries() {
+    const loading = document.getElementById('loadingState');
+    const wrapper = document.querySelector('.table-wrapper');
+    const empty = document.getElementById('emptyState');
+
+    loading.style.display = 'block';
+    wrapper.style.display = 'none';
+    empty.style.display = 'none';
+
+    try {
+      const res = await fetch(SCRIPT_URL);
+      cachedEntries = await res.json();
+
+      const body = document.getElementById('logBody');
+
+      if (cachedEntries.length === 0) {
+        loading.style.display = 'none';
+        wrapper.style.display = 'none';
+        empty.style.display = 'block';
+        return;
+      }
+
+      loading.style.display = 'none';
+      wrapper.style.display = 'block';
+      empty.style.display = 'none';
+
+      body.innerHTML = cachedEntries.map(e => `
+        <tr>
+          <td>${esc(String(e.name || ''))}</td>
+          <td>${esc(formatDate(e.date))}</td>
+          <td>${esc(String(e.type || ''))}</td>
+          <td>${esc(String(e.size || ''))}</td>
+          <td>${esc(String(e.scrap || '0'))}</td>
+          <td>${esc(String(e.parts || '0'))}</td>
+          <td class="notes-cell" title="${esc(String(e.notes || ''))}">${esc(String(e.notes || '') || '—')}</td>
+        </tr>
+      `).join('');
+    } catch (err) {
+      loading.style.display = 'none';
+      showToast('Error loading entries. Check connection.');
+    }
+  }
+
+  function exportToExcel() {
+    if (cachedEntries.length === 0) {
+      showToast('No data to export');
+      return;
+    }
+
+    const rows = cachedEntries.map(e => ({
+      Name: e.name || '',
+      Date: formatDate(e.date),
+      Type: e.type || '',
+      Size: e.size || '',
+      '#Scrap': e.scrap || 0,
+      '#Parts': e.parts || 0,
+      Notes: e.notes || ''
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Production Log');
+
+    const colWidths = Object.keys(rows[0]).map(k => ({
+      wch: Math.max(k.length, ...rows.map(r => String(r[k]).length)) + 2
+    }));
+    ws['!cols'] = colWidths;
+
+    XLSX.writeFile(wb, `Spin_Production_Log_${new Date().toISOString().slice(0,10)}.xlsx`);
+    showToast('Excel file downloaded');
+  }
+
+  // Set default date to today
+  document.getElementById('date').value = new Date().toISOString().split('T')[0];
+</script>
+
+</body>
+</html>
