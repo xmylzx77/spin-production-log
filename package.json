@@ -1,0 +1,13 @@
+{
+  "name": "spin-production-log",
+  "version": "1.0.0",
+  "description": "Spin Production Log Server",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "sql.js": "^1.11.0"
+  }
+}
