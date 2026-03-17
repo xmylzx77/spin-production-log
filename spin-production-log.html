@@ -300,7 +300,19 @@
       <form id="entryForm" class="form-grid" onsubmit="return handleSubmit(event)">
         <div class="form-group">
           <label for="name">Name</label>
-          <input type="text" id="name" placeholder="Operator name" required>
+          <select id="name" required>
+            <option value="" disabled selected>Select name</option>
+            <option value="Anthony">Anthony</option>
+            <option value="Cody">Cody</option>
+            <option value="Kao">Kao</option>
+            <option value="Keith">Keith</option>
+            <option value="Juan">Juan</option>
+            <option value="Rockie">Rockie</option>
+            <option value="Rodney">Rodney</option>
+            <option value="Sou">Sou</option>
+            <option value="Tyler">Tyler</option>
+            <option value="Other">Other</option>
+          </select>
         </div>
         <div class="form-group">
           <label for="date">Date</label>
@@ -328,7 +340,6 @@
             <option value="18">18</option>
             <option value="20">20</option>
             <option value="24">24</option>
-            <option value="30">30</option>
           </select>
         </div>
         <div class="form-group">
