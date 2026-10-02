@@ -13,7 +13,7 @@ This guide builds the app in Power Apps. You copy a file from the `app` folder, 
 
 ### Copy a whole file
 Always copy the **whole** file. A missing first or last line breaks the paste.
-- **On GitHub:** open the file and click **Copy raw file** (the two-squares icon at the top right of the file).
+- **On GitHub:** open the file, click **Raw** (top right of the file), then press **Ctrl+A** and **Ctrl+C** on the plain-text page. (Clicking into the code and pressing Ctrl+A, Ctrl+C also works. The "Copy raw file" button may not work on a work PC.)
 - **On your PC:** right-click the file > **Open with** > **Notepad**, then press **Ctrl+A** and **Ctrl+C**.
 - Don't select the text with the mouse.
 
