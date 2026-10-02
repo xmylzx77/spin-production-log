@@ -1,0 +1,453 @@
+{
+  "listName": "RunListJobs",
+  "siteGuidance": "ONE list only: RunListJobs, with one row per job. No second list is needed: gauges, ticks, pairs and both schedules all fit on the job row, and capacities, settings, stats, approvals, QC and electrical were dropped.\n\nWHERE: a SharePoint TEAM site in the company tenant. That can be an existing Production/Shop site, or a new site from IT such as \"Shop Floor Apps\". Do not use OneDrive or a personal site. The canvas app in the IT-managed 'Production PowerApps' environment reaches it through the standard SharePoint connector. There are no flows, nothing premium and no gateway. Ask IT to confirm that the environment's DLP policy allows the SharePoint connector.\n\nFIRST: a site owner sets the site's Regional settings > Time zone to the shop's time zone, before any dates are entered. Every tablet, PC and the TV must use that same time zone in its device settings.\n\nWHO GETS WHAT: the app runs as each signed-in user, so SharePoint permissions are the real security. Sharing the app does NOT give anyone access to the list.\n- Ask IT for two Entra (Microsoft 365) SECURITY groups. A SharePoint group cannot be used to share a Power App, but a security group works for both the list and the app.\n  - RunList Users: supervisors, the nester and every floor-tablet account.\n  - RunList Viewers: the TV/Progress account and look-only people.\n- Owners (Full Control): the builder plus one backup (IT). Only Owners can delete rows.\n- RunList Users get a custom permission level, 'Contribute - no delete': a copy of Contribute with Delete Items and Delete Versions unticked.\n  - The whole re-import guard depends on rows never being deleted. A deleted CASMFG job comes back as a new Incoming card on the next import.\n  - The app never deletes, so nobody loses anything they need.\n  - If IT cannot create a custom level, use Contribute and tell everyone never to delete a row. A deleted row can be restored from the site Recycle Bin for 93 days.\n- RunList Viewers get Read.\n- Break inheritance on the list and set the site Members group to Read, or remove it. Otherwise everyone in Members keeps Edit, which includes delete and changing columns.\n- Share the canvas app (as User, not Co-owner) with both security groups.\n- Every tablet and the TV must be signed in with a licensed M365 account (E3 includes Power Apps for Office 365) that is in one of the groups.\n- Leave Advanced settings > Item-level permissions at 'Read all items' / 'Create and edit all items'. Otherwise one tablet cannot edit a job that another person created.\n\nSYSTEM COLUMNS USED (nothing to create):\n- ID: every Patch base record is LookUp(RunListJobs, ID = n), which is delegable.\n- Created: the NEW tag, meaning created today and CasmfgId is not blank.\n- Modified / Modified By plus Version history: the audit trail of who ticked what.",
+  "columns": [
+    {
+      "displayName": "Title",
+      "internalName": "Title",
+      "type": "Single line of text (the built-in Title column)",
+      "settings": "Built-in; keep the name Title. Require = Yes. Enforce unique values = Yes, which also creates its index. Holds the JOB KEY = Upper(Trim(JobNumber)) & \"|\" & Upper(Trim(UnitNumber)), e.g. 8481557|1. A manual job with no Unit # gets Upper(Trim(JobNumber)) & \"|M\" & Text(Now(),\"yymmddhhmmss\"), so it can never collide. Hidden from every SharePoint view so nobody quick-edits it.",
+      "required": true,
+      "indexed": true,
+      "unique": true,
+      "usedBy": "Import dedup: LookUp(RunListJobs, Title = key) finds the job in ANY status. Manual Add sets it. On rows where CasmfgId is not blank (imported), the key is NEVER rewritten. On a manual '|M' row it becomes the real key the first time a Unit # is typed. If that save fails on the unique rule, the app says 'already in the list as <status>'. Never shown on cards."
+    },
+    {
+      "displayName": "JobNumber",
+      "internalName": "JobNumber",
+      "type": "Single line of text",
+      "settings": "Max 255, no default. CASMFG job number, or typed for manual jobs. Read-only in Edit when CasmfgId is not blank.",
+      "required": false,
+      "indexed": true,
+      "unique": false,
+      "usedBy": "Card label JobNumber-FanNumber on every screen. Import. Add/Edit. The 'Find job #' box, Filter(RunListJobs, JobNumber = text), which is indexed and reaches rows in any status (Done/Dismissed included) for Reopen/Restore after the list passes 5,000 rows."
+    },
+    {
+      "displayName": "UnitNumber",
+      "internalName": "UnitNumber",
+      "type": "Single line of text",
+      "settings": "Max 255, no default. CASMFG unit number. Read-only in Edit when CasmfgId is not blank.",
+      "required": false,
+      "indexed": false,
+      "unique": false,
+      "usedBy": "Import (second half of the key). Manual Add/Edit: optional; once typed, a manual job blocks its CASMFG twin."
+    },
+    {
+      "displayName": "FanNumber",
+      "internalName": "FanNumber",
+      "type": "Single line of text",
+      "settings": "Max 255, no default. Always its own editable column. Import leaves it blank, or pre-fills it from UnitNumber if open question 1 says fan # = unit #.",
+      "required": false,
+      "indexed": false,
+      "unique": false,
+      "usedBy": "Card label JobNumber-FanNumber on every screen. Punch Add/Edit. Editing it never touches the key."
+    },
+    {
+      "displayName": "JobName",
+      "internalName": "JobName",
+      "type": "Single line of text",
+      "settings": "Max 255, no default. Customer, which is the CASMFG job name.",
+      "required": false,
+      "indexed": false,
+      "unique": false,
+      "usedBy": "Cards (shown cut to about 12 characters) on Punch, SB8/SB15, Bending, Assembly and TV. Import. Add/Edit."
+    },
+    {
+      "displayName": "ProductModel",
+      "internalName": "ProductModel",
+      "type": "Single line of text",
+      "settings": "Max 255, no default. CASMFG product model, e.g. CASRTU3-I.250-24MF-3-RTU. Manual jobs type anything.",
+      "required": false,
+      "indexed": false,
+      "unique": false,
+      "usedBy": "Card title on SB8/SB15 and Bending. JobSize is parsed from it on import and on Edit when Size = Auto. Add/Edit."
+    },
+    {
+      "displayName": "NestLabel",
+      "internalName": "NestLabel",
+      "type": "Single line of text",
+      "settings": "Max 255, no default. Free text typed by the nester (nest/file label, may contain e.g. 25TON).",
+      "required": false,
+      "indexed": false,
+      "unique": false,
+      "usedBy": "Typed inline on the Nesting and Punch screens. Shown on SB8/SB15 and Bending cards. Heavy size-3 rule: the TON token is extracted exactly like the original, Match(NestLabel, \"(?<t>\\d+(\\.\\d+)?)TON\", MatchOptions.IgnoreCase).t, and tested with in [\"25\",\"30\",\"2530\"] (no substring IsMatch)."
+    },
+    {
+      "displayName": "CasmfgId",
+      "internalName": "CasmfgId",
+      "type": "Single line of text",
+      "settings": "Max 255, no default, not indexed. The CASMFG production record id from the last import. NOT stable: Import overwrites it when the pasted id differs, because a re-release changes it. Blank = a manual job.",
+      "required": false,
+      "indexed": false,
+      "unique": false,
+      "usedBy": "Imported/manual flag: locks JobNumber/UnitNumber in Edit and drives the NEW tag (Created today && CasmfgId not blank). Keeps the current CASMFG id, which a later production-date push (casmfg-production-dates.user.js sends productionJobId = casmfg_id) would need without a back-fill. Never used as a dedup key."
+    },
+    {
+      "displayName": "JobSize",
+      "internalName": "JobSize",
+      "type": "Number",
+      "settings": "Number of decimal places: 0. No min/max in SharePoint (an out-of-range value would make a Patch fail); the app writes only 1-4 or blank. No default. One parse formula everywhere (Import and Edit 'Auto'): With({m: Match(Upper(ProductModel), \"CASRTU\\s*(?<sz>\\d+)\")}, If(!IsBlank(m) && Value(m.sz) >= 1 && Value(m.sz) <= 4, Value(m.sz), Blank())). The Edit dialog has a Size drop-down: Auto, 1, 2, 3, 4. Auto re-parses ProductModel on save.",
+      "required": false,
+      "indexed": false,
+      "unique": false,
+      "usedBy": "Machine-rule warning (sizes 1 and 4 punch on SB8; warn and allow SB15). Assembly line warnings (4 goes to Line 3 only; 3 never on Line 1; heavy 3 goes to Line 3; 1 not on Line 3). 'Size n' / 'SET SIZE' (blank) on cards. Size counts on Progress. Import. Edit."
+    },
+    {
+      "displayName": "PairNo",
+      "internalName": "PairNo",
+      "type": "Number",
+      "settings": "Number of decimal places: 0. No default. Blank = not paired. Pairing gives every selected job PairNo = Min(ID) of the selected jobs: unique, needs no scan and cannot race. Groups of 2 or more are allowed. Unpair writes Blank().",
+      "required": false,
+      "indexed": false,
+      "unique": false,
+      "usedBy": "Pair badge, coloured by the pair's rank among the pairs visible on that board, so neighbouring pairs contrast. Pair grouping in every sort through local group keys: GroupShip = the earliest ShipDate in the pair, and GroupOrder = the lowest order value in the band. This keeps a pair together instead of relying on a tie-break. Punch pair/unpair."
+    },
+    {
+      "displayName": "PunchOrder",
+      "internalName": "PunchOrder",
+      "type": "Number",
+      "settings": "Number of decimal places: Automatic (decimals allowed). No min/max, no default. The order within one Machine + PunchDay band, including Unscheduled. Place or move into a band = band max + 1. Up/Down is ONE Patch of the moved card to the midpoint between its two new neighbours (neighbour - 1 at the top, + 1 at the bottom); there are no pairwise swaps. An optional 'Renumber band' button rewrites the band to 1..n.",
+      "required": false,
+      "indexed": false,
+      "unique": false,
+      "usedBy": "Punch place/move/up/down. SB8/SB15 and TV sort. Every local sort ends with ID, so equal values still show in a stable order."
+    },
+    {
+      "displayName": "AssemblyOrder",
+      "internalName": "AssemblyOrder",
+      "type": "Number",
+      "settings": "Number of decimal places: Automatic. No default. The order within one AssemblyLine + AssemblyDate cell. Same rules as PunchOrder (max + 1 on place, midpoint on up/down, ID as the final tie-break).",
+      "required": false,
+      "indexed": false,
+      "unique": false,
+      "usedBy": "Assembly place/move/up/down."
+    },
+    {
+      "displayName": "ShipDate",
+      "internalName": "ShipDate",
+      "type": "Date and time",
+      "settings": "Include time: No (date only). Display format: Standard. No default. Import writes Date(Value(Left(s,4)), Value(Mid(s,6,2)), Value(Mid(s,9,2))) ONLY when IsMatch(s, \"\\d{4}-\\d{2}-\\d{2}\", MatchOptions.BeginsWith). A new job with an invalid/blank date is created with ShipDate blank and the card shows 'NO SHIP DATE'. An update never applies an invalid/blank date.",
+      "required": false,
+      "indexed": false,
+      "unique": false,
+      "usedBy": "Ship badge everywhere. Incoming tray sort. Bending order (GroupShip, then pair, then own ShipDate). SB8/SB15 secondary sort. Import: the 16-day add window and ship-move detection, which compares Text(ShipDate,\"yyyy-mm-dd\") with the pasted text, never raw DateTime equality. Edit."
+    },
+    {
+      "displayName": "PrevShipDate",
+      "internalName": "PrevShipDate",
+      "type": "Date and time",
+      "settings": "Include time: No. No default. Blank = no flag. On a CASMFG move of an Active, not-Started job: PrevShipDate = If(new = PrevShipDate, Blank(), Coalesce(PrevShipDate, ShipDate)), and ShipDate = new. This keeps the first un-acknowledged date and clears the flag when CASMFG moves it back. The supervisor's tap writes Blank().",
+      "required": false,
+      "indexed": false,
+      "unique": false,
+      "usedBy": "Import. 'Ship moved from m/d' flag on Punch and Assembly cards. Supervisor acknowledge button."
+    },
+    {
+      "displayName": "PunchDay",
+      "internalName": "PunchDay",
+      "type": "Date and time",
+      "settings": "Include time: No. No default. Blank = the Unscheduled band. Any day of the week (the shop punches 7 days).",
+      "required": false,
+      "indexed": false,
+      "unique": false,
+      "usedBy": "Punch day bands and moves. Past days keep showing while they still hold unfinished work (computed locally). SB8/SB15 order: unscheduled first, then PunchDay, GroupShip, PunchOrder, ID. TV."
+    },
+    {
+      "displayName": "AssemblyDate",
+      "internalName": "AssemblyDate",
+      "type": "Date and time",
+      "settings": "Include time: No. No default. The planned START day; the app offers Mon-Fri only.",
+      "required": false,
+      "indexed": false,
+      "unique": false,
+      "usedBy": "Assembly day rows run Mon-Fri from Min(Today(), the earliest AssemblyDate of an unstarted job) through the latest AssemblyDate, at least about 10 workdays out. That way an overdue job always has a row. Blank AssemblyDate or AssemblyLine = the 'unassigned' band."
+    },
+    {
+      "displayName": "StartedOn",
+      "internalName": "StartedOn",
+      "type": "Date and time",
+      "settings": "Include time: No. No default. Set to Today() when Started is ticked, Blank() when it is unticked or the job is reopened.",
+      "required": false,
+      "indexed": false,
+      "unique": false,
+      "usedBy": "Housekeeping: a job closes to Done only 30 days after StartedOn. 'Started m/d' on Assembly/Progress."
+    },
+    {
+      "displayName": "JobStatus",
+      "internalName": "JobStatus",
+      "type": "Choice",
+      "settings": "Choices exactly, in order: Incoming, Active, Done, Dismissed (delete the Choice 1/2/3 placeholders). Drop-down. Default value: Incoming. More options: Require = Yes, Allow multiple selections = Off, Can add values manually = Off. The app always writes it explicitly: {JobStatus: {Value: \"Active\"}}. Filter with JobStatus.Value = \"Active\" (delegable).",
+      "required": true,
+      "indexed": true,
+      "unique": false,
+      "usedBy": "The first and indexed filter of every query: ActiveJobs (all boards, stations and TV) and IncomingJobs (tray), as two separate queries and never an OR. Import creates Incoming. Place/Add sets Active. Delete sets Dismissed. Housekeeping sets Done. Reopen/Restore sets Active/Incoming."
+    },
+    {
+      "displayName": "Machine",
+      "internalName": "Machine",
+      "type": "Choice",
+      "settings": "Choices: SB8, SB15. Drop-down. No default. Allow multiple selections = Off, Can add values manually = Off. Blank while Incoming; the app requires it when placing.",
+      "required": false,
+      "indexed": false,
+      "unique": false,
+      "usedBy": "Punch columns, Place, move between turrets, machine-rule warning. SB8/SB15 screens (local filter Machine.Value = \"SB8\"). TV."
+    },
+    {
+      "displayName": "AssemblyLine",
+      "internalName": "AssemblyLine",
+      "type": "Choice",
+      "settings": "Choices: Line 1, Line 2, Line 3 (spaces exactly). Drop-down. No default. Allow multiple selections = Off, Can add values manually = Off. Blank = unassigned.",
+      "required": false,
+      "indexed": false,
+      "unique": false,
+      "usedBy": "Assembly line columns, assign/move, line-rule warnings (with JobSize and the NestLabel TON token). Progress."
+    },
+    {
+      "displayName": "Nested",
+      "internalName": "Nested",
+      "type": "Yes/No",
+      "settings": "Default value: No (the panel starts at Yes). The app writes it explicitly on every create.",
+      "required": false,
+      "indexed": false,
+      "unique": false,
+      "usedBy": "Nesting screen tick and the 'Nested' button on Punch cards. SB8/SB15 and Bending show only Nested jobs."
+    },
+    {
+      "displayName": "Need12",
+      "internalName": "Need12",
+      "type": "Yes/No",
+      "settings": "Default value: No. Means the job needs 12 ga.",
+      "required": false,
+      "indexed": false,
+      "unique": false,
+      "usedBy": "Selected on Punch and Nesting. Controls which gauge buttons SB8/SB15 show. TurretDone. Gauge pills on Bending/Assembly/TV."
+    },
+    {
+      "displayName": "Need14",
+      "internalName": "Need14",
+      "type": "Yes/No",
+      "settings": "Default value: No. Needs 14 ga.",
+      "required": false,
+      "indexed": false,
+      "unique": false,
+      "usedBy": "Same as Need12."
+    },
+    {
+      "displayName": "Need16",
+      "internalName": "Need16",
+      "type": "Yes/No",
+      "settings": "Default value: No. Needs 16 ga.",
+      "required": false,
+      "indexed": false,
+      "unique": false,
+      "usedBy": "Same as Need12."
+    },
+    {
+      "displayName": "Need18",
+      "internalName": "Need18",
+      "type": "Yes/No",
+      "settings": "Default value: No. Needs 18 ga.",
+      "required": false,
+      "indexed": false,
+      "unique": false,
+      "usedBy": "Same as Need12."
+    },
+    {
+      "displayName": "Need20",
+      "internalName": "Need20",
+      "type": "Yes/No",
+      "settings": "Default value: No. Needs 20 ga.",
+      "required": false,
+      "indexed": false,
+      "unique": false,
+      "usedBy": "Same as Need12."
+    },
+    {
+      "displayName": "Need24",
+      "internalName": "Need24",
+      "type": "Yes/No",
+      "settings": "Default value: No. Needs 24 ga.",
+      "required": false,
+      "indexed": false,
+      "unique": false,
+      "usedBy": "Same as Need12."
+    },
+    {
+      "displayName": "Done12",
+      "internalName": "Done12",
+      "type": "Yes/No",
+      "settings": "Default value: No. 12 ga punched (operator tick).",
+      "required": false,
+      "indexed": false,
+      "unique": false,
+      "usedBy": "Gauge button on SB8/SB15 (patches only its own column). Green pill on Punch. TurretDone, which drives Punch/SB8/SB15 hiding, Bending dimming and 'ready only', and housekeeping. Assembly task squares. TV."
+    },
+    {
+      "displayName": "Done14",
+      "internalName": "Done14",
+      "type": "Yes/No",
+      "settings": "Default value: No. 14 ga punched.",
+      "required": false,
+      "indexed": false,
+      "unique": false,
+      "usedBy": "Same as Done12."
+    },
+    {
+      "displayName": "Done16",
+      "internalName": "Done16",
+      "type": "Yes/No",
+      "settings": "Default value: No. 16 ga punched.",
+      "required": false,
+      "indexed": false,
+      "unique": false,
+      "usedBy": "Same as Done12."
+    },
+    {
+      "displayName": "Done18",
+      "internalName": "Done18",
+      "type": "Yes/No",
+      "settings": "Default value: No. 18 ga punched.",
+      "required": false,
+      "indexed": false,
+      "unique": false,
+      "usedBy": "Same as Done12."
+    },
+    {
+      "displayName": "Done20",
+      "internalName": "Done20",
+      "type": "Yes/No",
+      "settings": "Default value: No. 20 ga punched.",
+      "required": false,
+      "indexed": false,
+      "unique": false,
+      "usedBy": "Same as Done12."
+    },
+    {
+      "displayName": "Done24",
+      "internalName": "Done24",
+      "type": "Yes/No",
+      "settings": "Default value: No. 24 ga punched.",
+      "required": false,
+      "indexed": false,
+      "unique": false,
+      "usedBy": "Same as Done12."
+    },
+    {
+      "displayName": "PBDone",
+      "internalName": "PBDone",
+      "type": "Yes/No",
+      "settings": "Default value: No. Press brake (PB) done.",
+      "required": false,
+      "indexed": false,
+      "unique": false,
+      "usedBy": "PB tick on Bending (either order with P4). PunchDone. Bending hides PB && P4 unless 'show complete' is on. Assembly task squares. Progress."
+    },
+    {
+      "displayName": "P4Done",
+      "internalName": "P4Done",
+      "type": "Yes/No",
+      "settings": "Default value: No. P4 done.",
+      "required": false,
+      "indexed": false,
+      "unique": false,
+      "usedBy": "P4 tick on Bending. Same reads as PBDone."
+    },
+    {
+      "displayName": "Started",
+      "internalName": "Started",
+      "type": "Yes/No",
+      "settings": "Default value: No. The line began the job.",
+      "required": false,
+      "indexed": false,
+      "unique": false,
+      "usedBy": "Assembly 'Started' tick (also writes StartedOn). Assembly display of Started jobs (open question 3; display-only). Import ignores ship moves on Started jobs, as the original did. Housekeeping. Reopen clears it."
+    },
+    {
+      "displayName": "Notes",
+      "internalName": "Notes",
+      "type": "Multiple lines of text",
+      "settings": "Plain text: More options > Use enhanced rich text = Off, Append changes to existing text = Off. No default. Never filtered on.",
+      "required": false,
+      "indexed": false,
+      "unique": false,
+      "usedBy": "Punch Add/Edit dialog. Shown on Punch, SB8/SB15 and Bending cards and on the TV."
+    }
+  ],
+  "statusModel": "JobStatus (an indexed Choice) is the ONLY lifecycle field. Every server query starts with one indexed equality.\n\nSHARED FORMULAS: the working set lives in App.Formulas named formulas, not in collections. Named formulas recalculate when the data source changes, so Refresh(RunListJobs) and every Patch update every screen.\n- ActiveJobs = Filter(RunListJobs, JobStatus.Value = \"Active\"), plus local columns:\n  - TurretDone = (Need12 || Need14 || Need16 || Need18 || Need20 || Need24) && (!Need12 || Done12) && (!Need14 || Done14) && (!Need16 || Done16) && (!Need18 || Done18) && (!Need20 || Done20) && (!Need24 || Done24)\n  - PunchDone = TurretDone && PBDone && P4Done\n  - the pair group keys GroupShip / GroupOrder\n- IncomingJobs = Filter(RunListJobs, JobStatus.Value = \"Incoming\").\nScreens read ThisItem.TurretDone; the formula is written once.\n\n1) INCOMING: created only by Import, with Machine blank, every Yes/No false and FanNumber blank (or pre-filled, see open question 1). Shown in the Punch Incoming tray, sorted by ShipDate. A CASMFG ship move simply overwrites ShipDate.\n\n2) ACTIVE: the supervisor PLACES an Incoming job.\n- Placing sets Machine (sizes 1 and 4 default to SB8; warn on SB15), an optional PunchDay (blank = Unscheduled) and PunchOrder = band max + 1.\n- Manual Add creates the row as Active directly.\nScreen rules, all local on ActiveJobs:\n- Punch: hides TurretDone jobs. 'Show completed' shows them.\n- SB8 / SB15: Machine matches && Nested && !TurretDone. A 'Show complete' toggle shows the TurretDone ones, so a wrong last tick can be undone.\n- Nesting: all Active.\n- Bending: Nested && !(PBDone && P4Done), dimmed until TurretDone. Toggles: 'ready only' and 'show complete'.\n- Assembly: unstarted jobs. Started jobs follow open question 3: by default they stay, ticked, until ShipDate has passed, as today. A 'show started' toggle shows the rest.\n- TV/Progress: the punch board (Active && !TurretDone, grouped by machine and punch day, no Unscheduled band), read-only.\n\n3) DONE: HOUSEKEEPING runs only in the supervisor app (Punch OnVisible plus its timer).\n- Rule: ForAll(Filter(ActiveJobs, PunchDone && Started && !IsBlank(StartedOn) && DateDiff(StartedOn, Today(), TimeUnit.Days) >= 30), write {JobStatus: Done} through the write helper).\n- The 30-day wait matches the original's 30-day retention. The Active set stays small (about 50-150 open jobs plus about 80-200 recently started jobs, far under the 2,000 row limit), and every 'show completed/started' toggle and every mistaken tick stays reachable on the boards for 30 days.\n- If housekeeping doesn't run for a while, nothing breaks; the next run catches up.\n- Done rows are never deleted. They are the years of history AND the re-import block. Never list all Done rows.\n\n4) DISMISSED: the app's Delete button patches JobStatus = Dismissed and never removes a row. Dismissed rows are hidden from the boards and kept forever.\n\nREACHING CLOSED ROWS:\n- A 'Find job #' box on Punch runs Filter(RunListJobs, JobNumber = text), which is indexed and matches any status, and opens Edit.\n- REOPEN is one button that writes {JobStatus: Active, Started: false, StartedOn: Blank()}. The job reappears on Assembly and Bending, where ticks can be fixed, and housekeeping cannot re-close it at once.\n- RESTORE (on a Dismissed row) writes JobStatus = Incoming.\n\nIMPORT CONTRACT (the userscript Claude will adapt):\n- The userscript always queries 180 days ahead and copies {v:1, pulledAt (ISO), fromYmd, toYmd, days, jobs:[{id, number, name, shipDate 'YYYY-MM-DD', runNumber, status, model, unit}]}.\n  - Filter: In-Process and the model contains casrtu.\n  - shipDate is sliced to 10 characters.\n- The Import screen shows a red banner when days < 90 ('narrow pull, moved ship dates past 16 days are invisible, re-pull'). It asks for confirmation when pulledAt is more than 2 hours old.\n- The Import button is disabled while a run is going.\n\nIMPORT RUN:\n- Read ActiveJobs and IncomingJobs (two indexed queries).\n- For each pasted job, key = Upper(Trim(number)) & \"|\" & Upper(Trim(unit)).\n(a) Key is in the open set: re-read the row with LookUp(RunListJobs, ID = id) and decide from that fresh row.\n- The ship date is valid and Text(ShipDate,\"yyyy-mm-dd\") <> pasted text:\n  - Incoming: ShipDate = new.\n  - Active && !Started: PrevShipDate = If(new = PrevShipDate, Blank(), Coalesce(PrevShipDate, ShipDate)), ShipDate = new.\n  - Active && Started: ignore.\n- The pasted id differs from CasmfgId: update CasmfgId.\n(b) Key is not open, and the ship date is invalid/blank or <= Today()+16: LookUp(RunListJobs, Title = key).\n- Dismissed: listed under 'Blocked - dismissed' (label, ship date, Modified) with a Restore button.\n- Done: counted.\n- Not found: create with EVERY value explicit: Title, JobNumber, UnitNumber, JobName, ProductModel, JobSize (parsed), ShipDate (or blank), CasmfgId, JobStatus Incoming, and Nested/Need*/Done*/PBDone/P4Done/Started all false. Defaults() is never relied on.\n- If the create fails: LookUp(Title = key) again. If a row is found, count it as 'already had'. Otherwise add key & \": \" & FirstError.Message to a red 'Failed' list with Retry.\n(c) Key is not open and the ship date is beyond Today()+16: watch-only, skipped.\n- Summary: added / ship moves / already had / blocked-dismissed / failed / watch-only.\n- Pasting the same clipboard twice must give 0 added and 0 moves.\n\nRE-IMPORT GUARD:\n- Title is unique, and the key is never rewritten on imported rows. Rows are never deleted (the permission level enforces this), so a Done or Dismissed job cannot come back.\n- If two people import at once, the unique rule makes the second create fail, and the re-check counts it as 'already had'.",
+  "creationSteps": [
+    "SITE PREP (site owner, 2 min): gear > Site information > View all site settings > Regional settings > Time zone = the shop's time zone > OK. Check that every tablet, PC and the TV is set to the same time zone.",
+    "GROUPS (IT): create Entra security groups 'RunList Users' (supervisors, nester, every floor-tablet account) and 'RunList Viewers' (TV account, look-only people). These same groups are later used to share the app.",
+    "CREATE THE LIST: site home > + New > List > Blank list. Name: RunListJobs, exactly, with no spaces. Never rename it. Description: 'White Board jobs - one row per job'. Create.",
+    "TITLE COLUMN: gear > List settings > Columns > Title. Keep the name Title. Require that this column contains information = Yes. Enforce unique values = Yes, and click OK when SharePoint says the column must be indexed. OK.",
+    "ADD THE OTHER 36 COLUMNS from the list view: + Add column > type > Next > Name typed EXACTLY as in the column table (no spaces; the name typed at creation becomes the permanent internal name) > options > Save. Work grouped by type.",
+    "Single line of text (7): JobNumber, UnitNumber, FanNumber, JobName, ProductModel, NestLabel, CasmfgId. Leave all options at their defaults.",
+    "Number (4): JobSize and PairNo: More options > Number of decimal places = 0. PunchOrder and AssemblyOrder: decimal places = Automatic. No min, max or default on any of the four.",
+    "Date and time (5): ShipDate, PrevShipDate, PunchDay, AssemblyDate, StartedOn. Include time = Off, Display format = Standard, Default value = None.",
+    "Choice (3): delete the placeholder choices. More options: Allow multiple selections = Off, Can add values manually = Off. JobStatus: Incoming, Active, Done, Dismissed; Default value = Incoming; Require = Yes. Machine: SB8, SB15; no default. AssemblyLine: Line 1, Line 2, Line 3; no default. Spelling and spaces must be exact.",
+    "Yes/No (16): Nested, Need12, Need14, Need16, Need18, Need20, Need24, Done12, Done14, Done16, Done18, Done20, Done24, PBDone, P4Done, Started. Set Default value = No on every one (the panel starts at Yes).",
+    "Multiple lines of text (1): Notes. More options: Use enhanced rich text = Off, Append changes to existing text = Off.",
+    "CHECK NAMES: List settings > click 4 or 5 columns. The address must end in Field=<Name> exactly, with no _x0020_ and no trailing 0. If one is wrong, delete it and create it again; renaming only changes the display name.",
+    "INDEXES (now, while the list is empty): List settings > Indexed columns > Create a new index > Primary column = JobStatus > Create. Repeat for JobNumber. The page must show Title, JobStatus and JobNumber, and nothing else.",
+    "VERSIONING: List settings > Versioning settings > Require content approval = No. Create a version each time you edit an item = Yes. Keep the following number of versions = 500 > OK.",
+    "ADVANCED SETTINGS: List settings > Advanced settings > Attachments = Disabled (confirm) > OK. Leave Item-level permissions at the defaults.",
+    "NO-DELETE LEVEL (site owner): gear > Site permissions > Advanced permissions settings > Permission Levels > Contribute > Copy Permission Level. Name 'Contribute - no delete', untick Delete Items and Delete Versions > Create. If this is not allowed, skip it and use Contribute in the next step.",
+    "LIST PERMISSIONS: List settings > Permissions for this list > Stop Inheriting Permissions > OK. Tick the site's Members group > Edit User Permissions > Read only > OK. Grant Permissions > RunList Users > Show options > 'Contribute - no delete' (or Contribute), untick the email > Share. Grant Permissions > RunList Viewers > Read. Owners keep Full Control.",
+    "VIEWS: in All Items, hide the Title column (column header > Column settings > Show/hide columns). Optional view 'Open jobs': filter JobStatus is equal to Active, sort by ShipDate. Every view must filter on JobStatus.",
+    "SHAREPOINT TEST ROW: + New > Title TEST|1, JobNumber TEST, ShipDate = today > Save. Check that JobStatus shows Incoming, every Yes/No shows No and ShipDate shows today. Then an Owner deletes it (the only kind of row anyone ever deletes).",
+    "AFTER THE APP EXISTS (Claude's go-live checklist, using job number TEST rows that are dismissed and then deleted by an Owner): (1) Import a pasted test payload with shipDate 2026-10-03. SharePoint, a card label and Text(ShipDate,\"yyyy-mm-dd\") must all show 2026-10-03. (2) Pick a date on a tablet's date picker, left at the default Local: SharePoint shows the same day. (3) Paste the same clipboard twice: the second run shows 0 added and 0 ship moves. (4) A tick on tablet A shows on tablet B within one timer cycle. (5) Two tablets tick PB and P4 on the same job within seconds: both stick. If (1) or (2) is off by a day, fix it once in a shared read/write formula, never per picker, and repeat. Do not go live until all five pass."
+  ],
+  "pitfalls": [
+    "DELEGATION HARD RULE (Microsoft's SharePoint table: Text only = and StartsWith; Boolean only =; Not never delegates; IsBlank on Text doesn't; Sort on Choice doesn't; ID only =). One non-delegable term makes the WHOLE query local, so it silently sees only the first 2,000 rows, which happens about a year in, well before 5,000. The expression that reaches RunListJobs may contain ONLY = on Title, ID, JobStatus.Value, JobNumber, Yes/No or Number, joined with &&. StartsWith on JobNumber is also allowed. Everything else (!, <>, IsBlank, in, date bands, multi-column sorts, pair grouping) runs on ActiveJobs/IncomingJobs. Treat any delegation warning on a RunListJobs formula as a bug. Never use UpdateIf/RemoveIf on RunListJobs; they are local and capped. Settings > General > Data row limit = 2000.",
+    "WORKING SET = NAMED FORMULAS, NOT COLLECTIONS. Collections are static snapshots that Refresh() and Patch() do not update, so a tick would stay invisible. ActiveJobs and IncomingJobs live in App.Formulas, and each gallery reads them. Station and TV screens use a Timer that runs Refresh(RunListJobs) every 30-60 s. Never bind a gallery to the unfiltered list.",
+    "ONE WRITE HELPER FOR EVERY PATCH, supervisor screens included. SharePoint rejects a write if the row changed since it was read ('Conflicts exist with changes on the server'), even when another column changed, e.g. PB and P4 on the same job. The helper:\n(1) works out explicit values first, e.g. With({v: !ThisItem.PBDone, id: ThisItem.ID}, ...);\n(2) uses LookUp(RunListJobs, ID = id) as the base record;\n(3) wraps the Patch in IfError, and on error runs Refresh(RunListJobs) and retries once;\n(4) shows Notify(..., NotificationType.Error) if the retry also fails.\nEach button patches only the columns it owns. Never use an Edit form/SubmitForm for tick columns.",
+    "CREATE = EXPLICIT VALUES. Microsoft says Defaults() may omit or ignore source defaults. Every create (Import and manual Add) sets JobStatus and all 16 Yes/No columns explicitly. If a Yes/No column is ever added to a list that already has rows, back-fill it, because blank does not match = false.",
+    "DATES:\n- All five date columns are date-only. Never switch one to date-and-time once data exists.\n- Site time zone = shop time zone = every device's time zone.\n- Write only Today(), a picker's SelectedDate (DateTimeZone left at Local) or Date(y,m,d) built from 'YYYY-MM-DD' text. Never Now(), never DateTimeValue on a '...Z' timestamp.\n- Compare dates that matter as text: Text(d,\"yyyy-mm-dd\").\n- NOT VERIFIED: Microsoft's docs do not say how the SharePoint connector maps date-only values, which is why go-live test steps (1) and (2) exist. If either is off, normalize once in a shared formula, never by switching single pickers to UTC.",
+    "CHOICE COLUMNS: write {JobStatus: {Value: \"Active\"}}, clear with Machine: Blank(), filter with .Value = \"...\", drop-down Items = Choices(RunListJobs.Machine). Text must match exactly ('Line 1', 'SB15'). Keep 'Allow multiple selections' and 'Can add values manually' Off.",
+    "CLEARING VALUES (PrevShipDate, PairNo, StartedOn, Machine, AssemblyLine/Date: Blank()) needs formula-level error management, which is on by default. Do not turn it off.",
+    "KEY IS IMMUTABLE ON IMPORTED ROWS: Job # and Unit # are read-only in Edit when CasmfgId is not blank, and Title is never patched there. Otherwise the next import would add a duplicate card. Build the key with exactly one expression everywhere. A duplicate key fails with 'duplicate values were found': Import re-checks with LookUp, and manual Edit shows 'already in the list as <status>'.",
+    "NEVER DELETE ROWS, in SharePoint or with Remove(). A deleted CASMFG job comes back on the next import. The 'Contribute - no delete' level enforces this; Owners alone can delete (test rows only). Never rename the list or a column after the app is built, and keep Title named Title.",
+    "5,000-ITEM THRESHOLD: the list passes 5,000 rows in about 2 years. Every query's first filter is an indexed equality that narrows below 5,000 (JobStatus Active/Incoming, Title, ID, JobNumber). JobStatus = Done eventually will not, so never list all Done rows. Sort locally. Create the indexes while the list is empty.",
+    "LOCAL ORDERING: every sort ends with ID. Up/down is one midpoint Patch. Pairs sort by GroupShip/GroupOrder, then PairNo, then the job's own value; a PairNo tie-break alone does NOT keep pairs adjacent.",
+    "IMPORT SPEED: match the paste against ActiveJobs + IncomingJobs (two queries) first. Run LookUp(Title = key) only for unmatched jobs inside 16 days, or with an invalid date. Jobs past 16 days that aren't open need no server call.",
+    "NOTES must be plain text with Append changes Off; Power Apps cannot show appended-history text.",
+    "VERSIONING at 500 per item is a best-effort audit (who ticked what, via Version history), not a guaranteed one. No 'ticked by' columns are needed."
+  ],
+  "changesFromDraft": [
+    "Added CasmfgId (Single line of text, not indexed): imported/manual flag, locks Job #/Unit # in Edit so the key is never rewritten on imported rows, updated on re-release, and keeps the door open for a later production-date push. The list now has 36 added columns plus Title.",
+    "Done now waits 30 days after StartedOn (was the next day). This matches the original 30-day retention, keeps every 'show completed/started' toggle and mistaken tick reachable, and adds no column.",
+    "Added a 'Find job #' lookup (indexed JobNumber, any status), a Reopen button that also clears Started/StartedOn so housekeeping can't re-close the job, and a Restore button for Dismissed rows.",
+    "Working set fixed as App.Formulas named formulas (ActiveJobs with TurretDone/PunchDone/group keys; IncomingJobs) instead of 'collection or With()'. The turret-complete formula is now written once.",
+    "One write helper for EVERY Patch (explicit values, base LookUp(ID), IfError, then Refresh, retry, Notify), not only floor patches.",
+    "Up/down is now one midpoint Patch, with ID as the final sort key and an optional Renumber band button. Pairwise swaps are gone.",
+    "Pairs: PairNo = Min(ID) of the selected jobs (race-free). Local group keys keep pairs adjacent. Colours are assigned by rank on the board.",
+    "Import contract: 180-day pull with a clipboard header (pulledAt, fromYmd, toYmd, days), a narrow-pull banner, a stale-paste confirmation and the button disabled while running.",
+    "Import logic: explicit create values (no Defaults reliance); failed creates re-checked and real failures listed with Retry; ship moves detected by text compare on a freshly read row; PrevShipDate keeps the first date and clears on a move back; Started jobs ignored for ship moves; invalid ship dates handled; Dismissed matches listed with Restore; Active and Incoming read as two queries, not an OR.",
+    "JobSize parsing uses a CASRTU\\s*digits regex limited to 1-4, and Edit gets a Size 'Auto' option that re-parses ProductModel.",
+    "The heavy size-3 rule now uses the exact TON token (25/30/2530), not a substring match.",
+    "Screens: SB8/SB15 get 'Show complete'. TV is defined as the punch board (not turret complete, no Unscheduled band). Assembly day rows extend back to the earliest overdue unstarted job.",
+    "Hard delegation rule added; UpdateIf/RemoveIf banned; housekeeping is ForAll over the local set.",
+    "Permissions: a custom 'Contribute - no delete' level, the site Members group set to Read on the list, Entra security groups (usable for app sharing too), and a Recycle Bin fallback.",
+    "Versions raised from 100 to 500.",
+    "Date handling: no per-picker UTC fallback. A go-live checklist now tests the Import path, the picker path, import idempotency and multi-tablet ticks.",
+    "Choice columns: 'Allow multiple selections = Off' stated explicitly. Title hidden from SharePoint views.",
+    "Open questions rewritten: Q1 keeps FanNumber separate either way; Q3 is now display-only; added Q4 on TV tapping."
+  ],
+  "rejectedFindings": [
+    "Technical #1, collection branch (write every tick back into colActive): rejected. Named formulas recalculate on Refresh and Patch, so there is no collection to keep in sync. The finding's core point (pick one pattern, base record from LookUp(ID), Notify on failure) is accepted.",
+    "Technical #3, repeat the smoke test on a device set to a different time zone: rejected as overkill. Every device is physically in the shop, and the design instead requires all devices to use the shop's time zone. The rest of the finding (test the Import path, no per-picker UTC switch, fix centrally) is accepted.",
+    "Technical #7, 'leave versions unlimited': rejected. 500 is plenty, and unlimited is not needed for an audit that is best-effort anyway.",
+    "Workflow #1 alternative, a DoneOn date column (indexed): rejected. Delaying Done by 30 days gives the same reach with no new column and no extra query.",
+    "Workflow #4, give the TV account Contribute so taps complete gauges: rejected because the user explicitly decided the TV/Progress screen is a read-only overview. It is raised as open question 4 instead. The view definition part (punch board, no Unscheduled band) is accepted.",
+    "Lifecycle #5, index Modified for a 'recently dismissed' list: rejected. The Import screen's Blocked-dismissed list and the indexed 'Find job #' box already reach every Dismissed row; a third path is overkill for a basic app.",
+    "Lifecycle #9, refuse a paste whose pulledAt isn't later than the last import's: rejected. A variable is lost when the app restarts, so the check would give false comfort without a settings list or column. The age check (confirm if older than 2 hours) is accepted.",
+    "Technical #1 claim that collection records may not satisfy Patch's base-record rule: not adopted as a reason. In practice SharePoint records copied by ClearCollect keep their ID. The design avoids the question anyway by always using LookUp(RunListJobs, ID = id)."
+  ],
+  "openQuestions": [
+    "Is the fan # on the card always the CASMFG unit #? If yes, Import pre-fills FanNumber from UnitNumber, and it stays editable. Either way, FanNumber stays its own column and the job key is never rewritten on imported jobs.",
+    "Which SharePoint site holds RunListJobs, and how do the floor tablets and the TV sign in (personal or shared shop accounts)? Every account needs a license and membership in RunList Users or RunList Viewers. Shared accounts, the two security groups and the 'Contribute - no delete' level need IT's OK.",
+    "After the line ticks Started, should the job stay on the Assembly board (ticked) until its ship date passes, as today and as the default, or leave at once? This is a display rule only: either way the job closes to Done 30 days after Started.",
+    "Today an operator can tap a gauge on the TV to complete it. You decided the new TV is read-only (Read permission), so operators will tick on the SB8/SB15 tablets instead. Is that right? If the TV must take taps, its account needs the same access as the tablets."
+  ],
+  "extraLists": [],
+  "guideMarkdown": "# Set up the RunListJobs list in SharePoint\n\nThis takes about 30 minutes in a web browser on your work PC. A site **owner** (you or IT) must do steps 1 and 9.\n\n## 1. Where it goes and who gets access\n- **Site:** use a SharePoint **team site** in the company tenant. That can be an existing Production/Shop site, or ask IT for one such as \"Shop Floor Apps\". Do not use OneDrive.\n- **Time zone (do this first):** gear icon > **Site information** > **View all site settings** > **Regional settings** > set **Time zone** to the shop's time zone > **OK**. Every tablet, PC and the TV must also be set to this time zone.\n- **Groups:** ask IT for two **security groups**:\n  - **RunList Users**: supervisors, the nester and every floor-tablet account. They change jobs.\n  - **RunList Viewers**: the TV account and anyone who only looks.\n- Every tablet and the TV must sign in with a licensed Microsoft 365 work account (E3 is fine) that is in one of these groups.\n\n## 2. Create the list\nSite home > **+ New** > **List** > **Blank list**. Name: `RunListJobs` (exactly like that, no spaces) > **Create**. Never rename it.\n\n## 3. Set up the Title column (the job key)\nGear > **List settings** > under Columns click **Title**. Keep the name **Title**. Set **Require that this column contains information** = Yes and **Enforce unique values** = Yes. When it says the column must be indexed, click **OK**. Then click **OK** again.\n\n## 4. Add the other 36 columns\nGo back to the list and click **+ Add column** > pick the type > **Next** > type the name **exactly** as shown (no spaces; the first name you type is permanent) > set the options > **Save**.\n- **Every Yes/No:** set Default value to **No**. It starts at Yes.\n- **Every Choice:** delete the \"Choice 1/2/3\" placeholders. Under More options, set **Allow multiple selections** Off and **Can add values manually** Off.\n- **Every Date:** set **Include time** Off.\n\n| Name to type | Type | Settings | Index? |\n|---|---|---|---|\n| Title | (already there) | Required, unique values (step 3) | Yes (automatic) |\n| JobNumber | Single line of text | Defaults | Yes (step 6) |\n| UnitNumber | Single line of text | Defaults | No |\n| FanNumber | Single line of text | Defaults | No |\n| JobName | Single line of text | Defaults | No |\n| ProductModel | Single line of text | Defaults | No |\n| NestLabel | Single line of text | Defaults | No |\n| CasmfgId | Single line of text | Defaults | No |\n| JobSize | Number | Decimal places 0; no min, max or default | No |\n| PairNo | Number | Decimal places 0; no min, max or default | No |\n| PunchOrder | Number | Decimal places Automatic; no default | No |\n| AssemblyOrder | Number | Decimal places Automatic; no default | No |\n| ShipDate | Date and time | Include time Off; format Standard; no default | No |\n| PrevShipDate | Date and time | Same as ShipDate | No |\n| PunchDay | Date and time | Same as ShipDate | No |\n| AssemblyDate | Date and time | Same as ShipDate | No |\n| StartedOn | Date and time | Same as ShipDate | No |\n| JobStatus | Choice | Choices: Incoming, Active, Done, Dismissed. Default **Incoming**. More options: Require = **Yes** | Yes (step 6) |\n| Machine | Choice | Choices: SB8, SB15. No default | No |\n| AssemblyLine | Choice | Choices: Line 1, Line 2, Line 3. No default | No |\n| Nested | Yes/No | Default **No** | No |\n| Need12, Need14, Need16, Need18, Need20, Need24 | Yes/No (six separate columns) | Default **No** | No |\n| Done12, Done14, Done16, Done18, Done20, Done24 | Yes/No (six separate columns) | Default **No** | No |\n| PBDone | Yes/No | Default **No** | No |\n| P4Done | Yes/No | Default **No** | No |\n| Started | Yes/No | Default **No** | No |\n| Notes | Multiple lines of text | More options: Use enhanced rich text **Off**, Append changes to existing text **Off** | No |\n\n## 5. Check the names\nGo to **List settings** and click 4 or 5 of the columns. The web address must end in `Field=` followed by the exact name, for example `Field=PunchOrder`. If you see `_x0020_` or an extra `0` at the end, **delete that column and create it again**. Renaming does not fix it.\n\n## 6. Add the indexes\n**List settings** > **Indexed columns** > **Create a new index** > Primary column = **JobStatus** > **Create**. Do the same for **JobNumber**. The page should now list exactly three: Title, JobStatus and JobNumber.\n\n## 7. Turn on version history\n**List settings** > **Versioning settings**:\n- Require content approval = **No**\n- Create a version each time you edit an item = **Yes**\n- Keep the following number of versions = **500**\n\nClick **OK**.\n\n## 8. Turn off attachments\n**List settings** > **Advanced settings** > Attachments = **Disabled** > **OK**. Leave everything else as it is.\n\n## 9. Set permissions (site owner)\n1. **Make a \"no delete\" level:** gear > **Site permissions** > **Advanced permissions settings** > **Permission Levels** > click **Contribute** > **Copy Permission Level** (at the bottom). Name it `Contribute - no delete`, untick **Delete Items** and **Delete Versions**, then click **Create**.\n2. **List settings** > **Permissions for this list** > **Stop Inheriting Permissions** > **OK**.\n3. Tick the site's **Members** group > **Edit User Permissions** > tick **Read** only > **OK**.\n4. **Grant Permissions** > enter **RunList Users** > **Show options** > choose **Contribute - no delete** > untick the email > **Share**.\n5. **Grant Permissions** > enter **RunList Viewers** > choose **Read** > **Share**.\n\nThe owners keep Full Control, and they are the only people who can delete. If step 1 is not allowed, give RunList Users **Contribute** instead and tell everyone: **never delete a row**. A deleted row can be restored from the site Recycle Bin for 93 days.\n\n## 10. Hide the key, then test\n1. In **All Items**, click a column header > **Column settings** > **Show/hide columns** > untick **Title** > **Apply**.\n2. Add a test row: **+ New** > Title `TEST|1`, JobNumber `TEST`, ShipDate today > **Save**.\n3. Check three things:\n   - JobStatus shows **Incoming**.\n   - Every Yes/No column shows **No**.\n   - ShipDate shows today.\n4. Then delete the test row. You are an owner, so you can.\n\n## 11. Send this back when done\n- The site address and the list address.\n- A screenshot of the **Columns** section of List settings, and one of the **Indexed columns** page.\n- The time zone you set.\n- The names of the two groups, and which accounts are in each (tablets, TV, people).\n- Whether the **Contribute - no delete** level was made, or Contribute was used instead.\n- The test row results: Incoming? All No? Correct date?\n- Your answers to the four open questions."
+}
