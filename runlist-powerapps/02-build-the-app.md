@@ -53,7 +53,7 @@ Quick fixes to try first:
 
 1. **Browser.** Use Microsoft Edge or Chrome at https://make.powerapps.com. Studio must be in **English (US)**. In a language that puts `;` between formula parts (for example German or French), Pastes 1, 2 and 22 and the fix-up formulas fail.
 2. **Create the app.** At the top right, pick the environment IT gave you ('Production PowerApps'). Then go to **Create > Blank app > Blank canvas app**. Name it `White Board`, choose Format **Tablet**, and click **Create**.
-3. **Display.** In Studio, open **Settings** (gear icon, top bar) **> Display**. Check that **Scale to fit** is **On** and **Lock aspect ratio** is **On**. Leave the size at 16:9 (1366 x 768).
+3. **Display.** In Studio, open **Settings** (gear icon, top bar) **> Display**. If there's an **App layout** drop-down, change it from **Responsive** to the other choice (Scale to fit / fixed), which unlocks the settings below. Then: Orientation **Landscape**, Size **16:9 Default** (1366 x 768), **Lock aspect ratio** **On**. In older Studio versions, just check that **Scale to fit** is **On**.
 4. **Row limit.** **Settings > General > Data row limit**: set it to **2000**.
 5. **Analysis engine.** **Settings > Updates > New**: **New analysis engine** should be **On** (it's on by default). Nothing in this app needs you to change it.
 6. **Error handling.** **Settings > Updates > Retired**: keep **Disable formula-level error management** **Off**. The app needs it to clear values.
