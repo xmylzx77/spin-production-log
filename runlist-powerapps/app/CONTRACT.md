@@ -17,7 +17,7 @@ Where the higher files leave a gap, or disagree with each other, this page has s
 | D5 | Pair badge text | guide 6.2 (Button): `Text(ThisItem.PairNo)` | `Text(ThisItem.PairRank)`; PairNo (a list ID) is never shown. | 3.4 |
 | D6 | Overlay tap | guide 7.2: a tap on the overlay closes the panel | The overlay only blocks taps; panels close with Save / Cancel. | 9.7 |
 | D7 | Nest label save | app-spec: "saves OnChange"; guide rule 18: in galleries, only Buttons write | Punch: a small ✓ button only (no OnChange). Nesting: OnChange **and** a Save button, sharing one save key so a tap writes once (Nesting notes A2). Both compare trimmed text (6.4). | 6.4 |
-| D8 | Re-reads before a write | app-spec: "a single-row LookUp(RunListJobs, ID = n) before a Patch" | Allowed as a **guard** too: a button may re-read its row to refuse a stale write (status, Done gauge, ship date) or to merge a panel save (5, item 1; 6.1; 6.3; 6.4). | 5, 6 |
+| D8 | Re-reads before a write | app-spec: "a single-row LookUp(TheWhiteBoard, ID = n) before a Patch" | Allowed as a **guard** too: a button may re-read its row to refuse a stale write (status, Done gauge, ship date) or to merge a panel save (5, item 1; 6.1; 6.3; 6.4). | 5, 6 |
 
 ---
 
@@ -38,7 +38,7 @@ Where the higher files leave a gap, or disagree with each other, this page has s
 
 | Paste | What | From |
 |---|---|---|
-| 0 | One-time setup: guide section 2 steps 1-7 (Tablet app, Data row limit 2000, RunListJobs connected) | person |
+| 0 | One-time setup: guide section 2 steps 1-7 (Tablet app, Data row limit 2000, TheWhiteBoard connected) | person |
 | 1 | App > **OnStart** (fallback below if it isn't in the property list) | `app/App.OnStart.txt` |
 | 2 | App > **Formulas** | `app/App.Formulas.txt` |
 | 3 | scrHome, then delete Studio's empty `Screen1` (Tree view > right-click > Delete). If Screen1 holds the Paste 1 fallback, delete it right after Paste 4 instead | `app/screens/scrHome.yaml` |
@@ -57,7 +57,7 @@ The person follows `02-build-the-app.md`, which numbers the same pastes 1 to 22 
 **Paste 1 fallback.** Learn (App object): OnStart "might be disabled by default. If you don't see it ... check the app's Advanced settings for a switch to enable it." Look for that switch first. If there's none, paste the same two lines into **Screen1 > OnVisible** instead, and delete Screen1 only **after Paste 4** (not at Paste 3). Why it works: App.Formulas needs `gblRefreshTick` to exist as a variable, and a `Set` anywhere declares it; once scrPunch (Paste 4) is in, its own `Set(gblRefreshTick, ...)` keeps it declared, and scrHome's SB8/SB15 buttons keep `varMachine` declared. Nothing needs the starting values at run time: `TodayDate` uses `Coalesce(gblRefreshTick, 0)`, blank + 1 is 1 for the first tick, and scrTurret's `Coalesce(varMachine, ...)` treats blank like `""`.
 
 Rules that follow from the order:
-- A screen may reference: everything in App.Formulas, the two globals in section 4, `RunListJobs`, its own controls, and `scrHome`. The only other cross-screen references allowed are scrHome's buttons, scrPunch's Import button (`scrImport`) and scrImport's "Go to Punch" button (`scrPunch`).
+- A screen may reference: everything in App.Formulas, the two globals in section 4, `TheWhiteBoard`, its own controls, and `scrHome`. The only other cross-screen references allowed are scrHome's buttons, scrPunch's Import button (`scrImport`) and scrImport's "Go to Punch" button (`scrPunch`).
 - Never reference another screen's controls or context variables.
 - StartScreen reads only `Param()`. It must never use a named formula or a variable (Learn: a StartScreen that reads a named formula which reads a global variable can race with OnStart).
 
@@ -197,7 +197,7 @@ Uses:
 
 | Name | Type | Set by | Meaning |
 |---|---|---|---|
-| `gblRefreshTick` | Number | App.OnStart sets 0 (or nothing, with the Paste 1 fallback). Every timer, Refresh button and screen OnVisible bumps it right after `Refresh(RunListJobs)` | Part of TodayDate, so `Today()` is re-read on every refresh and a device left on past midnight moves to the new day (see 7.5) |
+| `gblRefreshTick` | Number | App.OnStart sets 0 (or nothing, with the Paste 1 fallback). Every timer, Refresh button and screen OnVisible bumps it right after `Refresh(TheWhiteBoard)` | Part of TodayDate, so `Today()` is re-read on every refresh and a device left on past midnight moves to the new day (see 7.5) |
 | `varMachine` | Text | App.OnStart sets "" (or nothing, with the Paste 1 fallback). scrHome's SB8 / SB15 buttons set "SB8" / "SB15" before `Navigate(scrTurret, ...)` | which turret scrTurret shows |
 
 scrTurret resolves its machine with exactly this (app-spec). As built, it is the `Text` of the hidden label `lblTurMachine` (always current, even when Preview starts on scrTurret and OnVisible hasn't run; scrTurret notes A3), and every other control reads `lblTurMachine.Text`:
@@ -210,15 +210,15 @@ Coalesce(varMachine, If(Lower(Trim(Param("screen"))) = "sb15", "SB15", "SB8"))
 
 ## 5. Data access
 
-- Galleries, labels and counts read `ActiveJobs`, `IncomingJobs` and the band tables only. The one exception is the Punch Find results gallery (3 below). Never bind anything else to `RunListJobs`.
-- The **only** direct `RunListJobs` reads allowed:
-  1. `LookUp(RunListJobs, ID = id)`: the Patch base record (section 6), or loading one job into a panel when it isn't in ActiveJobs/IncomingJobs (a Find result that is Done or Dismissed), e.g. `UpdateContext({locPanel: "edit", locId: id, locPunJob: LookUp(RunListJobs, ID = id)})`, or a **pre-write re-check** in the button that writes (section 0, D8): refuse a stale write (Place / Restore / Reopen status, a Done gauge before un-needing, the ship date before clearing PrevShipDate, the job still Active before an Assembly assign) or read the merge base of a panel save (6.3). Same delegable single-row form;
-  2. Import: `LookUp(RunListJobs, Title = key)`;
-  3. Punch Find box: `Filter(RunListJobs, JobNumber = Trim(txtPunFind.Text))`;
-  4. drop-down choices: `Choices(RunListJobs.Machine)` / `Choices(RunListJobs.AssemblyLine)` (column metadata, not rows).
+- Galleries, labels and counts read `ActiveJobs`, `IncomingJobs` and the band tables only. The one exception is the Punch Find results gallery (3 below). Never bind anything else to `TheWhiteBoard`.
+- The **only** direct `TheWhiteBoard` reads allowed:
+  1. `LookUp(TheWhiteBoard, ID = id)`: the Patch base record (section 6), or loading one job into a panel when it isn't in ActiveJobs/IncomingJobs (a Find result that is Done or Dismissed), e.g. `UpdateContext({locPanel: "edit", locId: id, locPunJob: LookUp(TheWhiteBoard, ID = id)})`, or a **pre-write re-check** in the button that writes (section 0, D8): refuse a stale write (Place / Restore / Reopen status, a Done gauge before un-needing, the ship date before clearing PrevShipDate, the job still Active before an Assembly assign) or read the merge base of a panel save (6.3). Same delegable single-row form;
+  2. Import: `LookUp(TheWhiteBoard, Title = key)`;
+  3. Punch Find box: `Filter(TheWhiteBoard, JobNumber = Trim(txtPunFind.Text))`;
+  4. drop-down choices: `Choices(TheWhiteBoard.Machine)` / `Choices(TheWhiteBoard.AssemblyLine)` (column metadata, not rows).
 - No delegation warning is expected anywhere (the job tables are in-memory). If Studio shows one, report it as a bug.
 - Never: `UpdateIf`, `RemoveIf`, `Remove`, `Collect`/`ClearCollect` of jobs, `gal.Selected` in a child's event, `AllItems`/`AllItemsCount`.
-- Machine and line drop-downs (panels only): `Items: =Choices(RunListJobs.Machine)` / `=Choices(RunListJobs.AssemblyLine)` with `Items.Value: =Value` (list-design pitfall 6, guide 6.4), written back as `{Value: dd.Selected.Value}`. `MachineList` / `LineList` are for loops and labels.
+- Machine and line drop-downs (panels only): `Items: =Choices(TheWhiteBoard.Machine)` / `=Choices(TheWhiteBoard.AssemblyLine)` with `Items.Value: =Value` (list-design pitfall 6, guide 6.4), written back as `{Value: dd.Selected.Value}`. `MachineList` / `LineList` are for loops and labels.
 - Dates: compare as `...Ymd` text or `...Key` numbers. Show with `Text(d, "m/d")` or the `...Text` columns.
 - Blank text: never `Coalesce(x, "")` (3.4, blank text rule); write `x & ""` or `IsBlank(x)`.
 - Look up the job behind an open panel with `LookUp(ActiveJobs, ID = locId)` (or `IncomingJobs` for the tray), inside a `With`.
@@ -239,7 +239,7 @@ Coalesce(varMachine, If(Lower(Trim(Param("screen"))) = "sb15", "SB15", "SB8"))
 
 ## 6. Writes (list-design pitfall 3 and 4)
 
-Rules: work out every value first inside `With`; base record is always `LookUp(RunListJobs, ID = id)`; `IfError`, then `Refresh`, then retry once, then `Notify(..., NotificationType.Error, 0)`; patch only the columns the button owns; writes come from `Classic/Button` `OnSelect` (keep `AutoDisableOnSelect` at its default, true, so a double tap can't double-write). Every write formula goes in a `|-` block (it contains `{`, `:`).
+Rules: work out every value first inside `With`; base record is always `LookUp(TheWhiteBoard, ID = id)`; `IfError`, then `Refresh`, then retry once, then `Notify(..., NotificationType.Error, 0)`; patch only the columns the button owns; writes come from `Classic/Button` `OnSelect` (keep `AutoDisableOnSelect` at its default, true, so a double tap can't double-write). Every write formula goes in a `|-` block (it contains `{`, `:`).
 
 - **Busy colours.** Because `AutoDisableOnSelect` is on, every button is drawn disabled while its OnSelect runs. Give every button that calls the server `DisabledColor: =Self.Color` and `DisabledFill: =ColorFade(Self.Fill, -30%)` (the template defaults flash a pale box on the dark UI). scrImport uses `clrMuted` + a darker blue on its own buttons; that is fine.
 - **Reads that decide a write in a bulk loop** (Import): test the read with `IsError()` and record a failure instead of dropping the row; a re-check where "not found" is the safe answer may use `IfError(LookUp(...), Blank())`.
@@ -250,10 +250,10 @@ Rules: work out every value first inside `With`; base record is always `LookUp(R
 ```powerfx
 With({id: ThisItem.ID, v: !ThisItem.PBDone},
     IfError(
-        Patch(RunListJobs, LookUp(RunListJobs, ID = id), {PBDone: v}),
-        Refresh(RunListJobs);
+        Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {PBDone: v}),
+        Refresh(TheWhiteBoard);
         IfError(
-            Patch(RunListJobs, LookUp(RunListJobs, ID = id), {PBDone: v}),
+            Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {PBDone: v}),
             Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
         )
     )
@@ -265,9 +265,9 @@ Change only `ThisItem.PBDone` and `{PBDone: v}` (e.g. `Nested`, `Need14`, `Done1
 ```powerfx
 With({id: ThisItem.ID, v: !ThisItem.Need14},
     If(
-        ThisItem.Need14 && (ThisItem.Done14 || LookUp(RunListJobs, ID = id).Done14),
+        ThisItem.Need14 && (ThisItem.Done14 || LookUp(TheWhiteBoard, ID = id).Done14),
         Notify("14 ga is already punched, so it stays selected", NotificationType.Warning);
-        If(!ThisItem.Done14, Refresh(RunListJobs); Set(gblRefreshTick, gblRefreshTick + 1)),
+        If(!ThisItem.Done14, Refresh(TheWhiteBoard); Set(gblRefreshTick, gblRefreshTick + 1)),
         <the helper above on {Need14: v}>
     )
 )
@@ -294,10 +294,10 @@ scrPunch and scrNesting build their Need pills this way.
       OnSelect: |-
         =With({id: ThisItem.ID, v: !ThisItem.Done16},
             IfError(
-                Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Done16: v}),
-                Refresh(RunListJobs);
+                Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Done16: v}),
+                Refresh(TheWhiteBoard);
                 IfError(
-                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Done16: v}),
+                    Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Done16: v}),
                     Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
                 )
             )
@@ -324,22 +324,22 @@ scrPunch and scrNesting build their Need pills this way.
 With({id: ThisItem.JobID, g: ThisItem.G, v: !ThisItem.Done},
     IfError(
         Switch(g,
-            12, Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Done12: v}),
-            14, Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Done14: v}),
-            16, Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Done16: v}),
-            18, Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Done18: v}),
-            20, Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Done20: v}),
-            24, Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Done24: v})
+            12, Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Done12: v}),
+            14, Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Done14: v}),
+            16, Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Done16: v}),
+            18, Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Done18: v}),
+            20, Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Done20: v}),
+            24, Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Done24: v})
         ),
-        Refresh(RunListJobs);
+        Refresh(TheWhiteBoard);
         IfError(
             Switch(g,
-                12, Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Done12: v}),
-                14, Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Done14: v}),
-                16, Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Done16: v}),
-                18, Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Done18: v}),
-                20, Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Done20: v}),
-                24, Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Done24: v})
+                12, Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Done12: v}),
+                14, Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Done14: v}),
+                16, Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Done16: v}),
+                18, Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Done18: v}),
+                20, Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Done20: v}),
+                24, Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Done24: v})
             ),
             Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
         )
@@ -363,10 +363,10 @@ With(
         }
     },
     IfError(
-        Patch(RunListJobs, LookUp(RunListJobs, ID = id), changes),
-        Refresh(RunListJobs);
+        Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), changes),
+        Refresh(TheWhiteBoard);
         IfError(
-            Patch(RunListJobs, LookUp(RunListJobs, ID = id), changes),
+            Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), changes),
             Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0),
             UpdateContext({locPanel: "", locId: 0})
         ),
@@ -375,7 +375,7 @@ With(
 )
 ```
 
-**Don't undo other devices.** A panel can stay open for minutes while the screen doesn't refresh. Write a field from the panel only if the user changed it (compare with the copy the panel opened with); for every field left alone, write the row's value from one fresh `LookUp(RunListJobs, ID = id)` taken at Save time, and keep the order value unless the band or cell really changes (then band max + 1, worked out **after** a `Refresh(RunListJobs)` and tick bump). scrPunch's edit Save and scrAssembly's Assign / Move here do this.
+**Don't undo other devices.** A panel can stay open for minutes while the screen doesn't refresh. Write a field from the panel only if the user changed it (compare with the copy the panel opened with); for every field left alone, write the row's value from one fresh `LookUp(TheWhiteBoard, ID = id)` taken at Save time, and keep the order value unless the band or cell really changes (then band max + 1, worked out **after** a `Refresh(TheWhiteBoard)` and tick bump). scrPunch's edit Save and scrAssembly's Assign / Move here do this.
 
 The third argument of each `IfError` runs only when there was no error (Learn: DefaultResult). All of section 6 was run offline in the Power Fx 1.8 interpreter against sample rows; there, a base record that no longer exists (row deleted by an Owner) writes nothing. Value shapes: Choice `{Value: "SB8"}`; clear with `Blank()` (Choice clear is U13); Yes/No `true`/`false`; Number `Value(txt.Text)` or `Blank()`; Date `dp.SelectedDate`, `Today()` or `Blank()`; Text `"..."`.
 
@@ -383,10 +383,10 @@ The third argument of each `IfError` runs only when there was no error (Learn: D
 
 | Action | Change record |
 |---|---|
-| Place (Incoming tray) | `{JobStatus: {Value: "Active"}, Machine: {Value: m}, PunchDay: d, PunchOrder: <band max + 1>, Need12: ..., Need14: ..., Need16: ..., Need18: ..., Need20: ..., Need24: ...}`, only if a fresh `LookUp(RunListJobs, ID = id)` is still Incoming; otherwise Notify, Refresh, tick bump, no write |
+| Place (Incoming tray) | `{JobStatus: {Value: "Active"}, Machine: {Value: m}, PunchDay: d, PunchOrder: <band max + 1>, Need12: ..., Need14: ..., Need16: ..., Need18: ..., Need20: ..., Need24: ...}`, only if a fresh `LookUp(TheWhiteBoard, ID = id)` is still Incoming; otherwise Notify, Refresh, tick bump, no write |
 | Nest label (✓ button, or text box OnChange) | `{NestLabel: Trim(<box>.Text)}`, only `If(Trim(<box>.Text) <> Trim(ThisItem.NestLabel & ""), <helper>)` so a data refresh never writes (not `Coalesce(..., "")`: that is blank when NestLabel is empty, and `"" <> Blank()` is true, so it would write). If a screen has both OnChange and a Save button, they share one save key so a tap writes once (section 0, D7) |
-| Ship move acknowledged | `{PrevShipDate: Blank()}`, only if a fresh `LookUp(RunListJobs, ID = id)` still has the ship date the card shows (`Text(ShipDate, "yyyy-mm-dd") = ThisItem.ShipYmd`); otherwise Notify "CASMFG moved this ship date again", Refresh, tick bump, no write |
-| Started tick | on: `{Started: true, StartedOn: If(cur.Started && !IsBlank(cur.StartedOn), cur.StartedOn, Today())}` with `cur` = a fresh `LookUp(RunListJobs, ID = id)` (a stale tap keeps the existing date, so the 30-day housekeeping clock isn't restarted); off: `{Started: false, StartedOn: Blank()}` |
+| Ship move acknowledged | `{PrevShipDate: Blank()}`, only if a fresh `LookUp(TheWhiteBoard, ID = id)` still has the ship date the card shows (`Text(ShipDate, "yyyy-mm-dd") = ThisItem.ShipYmd`); otherwise Notify "CASMFG moved this ship date again", Refresh, tick bump, no write |
+| Started tick | on: `{Started: true, StartedOn: If(cur.Started && !IsBlank(cur.StartedOn), cur.StartedOn, Today())}` with `cur` = a fresh `LookUp(TheWhiteBoard, ID = id)` (a stale tap keeps the existing date, so the 30-day housekeeping clock isn't restarted); off: `{Started: false, StartedOn: Blank()}` |
 | Dismiss (after confirm) | `{JobStatus: {Value: "Dismissed"}}` |
 | Reopen (Find, Done row) | `{JobStatus: {Value: "Active"}, Started: false, StartedOn: Blank()}`, only if the fresh row is still Done |
 | Restore (Dismissed row) | `{JobStatus: {Value: "Incoming"}}`, only if the fresh row is still Dismissed |
@@ -418,10 +418,10 @@ If(!IsBlank(mover) && !IsBlank(above),
     With({id: First(SortByColumns(Filter(ActiveJobs, PunchBand = c.PunchBand && If(IsBlank(mover.pn), ID = mover.uid, PairNo = mover.pn)), "PunchSort", SortOrder.Ascending, "ID", SortOrder.Ascending)).ID,
           v: If(IsBlank(above2), above.go - 1, (above2.go + above.go) / 2)},
         IfError(
-            Patch(RunListJobs, LookUp(RunListJobs, ID = id), {PunchOrder: v}),
-            Refresh(RunListJobs);
+            Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {PunchOrder: v}),
+            Refresh(TheWhiteBoard);
             IfError(
-                Patch(RunListJobs, LookUp(RunListJobs, ID = id), {PunchOrder: v}),
+                Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {PunchOrder: v}),
                 Notify("Move failed: " & FirstError.Message, NotificationType.Error, 0)
             )
         )
@@ -441,7 +441,7 @@ Job key, the one expression everywhere (pitfall 8): `Upper(Trim(<job #>)) & "|" 
 Import (new Incoming job). The Import agent computes `key`, `ship` (Date or `Blank()`, list-design ShipDate rule) and `size` (list-design JobSize parse) first:
 
 ```powerfx
-Patch(RunListJobs, Defaults(RunListJobs), {
+Patch(TheWhiteBoard, Defaults(TheWhiteBoard), {
     Title: key,
     JobNumber: Trim(num), UnitNumber: Trim(unit), FanNumber: Trim(unit),
     JobName: name, ProductModel: model, CasmfgId: casmfgId,
@@ -456,7 +456,7 @@ Patch(RunListJobs, Defaults(RunListJobs), {
 
 Manual Add (new Active job, Punch edit panel in "add" mode): same 16 Yes/No as `false` (or the panel's Need choices) plus `Title: key`, `JobNumber`, `UnitNumber`, `FanNumber`, `JobName`, `ProductModel`, `JobSize`, `ShipDate`, `Notes`, `JobStatus: {Value: "Active"}`, `Machine: {Value: m}`, `PunchDay: d`, `PunchOrder: <band max + 1>`, and `AssemblyLine`/`AssemblyDate` only if chosen. Leave CasmfgId out (blank = manual job). Columns left out of a create (Machine, AssemblyLine, the dates, PairNo, the orders, NestLabel, Notes, CasmfgId) have no SharePoint default, so they start blank.
 
-Creates are not retried blindly: on error, re-check with `LookUp(RunListJobs, Title = key)` (Import: count as "already had"; manual Add: "already in the list as " & status), else `Notify` / Failed list.
+Creates are not retried blindly: on error, re-check with `LookUp(TheWhiteBoard, Title = key)` (Import: count as "already had"; manual Add: "already in the list as " & status), else `Notify` / Failed list.
 
 ---
 
@@ -474,12 +474,12 @@ Screens with a panel (Punch, Assembly):
       AutoStart: =true
       Duration: =60000
       OnTimerEnd: |-
-        =If(IsBlank(locPanel), Refresh(RunListJobs); Set(gblRefreshTick, gblRefreshTick + 1))
+        =If(IsBlank(locPanel), Refresh(TheWhiteBoard); Set(gblRefreshTick, gblRefreshTick + 1))
       Repeat: =true
       Visible: =false
 ```
 
-Screens without a panel (Nesting, Turret, Bending: 30000; TV: 60000): the same with `OnTimerEnd` = `=Refresh(RunListJobs); Set(gblRefreshTick, gblRefreshTick + 1)` inside a `|-` block.
+Screens without a panel (Nesting, Turret, Bending: 30000; TV: 60000): the same with `OnTimerEnd` = `=Refresh(TheWhiteBoard); Set(gblRefreshTick, gblRefreshTick + 1)` inside a `|-` block.
 
 Allowed variant (scrNesting): a screen with a text box in its gallery may skip a set number of timer cycles after the box is tapped (`locNesHold`), so a refresh doesn't wipe half-typed text. Saving ends the pause. The Refresh button always refreshes.
 
@@ -488,7 +488,7 @@ Allowed variant (scrNesting): a screen with a text box in its gallery may skip a
 Refresh button `OnSelect`, and the start of every data screen's `OnVisible` (all screens except scrHome):
 
 ```powerfx
-Refresh(RunListJobs);
+Refresh(TheWhiteBoard);
 Set(gblRefreshTick, gblRefreshTick + 1)
 ```
 
@@ -504,7 +504,7 @@ Refresh in a value property, a timer under 30000 ms, or `Refresh` without the ti
 
 ### 7.5 Why the tick (U9) and how it's tested
 
-Named formulas recalculate when RunListJobs changes, so a Patch or Refresh updates every screen (list-design). `Refresh(RunListJobs)` is the documented way to pick up *other* users' changes; whether it re-runs the named formulas every time is unconfirmed (guide U9). The tick's own job is the midnight rollover: `TodayDate` reads `gblRefreshTick`, so bumping it makes `TodayDate` re-read `Today()`. Don't rely on the tick to force a data recalculation: on a normal day `TodayDate` doesn't change value, and it isn't proven that the engine recalculates the job tables when a dependency is re-evaluated to the same value. Go-live test (list-design step 20 (4)) is the gate: tick on tablet A, watch tablet B within one timer cycle. If B never updates, report it; don't add collections.
+Named formulas recalculate when TheWhiteBoard changes, so a Patch or Refresh updates every screen (list-design). `Refresh(TheWhiteBoard)` is the documented way to pick up *other* users' changes; whether it re-runs the named formulas every time is unconfirmed (guide U9). The tick's own job is the midnight rollover: `TodayDate` reads `gblRefreshTick`, so bumping it makes `TodayDate` re-read `Today()`. Don't rely on the tick to force a data recalculation: on a normal day `TodayDate` doesn't change value, and it isn't proven that the engine recalculates the job tables when a dependency is re-evaluated to the same value. Go-live test (list-design step 20 (4)) is the gate: tick on tablet A, watch tablet B within one timer cycle. If B never updates, report it; don't add collections.
 
 ---
 
@@ -570,7 +570,7 @@ Canvas 1366 x 768, absolute positions (guide 7.1). Header 0..64, body 64..768. E
             DisabledColor: =Self.Color
             DisabledFill: =ColorFade(Self.Fill, -30%)
             OnSelect: |-
-              =Refresh(RunListJobs);
+              =Refresh(TheWhiteBoard);
               Set(gblRefreshTick, gblRefreshTick + 1)
             PressedColor: =Self.Color
             PressedFill: =ColorFade(Self.Fill, -30%)
@@ -878,7 +878,7 @@ Children order in a screen = back to front: header, body (trays, galleries), tim
       Height: =44
       HoverColor: =clrText
       HoverFill: =clrCard
-      Items: =Choices(RunListJobs.Machine)
+      Items: =Choices(TheWhiteBoard.Machine)
       Items.Value: =Value
       PressedColor: =clrText
       PressedFill: =clrCard
@@ -915,8 +915,8 @@ Children order in a screen = back to front: header, body (trays, galleries), tim
 ## 10. Before you hand over
 
 1. `python3 tools/palint.py <your screen>.yaml` and, together with the other screens, 0 errors and no duplicate names.
-2. Only names from this contract, your own controls, `RunListJobs` and its columns.
-3. Every `RunListJobs` touch is one of the three in section 5 or a write in section 6.
+2. Only names from this contract, your own controls, `TheWhiteBoard` and its columns.
+3. Every `TheWhiteBoard` touch is one of the three in section 5 or a write in section 6.
 4. Every write: 6.1/6.2/6.3 or the 6.4 move snippet, from a Button `OnSelect`, using `ThisItem` or `locId`.
 5. No `Coalesce(x, "")` anywhere (3.4, blank text rule), and no gauge gallery on a banded screen (6.2).
 6. Header (9.1) with Home last; timer (7.1); OnVisible (7.2); panels last (9.7).

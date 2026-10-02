@@ -3,8 +3,8 @@
 This guide builds the app in Power Apps. You copy a file from the `app` folder, paste it into Power Apps Studio, and check that it looks right. There are 22 pastes, a few settings, then sharing, links for each device and a go-live test.
 
 - **Time:** about 2 hours for the pastes, and about 1.5 hours for the tests.
-- **Before this:** `01-sharepoint-list-setup.md` is done. The RunListJobs list exists, and IT has made the **RunList Users** and **RunList Viewers** groups. Your own account is a site Owner or in RunList Users (a plain site Member can only read the list, so the tests in Part G can't save).
-- **Nothing premium:** the app uses only the SharePoint list RunListJobs.
+- **Before this:** `01-sharepoint-list-setup.md` is done. The list TheWhiteBoard exists, and IT has made the **RunList Users** and **RunList Viewers** groups. Your own account is a site Owner or in RunList Users (a plain site Member can only read the list, so the tests in Part G can't save).
+- **Nothing premium:** the app uses only the SharePoint list TheWhiteBoard.
 - **More detail:** each screen has a notes file next to its code, for example `app/screens/scrPunch.notes.md`. Open it if a step here isn't enough.
 
 ---
@@ -57,7 +57,7 @@ Quick fixes to try first:
 4. **Row limit.** **Settings > General > Data row limit**: set it to **2000**.
 5. **Analysis engine.** **Settings > Updates > New**: **New analysis engine** should be **On** (it's on by default). Nothing in this app needs you to change it.
 6. **Error handling.** **Settings > Updates > Retired**: keep **Disable formula-level error management** **Off**. The app needs it to clear values.
-7. **Data.** Click the **Data** icon (cylinder) on the left, then **Add data**. Search for **SharePoint**, pick the connection, then the team site from `01-sharepoint-list-setup.md`. Tick **RunListJobs** and click **Connect**. RunListJobs now shows under Data.
+7. **Data.** Click the **Data** icon (cylinder) on the left, then **Add data**. Search for **SharePoint**, pick the connection, then the team site from `01-sharepoint-list-setup.md`. Tick **TheWhiteBoard** and click **Connect**. TheWhiteBoard now shows under Data.
    - If no SharePoint connection is listed, click **Add a connection** > **Connect directly (cloud services)** > **Connect**.
    - If the site isn't listed, paste its address (the one sent back in step 11 of `01-sharepoint-list-setup.md`).
 
@@ -99,7 +99,7 @@ From Paste 3 until the fix-up step, App checker keeps listing errors on scrHome'
 
 ```
 PASTE 1 of 22: App > OnStart (formula bar) - file app/App.OnStart.txt
-Before this: Parts A and B done. RunListJobs connected.
+Before this: Parts A and B done. TheWhiteBoard connected.
 Where: Tree view → click App → property list → OnStart → formula bar → Ctrl+A → Ctrl+V → Enter.
 After: run the checks. Expected: 0 errors.
 ```

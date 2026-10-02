@@ -1,10 +1,10 @@
-# RunListJobs list design (reference)
+# TheWhiteBoard list design (reference)
 
 The design behind `01-sharepoint-list-setup.md`. It was drafted, then checked by three reviewers (Power Apps/SharePoint technical, shop workflow fit, import and data lifecycle), then finalized. The app code follows the rules on this page.
 
 ## Where, who, and system columns
 
-ONE list only: RunListJobs, with one row per job. No second list is needed: gauges, ticks, pairs and both schedules all fit on the job row, and capacities, settings, stats, approvals, QC and electrical were dropped.
+ONE list only: TheWhiteBoard, with one row per job. No second list is needed: gauges, ticks, pairs and both schedules all fit on the job row, and capacities, settings, stats, approvals, QC and electrical were dropped.
 
 WHERE: a SharePoint TEAM site in the company tenant. That can be an existing Production/Shop site, or a new site from IT such as "Shop Floor Apps". Do not use OneDrive or a personal site. The canvas app in the IT-managed 'Production PowerApps' environment reaches it through the standard SharePoint connector. There are no flows, nothing premium and no gateway. Ask IT to confirm that the environment's DLP policy allows the SharePoint connector.
 
@@ -26,7 +26,7 @@ WHO GETS WHAT: the app runs as each signed-in user, so SharePoint permissions ar
 - Leave Advanced settings > Item-level permissions at 'Read all items' / 'Create and edit all items'. Otherwise one tablet cannot edit a job that another person created.
 
 SYSTEM COLUMNS USED (nothing to create):
-- ID: every Patch base record is LookUp(RunListJobs, ID = n), which is delegable.
+- ID: every Patch base record is LookUp(TheWhiteBoard, ID = n), which is delegable.
 - Created: the NEW tag, meaning created today and CasmfgId is not blank.
 - Modified / Modified By plus Version history: the audit trail of who ticked what.
 
@@ -34,12 +34,12 @@ SYSTEM COLUMNS USED (nothing to create):
 
 JobStatus (an indexed Choice) is the ONLY lifecycle field. Every server query starts with one indexed equality.
 
-SHARED FORMULAS: the working set lives in App.Formulas named formulas, not in collections. Named formulas recalculate when the data source changes, so Refresh(RunListJobs) and every Patch update every screen.
-- ActiveJobs = Filter(RunListJobs, JobStatus.Value = "Active"), plus local columns:
+SHARED FORMULAS: the working set lives in App.Formulas named formulas, not in collections. Named formulas recalculate when the data source changes, so Refresh(TheWhiteBoard) and every Patch update every screen.
+- ActiveJobs = Filter(TheWhiteBoard, JobStatus.Value = "Active"), plus local columns:
   - TurretDone = (Need12 || Need14 || Need16 || Need18 || Need20 || Need24) && (!Need12 || Done12) && (!Need14 || Done14) && (!Need16 || Done16) && (!Need18 || Done18) && (!Need20 || Done20) && (!Need24 || Done24)
   - PunchDone = TurretDone && PBDone && P4Done
   - the pair group keys GroupShip / GroupOrder
-- IncomingJobs = Filter(RunListJobs, JobStatus.Value = "Incoming").
+- IncomingJobs = Filter(TheWhiteBoard, JobStatus.Value = "Incoming").
 Screens read ThisItem.TurretDone; the formula is written once.
 
 1) INCOMING: created only by Import, with Machine blank, every Yes/No false and FanNumber blank (or pre-filled, see open question 1). Shown in the Punch Incoming tray, sorted by ShipDate. A CASMFG ship move simply overwrites ShipDate.
@@ -64,7 +64,7 @@ Screen rules, all local on ActiveJobs:
 4) DISMISSED: the app's Delete button patches JobStatus = Dismissed and never removes a row. Dismissed rows are hidden from the boards and kept forever.
 
 REACHING CLOSED ROWS:
-- A 'Find job #' box on Punch runs Filter(RunListJobs, JobNumber = text), which is indexed and matches any status, and opens Edit.
+- A 'Find job #' box on Punch runs Filter(TheWhiteBoard, JobNumber = text), which is indexed and matches any status, and opens Edit.
 - REOPEN is one button that writes {JobStatus: Active, Started: false, StartedOn: Blank()}. The job reappears on Assembly and Bending, where ticks can be fixed, and housekeeping cannot re-close it at once.
 - RESTORE (on a Dismissed row) writes JobStatus = Incoming.
 
@@ -78,13 +78,13 @@ IMPORT CONTRACT (the userscript Claude will adapt):
 IMPORT RUN:
 - Read ActiveJobs and IncomingJobs (two indexed queries).
 - For each pasted job, key = Upper(Trim(number)) & "|" & Upper(Trim(unit)).
-(a) Key is in the open set: re-read the row with LookUp(RunListJobs, ID = id) and decide from that fresh row.
+(a) Key is in the open set: re-read the row with LookUp(TheWhiteBoard, ID = id) and decide from that fresh row.
 - The ship date is valid and Text(ShipDate,"yyyy-mm-dd") <> pasted text:
   - Incoming: ShipDate = new.
   - Active && !Started: PrevShipDate = If(new = PrevShipDate, Blank(), Coalesce(PrevShipDate, ShipDate)), ShipDate = new.
   - Active && Started: ignore.
 - The pasted id differs from CasmfgId: update CasmfgId.
-(b) Key is not open, and the ship date is invalid/blank or <= Today()+16: LookUp(RunListJobs, Title = key).
+(b) Key is not open, and the ship date is invalid/blank or <= Today()+16: LookUp(TheWhiteBoard, Title = key).
 - Dismissed: listed under 'Blocked - dismissed' (label, ship date, Modified) with a Restore button.
 - Done: counted.
 - Not found: create with EVERY value explicit: Title, JobNumber, UnitNumber, JobName, ProductModel, JobSize (parsed), ShipDate (or blank), CasmfgId, JobStatus Incoming, and Nested/Need*/Done*/PBDone/P4Done/Started all false. Defaults() is never relied on.
@@ -101,8 +101,8 @@ RE-IMPORT GUARD:
 
 | Name (internal = display) | Type | Required | Indexed | Unique | Settings | Used by |
 |---|---|---|---|---|---|---|
-| Title | Single line of text (the built-in Title column) | Yes | Yes | Yes | Built-in; keep the name Title. Require = Yes. Enforce unique values = Yes, which also creates its index. Holds the JOB KEY = Upper(Trim(JobNumber)) & "\|" & Upper(Trim(UnitNumber)), e.g. 8481557\|1. A manual job with no Unit # gets Upper(Trim(JobNumber)) & "\|M" & Text(Now(),"yymmddhhmmss"), so it can never collide. Hidden from every SharePoint view so nobody quick-edits it. | Import dedup: LookUp(RunListJobs, Title = key) finds the job in ANY status. Manual Add sets it. On rows where CasmfgId is not blank (imported), the key is NEVER rewritten. On a manual '\|M' row it becomes the real key the first time a Unit # is typed. If that save fails on the unique rule, the app says 'already in the list as <status>'. Never shown on cards. |
-| JobNumber | Single line of text |  | Yes |  | Max 255, no default. CASMFG job number, or typed for manual jobs. Read-only in Edit when CasmfgId is not blank. | Card label JobNumber-FanNumber on every screen. Import. Add/Edit. The 'Find job #' box, Filter(RunListJobs, JobNumber = text), which is indexed and reaches rows in any status (Done/Dismissed included) for Reopen/Restore after the list passes 5,000 rows. |
+| Title | Single line of text (the built-in Title column) | Yes | Yes | Yes | Built-in; keep the name Title. Require = Yes. Enforce unique values = Yes, which also creates its index. Holds the JOB KEY = Upper(Trim(JobNumber)) & "\|" & Upper(Trim(UnitNumber)), e.g. 8481557\|1. A manual job with no Unit # gets Upper(Trim(JobNumber)) & "\|M" & Text(Now(),"yymmddhhmmss"), so it can never collide. Hidden from every SharePoint view so nobody quick-edits it. | Import dedup: LookUp(TheWhiteBoard, Title = key) finds the job in ANY status. Manual Add sets it. On rows where CasmfgId is not blank (imported), the key is NEVER rewritten. On a manual '\|M' row it becomes the real key the first time a Unit # is typed. If that save fails on the unique rule, the app says 'already in the list as <status>'. Never shown on cards. |
+| JobNumber | Single line of text |  | Yes |  | Max 255, no default. CASMFG job number, or typed for manual jobs. Read-only in Edit when CasmfgId is not blank. | Card label JobNumber-FanNumber on every screen. Import. Add/Edit. The 'Find job #' box, Filter(TheWhiteBoard, JobNumber = text), which is indexed and reaches rows in any status (Done/Dismissed included) for Reopen/Restore after the list passes 5,000 rows. |
 | UnitNumber | Single line of text |  |  |  | Max 255, no default. CASMFG unit number. Read-only in Edit when CasmfgId is not blank. | Import (second half of the key). Manual Add/Edit: optional; once typed, a manual job blocks its CASMFG twin. |
 | FanNumber | Single line of text |  |  |  | Max 255, no default. Always its own editable column. Import leaves it blank, or pre-fills it from UnitNumber if open question 1 says fan # = unit #. | Card label JobNumber-FanNumber on every screen. Punch Add/Edit. Editing it never touches the key. |
 | JobName | Single line of text |  |  |  | Max 255, no default. Customer, which is the CASMFG job name. | Cards (shown cut to about 12 characters) on Punch, SB8/SB15, Bending, Assembly and TV. Import. Add/Edit. |
@@ -143,7 +143,7 @@ RE-IMPORT GUARD:
 
 1. SITE PREP (site owner, 2 min): gear > Site information > View all site settings > Regional settings > Time zone = the shop's time zone > OK. Check that every tablet, PC and the TV is set to the same time zone.
 2. GROUPS (IT): create Entra security groups 'RunList Users' (supervisors, nester, every floor-tablet account) and 'RunList Viewers' (TV account, look-only people). These same groups are later used to share the app.
-3. CREATE THE LIST: site home > + New > List > Blank list. Name: RunListJobs, exactly, with no spaces. Never rename it. Description: 'White Board jobs - one row per job'. Create.
+3. CREATE THE LIST: site home > + New > List > Blank list. Name: TheWhiteBoard, exactly, with no spaces. Never rename it. Description: 'White Board jobs - one row per job'. Create.
 4. TITLE COLUMN: gear > List settings > Columns > Title. Keep the name Title. Require that this column contains information = Yes. Enforce unique values = Yes, and click OK when SharePoint says the column must be indexed. OK.
 5. ADD THE OTHER 36 COLUMNS from the list view: + Add column > type > Next > Name typed EXACTLY as in the column table (no spaces; the name typed at creation becomes the permanent internal name) > options > Save. Work grouped by type.
 6. Single line of text (7): JobNumber, UnitNumber, FanNumber, JobName, ProductModel, NestLabel, CasmfgId. Leave all options at their defaults.
@@ -164,12 +164,12 @@ RE-IMPORT GUARD:
 
 ## Pitfalls the app code must respect
 
-1. DELEGATION HARD RULE (Microsoft's SharePoint table: Text only = and StartsWith; Boolean only =; Not never delegates; IsBlank on Text doesn't; Sort on Choice doesn't; ID only =). One non-delegable term makes the WHOLE query local, so it silently sees only the first 2,000 rows, which happens about a year in, well before 5,000. The expression that reaches RunListJobs may contain ONLY = on Title, ID, JobStatus.Value, JobNumber, Yes/No or Number, joined with &&. StartsWith on JobNumber is also allowed. Everything else (!, <>, IsBlank, in, date bands, multi-column sorts, pair grouping) runs on ActiveJobs/IncomingJobs. Treat any delegation warning on a RunListJobs formula as a bug. Never use UpdateIf/RemoveIf on RunListJobs; they are local and capped. Settings > General > Data row limit = 2000.
-2. WORKING SET = NAMED FORMULAS, NOT COLLECTIONS. Collections are static snapshots that Refresh() and Patch() do not update, so a tick would stay invisible. ActiveJobs and IncomingJobs live in App.Formulas, and each gallery reads them. Station and TV screens use a Timer that runs Refresh(RunListJobs) every 30-60 s. Never bind a gallery to the unfiltered list.
+1. DELEGATION HARD RULE (Microsoft's SharePoint table: Text only = and StartsWith; Boolean only =; Not never delegates; IsBlank on Text doesn't; Sort on Choice doesn't; ID only =). One non-delegable term makes the WHOLE query local, so it silently sees only the first 2,000 rows, which happens about a year in, well before 5,000. The expression that reaches TheWhiteBoard may contain ONLY = on Title, ID, JobStatus.Value, JobNumber, Yes/No or Number, joined with &&. StartsWith on JobNumber is also allowed. Everything else (!, <>, IsBlank, in, date bands, multi-column sorts, pair grouping) runs on ActiveJobs/IncomingJobs. Treat any delegation warning on a TheWhiteBoard formula as a bug. Never use UpdateIf/RemoveIf on TheWhiteBoard; they are local and capped. Settings > General > Data row limit = 2000.
+2. WORKING SET = NAMED FORMULAS, NOT COLLECTIONS. Collections are static snapshots that Refresh() and Patch() do not update, so a tick would stay invisible. ActiveJobs and IncomingJobs live in App.Formulas, and each gallery reads them. Station and TV screens use a Timer that runs Refresh(TheWhiteBoard) every 30-60 s. Never bind a gallery to the unfiltered list.
 3. ONE WRITE HELPER FOR EVERY PATCH, supervisor screens included. SharePoint rejects a write if the row changed since it was read ('Conflicts exist with changes on the server'), even when another column changed, e.g. PB and P4 on the same job. The helper:
 (1) works out explicit values first, e.g. With({v: !ThisItem.PBDone, id: ThisItem.ID}, ...);
-(2) uses LookUp(RunListJobs, ID = id) as the base record;
-(3) wraps the Patch in IfError, and on error runs Refresh(RunListJobs) and retries once;
+(2) uses LookUp(TheWhiteBoard, ID = id) as the base record;
+(3) wraps the Patch in IfError, and on error runs Refresh(TheWhiteBoard) and retries once;
 (4) shows Notify(..., NotificationType.Error) if the retry also fails.
 Each button patches only the columns it owns. Never use an Edit form/SubmitForm for tick columns.
 4. CREATE = EXPLICIT VALUES. Microsoft says Defaults() may omit or ignore source defaults. Every create (Import and manual Add) sets JobStatus and all 16 Yes/No columns explicitly. If a Yes/No column is ever added to a list that already has rows, back-fill it, because blank does not match = false.
@@ -179,7 +179,7 @@ Each button patches only the columns it owns. Never use an Edit form/SubmitForm 
 - Write only Today(), a picker's SelectedDate (DateTimeZone left at Local) or Date(y,m,d) built from 'YYYY-MM-DD' text. Never Now(), never DateTimeValue on a '...Z' timestamp.
 - Compare dates that matter as text: Text(d,"yyyy-mm-dd").
 - NOT VERIFIED: Microsoft's docs do not say how the SharePoint connector maps date-only values, which is why go-live test steps (1) and (2) exist. If either is off, normalize once in a shared formula, never by switching single pickers to UTC.
-6. CHOICE COLUMNS: write {JobStatus: {Value: "Active"}}, clear with Machine: Blank(), filter with .Value = "...", drop-down Items = Choices(RunListJobs.Machine). Text must match exactly ('Line 1', 'SB15'). Keep 'Allow multiple selections' and 'Can add values manually' Off.
+6. CHOICE COLUMNS: write {JobStatus: {Value: "Active"}}, clear with Machine: Blank(), filter with .Value = "...", drop-down Items = Choices(TheWhiteBoard.Machine). Text must match exactly ('Line 1', 'SB15'). Keep 'Allow multiple selections' and 'Can add values manually' Off.
 7. CLEARING VALUES (PrevShipDate, PairNo, StartedOn, Machine, AssemblyLine/Date: Blank()) needs formula-level error management, which is on by default. Do not turn it off.
 8. KEY IS IMMUTABLE ON IMPORTED ROWS: Job # and Unit # are read-only in Edit when CasmfgId is not blank, and Title is never patched there. Otherwise the next import would add a duplicate card. Build the key with exactly one expression everywhere. A duplicate key fails with 'duplicate values were found': Import re-checks with LookUp, and manual Edit shows 'already in the list as <status>'.
 9. NEVER DELETE ROWS, in SharePoint or with Remove(). A deleted CASMFG job comes back on the next import. The 'Contribute - no delete' level enforces this; Owners alone can delete (test rows only). Never rename the list or a column after the app is built, and keep Title named Title.
@@ -200,7 +200,7 @@ The calls made while you were away:
 The original questions:
 
 1. Is the fan # on the card always the CASMFG unit #? If yes, Import pre-fills FanNumber from UnitNumber, and it stays editable. Either way, FanNumber stays its own column and the job key is never rewritten on imported jobs.
-2. Which SharePoint site holds RunListJobs, and how do the floor tablets and the TV sign in (personal or shared shop accounts)? Every account needs a license and membership in RunList Users or RunList Viewers. Shared accounts, the two security groups and the 'Contribute - no delete' level need IT's OK.
+2. Which SharePoint site holds TheWhiteBoard, and how do the floor tablets and the TV sign in (personal or shared shop accounts)? Every account needs a license and membership in RunList Users or RunList Viewers. Shared accounts, the two security groups and the 'Contribute - no delete' level need IT's OK.
 3. After the line ticks Started, should the job stay on the Assembly board (ticked) until its ship date passes, as today and as the default, or leave at once? This is a display rule only: either way the job closes to Done 30 days after Started.
 4. Today an operator can tap a gauge on the TV to complete it. You decided the new TV is read-only (Read permission), so operators will tick on the SB8/SB15 tablets instead. Is that right? If the TV must take taps, its account needs the same access as the tablets.
 
@@ -234,4 +234,4 @@ The original questions:
 - Workflow #4, give the TV account Contribute so taps complete gauges: rejected because the user explicitly decided the TV/Progress screen is a read-only overview. It is raised as open question 4 instead. The view definition part (punch board, no Unscheduled band) is accepted.
 - Lifecycle #5, index Modified for a 'recently dismissed' list: rejected. The Import screen's Blocked-dismissed list and the indexed 'Find job #' box already reach every Dismissed row; a third path is overkill for a basic app.
 - Lifecycle #9, refuse a paste whose pulledAt isn't later than the last import's: rejected. A variable is lost when the app restarts, so the check would give false comfort without a settings list or column. The age check (confirm if older than 2 hours) is accepted.
-- Technical #1 claim that collection records may not satisfy Patch's base-record rule: not adopted as a reason. In practice SharePoint records copied by ClearCollect keep their ID. The design avoids the question anyway by always using LookUp(RunListJobs, ID = id).
+- Technical #1 claim that collection records may not satisfy Patch's base-record rule: not adopted as a reason. In practice SharePoint records copied by ClearCollect keep their ID. The design avoids the question anyway by always using LookUp(TheWhiteBoard, ID = id).

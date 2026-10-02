@@ -12,7 +12,7 @@ A basic rebuild of the shop's White Board run list as a Power Apps canvas app on
 Left out: the auto-planner and capacities, approvals and locks, Utility Sets, QC photos, parts issues, Electrical, stats, and sending dates back to CASMFG.
 
 ## Steps, in order
-1. `01-sharepoint-list-setup.md`: create the **RunListJobs** list (about 30 minutes, in the browser).
+1. `01-sharepoint-list-setup.md`: create the **TheWhiteBoard** list (about 30 minutes, in the browser).
 2. `02-build-the-app.md`: build the app in Power Apps Studio, paste by paste (22 pastes from the `app` folder), then publish, share, set up each device's link, and run the go-live tests.
 3. `casmfg-copy-jobs.user.js`: install it on each supervisor PC that imports (Tampermonkey; see `02-build-the-app.md` Part F).
 

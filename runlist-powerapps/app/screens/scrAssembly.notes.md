@@ -18,7 +18,7 @@ Don't press F5 and don't tap **Assign** until all three pastes are done. Before 
 
 ```
 PASTE 6a of 12: screen scrAssembly (new screen, part 1 of 3)
-Before this: Pastes 1-5 done (App.OnStart, App.Formulas, scrHome, scrPunch, scrImport). RunListJobs connected.
+Before this: Pastes 1-5 done (App.OnStart, App.Formulas, scrHome, scrPunch, scrImport). TheWhiteBoard connected.
              (This screen itself only needs 1-3: OnStart, Formulas and scrHome.)
 Where: Tree view > Screens tab > right-click any screen > Paste. Copy all of scrAssembly.1.yaml.
 After: run the 3.4 checks. Expected: 0 errors. A new screen "scrAssembly" (no _1 at the end).
@@ -137,7 +137,7 @@ Afterwards, set the TEST jobs to Dismissed in Punch.
 | U-e | **Symbols** ✓ ⚠ 📅 on a tablet (guide U12). ▲▼ are built with UniChar(9650/9660). | A box instead of a symbol. | Report the device; the text can be swapped for plain words. |
 | U-f | **Date-only values** (list-design pitfall 5). The picker writes SelectedDate; dates are compared as yyyymmdd keys. | The card lands one row off from the date picked. | Covered by go-live test (2). Fix centrally, never per picker. |
 | U-g | **Mouse wheel on a PC** over the card area may not scroll the day list. | Wheel does nothing over cards. | Touch swipe works. On a PC, use the scrollbar at the right edge of the grid. |
-| U-h | **Refresh inside Assign / Move here** (A13). Whether `ActiveJobs` is recalculated inside the same OnSelect, right after `Refresh(RunListJobs)`, is the same open point as guide U9. | Covered by manual tests 11 and 12. | If it isn't, Save behaves exactly as before the change (stale cell max), so nothing gets worse. Report it. |
+| U-h | **Refresh inside Assign / Move here** (A13). Whether `ActiveJobs` is recalculated inside the same OnSelect, right after `Refresh(TheWhiteBoard)`, is the same open point as guide U9. | Covered by manual tests 11 and 12. | If it isn't, Save behaves exactly as before the change (stale cell max), so nothing gets worse. Report it. |
 | U-i | **Text widths.** Segoe UI isn't available offline, so every tight label was measured with Open Sans and Arial metrics (both wider than Segoe UI) and fits. | Red "NO SHIP DATE" / "SET SIZE", a long job #, or the "📅 was" chip is cut off. | Report which label and on which device; it's a Size or Width property patch. |
 | U-j | **"✓ Started m/d"** wraps to two lines inside the 56 px Start button (text about 135-142 px, button 124 px). Two lines fit the height, so nothing is cut. | The button shows the date on a second line. | Cosmetic; no action. |
 
@@ -178,8 +178,8 @@ The screen computes these two values locally, inside `galAsmDays.Items`, as `Asm
 
 ### CONTRACT (from the 2026-10-02 reviews)
 
-3. **9.1 header template: add disabled colours to the Refresh and Home buttons**: `DisabledColor: =Self.Color`, `DisabledFill: =ColorFade(Self.Fill, -30%)`. Buttons disable themselves while their OnSelect runs (`AutoDisableOnSelect`, on by default), and `Refresh(RunListJobs)` takes a moment, so without these the button flashes the theme's light disabled fill on the dark header. Local workaround: added to btnAsmRefresh and btnAsmHome (and to btnAsmTrAssign, btnAsmPCancel and btnAsmRule). Other screens built from 9.1 probably have the same flash.
-4. **6.4 "Started tick"**: say that "on" keeps an existing StartedOn when the freshly read row is already started (`If(cur.Started && !IsBlank(cur.StartedOn), cur.StartedOn, Today())`, with `cur = LookUp(RunListJobs, ID = id)`). Local workaround: btnAsmStarted (A14).
+3. **9.1 header template: add disabled colours to the Refresh and Home buttons**: `DisabledColor: =Self.Color`, `DisabledFill: =ColorFade(Self.Fill, -30%)`. Buttons disable themselves while their OnSelect runs (`AutoDisableOnSelect`, on by default), and `Refresh(TheWhiteBoard)` takes a moment, so without these the button flashes the theme's light disabled fill on the dark header. Local workaround: added to btnAsmRefresh and btnAsmHome (and to btnAsmTrAssign, btnAsmPCancel and btnAsmRule). Other screens built from 9.1 probably have the same flash.
+4. **6.4 "Started tick"**: say that "on" keeps an existing StartedOn when the freshly read row is already started (`If(cur.Started && !IsBlank(cur.StartedOn), cur.StartedOn, Today())`, with `cur = LookUp(TheWhiteBoard, ID = id)`). Local workaround: btnAsmStarted (A14).
 5. **6.4 "Ship move acknowledged"**: re-read the row and clear PrevShipDate only when `Text(ShipDate, "yyyy-mm-dd")` still equals the ShipYmd the card showed; otherwise Notify and Refresh. Local workaround: btnAsmMoved (A15). **scrPunch has the same gap** (btnPunMovedS8 / btnPunMovedS15 clear PrevShipDate without the check); that is for the Punch agent.
 6. **6.4 "Band max + 1" from a panel**: on screens whose timer skips refreshing while a panel is open, refresh (and bump `gblRefreshTick`) before computing the band max, after reading the panel's inputs into a `With`. Local workaround: btnAsmPSave (A13). Punch's Place / Edit save may want the same.
 7. **9.4 Assembly squares**: record that Assembly uses 27 px Labels at a 30 px pitch (A11), because 8 x 46 px doesn't fit a 346 px card.
@@ -187,11 +187,11 @@ The screen computes these two values locally, inside `galAsmDays.Items`, as `Asm
 
 ## Data and contract compliance
 
-- **RunListJobs** is touched only by:
-  - `Choices(RunListJobs.AssemblyLine)` (column metadata),
-  - writes of the form `Patch(RunListJobs, LookUp(RunListJobs, ID = id), ...)`,
-  - `Refresh(RunListJobs)` (Refresh button, timer, OnVisible, and the first step of Assign / Move here, each followed by the `gblRefreshTick` bump), and
-  - a single-row `LookUp(RunListJobs, ID = id)` read right before the Patch in Start (A14) and in the 📅 chip (A15). app-spec and CONTRACT 5 allow this ("a single-row LookUp before a Patch"); it is delegable (ID =).
+- **TheWhiteBoard** is touched only by:
+  - `Choices(TheWhiteBoard.AssemblyLine)` (column metadata),
+  - writes of the form `Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), ...)`,
+  - `Refresh(TheWhiteBoard)` (Refresh button, timer, OnVisible, and the first step of Assign / Move here, each followed by the `gblRefreshTick` bump), and
+  - a single-row `LookUp(TheWhiteBoard, ID = id)` read right before the Patch in Start (A14) and in the 📅 chip (A15). app-spec and CONTRACT 5 allow this ("a single-row LookUp before a Patch"); it is delegable (ID =).
 - Everything else reads `ActiveJobs`, `AsmDays` or `AsmDaysAll`, which are in memory. No delegation warning is expected; any warning is a bug, so report it.
 - **Every write** is a Button `OnSelect` using the write helper (values worked out first in `With`, `IfError`, Refresh, retry once, then `Notify`). Each button patches only its own columns:
 
@@ -210,7 +210,7 @@ Re-run after the 2026-10-02 review fixes:
 
 - `python3 tools/palint.py`: 0 errors, 0 warnings on each paste (6a: 32 names, 6b: 11, 6c: 19), on the three joined back into one screen (62 names), and on all screens together (425 names, no duplicates).
 - No control refers to a control that comes later in the same paste (checked by script), so no "Name isn't recognized" is expected (guide U3).
-- All 859 property-formula blocks were type-checked in the Power Fx 1.8.1 interpreter, default and V1 mode, against the current App.Formulas and sample RunListJobs rows, with stubs for Notify, Reset, Refresh and UpdateContext and for the controls. 0 failures.
+- All 859 property-formula blocks were type-checked in the Power Fx 1.8.1 interpreter, default and V1 mode, against the current App.Formulas and sample TheWhiteBoard rows, with stubs for Notify, Reset, Refresh and UpdateContext and for the controls. 0 failures.
 - Text widths of every tight label were measured with Open Sans and Arial metrics (U-i). All fit after the fixes.
 - Behaviour runs (today = Fri 2026-10-02) all passed:
   - Grid rows: an overdue Tue 9/29 row, a Sat 10/10 row only because a job is on it, and the 10-workday tail.

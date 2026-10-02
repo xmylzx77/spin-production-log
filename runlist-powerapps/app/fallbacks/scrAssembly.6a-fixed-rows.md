@@ -235,7 +235,7 @@ Unchanged from the notes: U-b to U-j, including the mouse wheel on a PC (U-g).
   - With the original 6a included as well: exactly 31 errors, all "duplicate control name". There is one for each control of the original 6a, plus the screen name `scrAssembly`, which palint doesn't check. These are the names the fallback reuses, which is why Step 2 deletes the old screen first.
   - The rebuilt screen (this 6a with the unchanged 6b and 6c in their containers): 0 errors, 0 warnings, 62 names.
 - **No forward references.** The new formulas use only `tglAsmShowStarted` (earlier in the paste), `ThisItem`, `Parent` and App.Formulas names, so no "Name isn't recognized" is expected (guide U3).
-- **Type check:** all 859 property formulas of the rebuilt screen ran in the Power Fx 1.8.1 interpreter, in default and V1 mode, against the current App.Formulas and sample RunListJobs rows: 0 failures. Results are the same as for the original screen. The new TemplateSize formula was also checked with its comments in place.
+- **Type check:** all 859 property formulas of the rebuilt screen ran in the Power Fx 1.8.1 interpreter, in default and V1 mode, against the current App.Formulas and sample TheWhiteBoard rows: 0 failures. Results are the same as for the original screen. The new TemplateSize formula was also checked with its comments in place.
 - **Behaviour runs:** 65 assertions over 8 scenarios, in default and V1 mode, all passed. They used the real formulas from the YAML and sample rows, with today = Fri 2026-10-02.
 
   | Busiest cell | Row height | Result |

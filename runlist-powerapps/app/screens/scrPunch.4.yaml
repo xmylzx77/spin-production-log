@@ -379,11 +379,11 @@
       HoverColor: =Self.Color
       HoverFill: =ColorFade(Self.Fill, -10%)
       OnSelect: |-
-        =With({j: LookUp(IncomingJobs, ID = locId), m: locPunPlaceMachine, d: dpPunPlDay.SelectedDate, cur: LookUp(RunListJobs, ID = locId)},
+        =With({j: LookUp(IncomingJobs, ID = locId), m: locPunPlaceMachine, d: dpPunPlDay.SelectedDate, cur: LookUp(TheWhiteBoard, ID = locId)},
             // cur is the row as it is on the server now: another device may have placed or dismissed it.
             If(IsBlank(j) || cur.JobStatus.Value <> "Incoming",
                 Notify("This job is no longer in the Incoming tray (it was placed or dismissed on another device). Nothing was changed.", NotificationType.Warning);
-                Refresh(RunListJobs);
+                Refresh(TheWhiteBoard);
                 Set(gblRefreshTick, gblRefreshTick + 1);
                 Select(btnPunPlCancel),
                 // Place: Active, machine, optional punch day, gauges, end of its band (band max + 1).
@@ -392,10 +392,10 @@
                            PunchOrder: Coalesce(Max(Filter(ActiveJobs, PunchBand = m & "|" & If(IsBlank(d), "", Text(d, "yyyy-mm-dd"))), PunchSort), 0) + 1,
                            Need12: locPunP12, Need14: locPunP14, Need16: locPunP16, Need18: locPunP18, Need20: locPunP20, Need24: locPunP24}},
                     IfError(
-                        Patch(RunListJobs, LookUp(RunListJobs, ID = id), ch),
-                        Refresh(RunListJobs);
+                        Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), ch),
+                        Refresh(TheWhiteBoard);
                         IfError(
-                            Patch(RunListJobs, LookUp(RunListJobs, ID = id), ch),
+                            Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), ch),
                             Notify("Place failed: " & FirstError.Message, NotificationType.Error, 0),
                             Select(btnPunPlCancel)
                         ),

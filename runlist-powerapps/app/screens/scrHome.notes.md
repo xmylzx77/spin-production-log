@@ -8,7 +8,7 @@ This screen is **one paste**: `scrHome.yaml` (394 lines, 21 controls plus the sc
 
 ```
 PASTE 3 of 12: screen scrHome (new screen)
-Before this: Pastes 0-2 done (setup, App.OnStart, App.Formulas). RunListJobs connected.
+Before this: Pastes 0-2 done (setup, App.OnStart, App.Formulas). TheWhiteBoard connected.
 Where: Tree view > Screens tab > right-click Screen1 (the only screen so far) > Paste.
        Copy ALL of scrHome.yaml: 394 lines. Use the copy button; don't select by hand.
        The first line is "Screens:". The file ends with control lblHomTVInfo (the grey
@@ -171,7 +171,7 @@ For **CONTRACT.md** (or guide 3.4); these affect every screen, so they belong in
 
 ## Data and contract compliance
 
-- **RunListJobs is never touched**: no read, no write, no Refresh. The screen doesn't use `ActiveJobs` or `IncomingJobs` either, so no delegation warning is possible.
+- **TheWhiteBoard is never touched**: no read, no write, no Refresh. The screen doesn't use `ActiveJobs` or `IncomingJobs` either, so no delegation warning is possible.
 - **Navigation** follows contract section 8 exactly: `Navigate(scrX, ScreenTransition.None)` (never `Back()`). SB8 / SB15 run `Set(varMachine, "SB8")` / `"SB15"` first. `varMachine` is the only global this screen sets, and it holds Text, the same type App.OnStart gives it.
 - **Header** is contract 9.1's bar (AutoLayout, title stretching). There is no Home button, because this is Home, and no Refresh button (A5). There's no timer and no OnVisible (contract sections 1 and 7.2).
 - **No `Font`** anywhere, no `#` colours, no `ColorValue`, no `Coalesce(x, "")`, and no emoji. All the text on the screen is plain ASCII.

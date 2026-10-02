@@ -3,10 +3,10 @@ Screens:
     Properties:
       Fill: =clrPage
       OnVisible: |-
-        =UpdateContext({locPanel: "", locId: 0, locPunJob: If(false, LookUp(RunListJobs, ID = 0)), locPunEdMode: "", locPunEdFrom: "", locPunEdClrPunch: false, locPunEdClrAsm: false, locPunDismissArm: false, locPunSaved: false, locPunPlaceMachine: "SB8", locPunP12: false, locPunP14: false, locPunP16: false, locPunP18: false, locPunP20: false, locPunP24: false, locPunFindText: "", locPunFindHit: false});
+        =UpdateContext({locPanel: "", locId: 0, locPunJob: If(false, LookUp(TheWhiteBoard, ID = 0)), locPunEdMode: "", locPunEdFrom: "", locPunEdClrPunch: false, locPunEdClrAsm: false, locPunDismissArm: false, locPunSaved: false, locPunPlaceMachine: "SB8", locPunP12: false, locPunP14: false, locPunP16: false, locPunP18: false, locPunP20: false, locPunP24: false, locPunFindText: "", locPunFindHit: false});
         // locPunJob above is a typed blank (no server call): it tells Studio
-        // that locPunJob holds one RunListJobs row (the job in the edit panel).
-        Refresh(RunListJobs);
+        // that locPunJob holds one TheWhiteBoard row (the job in the edit panel).
+        Refresh(TheWhiteBoard);
         Set(gblRefreshTick, gblRefreshTick + 1);
         // Housekeeping (app-spec, list-design status model 3): a job closes to Done
         // 30 days after the line started it, once punch, PB and P4 are all done.
@@ -15,10 +15,10 @@ Screens:
             ForAll(Sequence(CountRows(hk)) As s,
                 With({id: Index(hk, s.Value).ID},
                     IfError(
-                        Patch(RunListJobs, LookUp(RunListJobs, ID = id), {JobStatus: {Value: "Done"}}),
-                        Refresh(RunListJobs);
+                        Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {JobStatus: {Value: "Done"}}),
+                        Refresh(TheWhiteBoard);
                         IfError(
-                            Patch(RunListJobs, LookUp(RunListJobs, ID = id), {JobStatus: {Value: "Done"}}),
+                            Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {JobStatus: {Value: "Done"}}),
                             Notify("Housekeeping could not close a job: " & FirstError.Message, NotificationType.Error, 0)
                         )
                     )
@@ -121,7 +121,7 @@ Screens:
                   OnSelect: |-
                     =If(Trim(txtPunFind.Text) = "",
                         Notify("Type a job number first.", NotificationType.Warning),
-                        UpdateContext({locPanel: "find", locPunFindText: Trim(txtPunFind.Text), locPunFindHit: !IsBlank(LookUp(RunListJobs, JobNumber = Trim(txtPunFind.Text)))})
+                        UpdateContext({locPanel: "find", locPunFindText: Trim(txtPunFind.Text), locPunFindHit: !IsBlank(LookUp(TheWhiteBoard, JobNumber = Trim(txtPunFind.Text)))})
                     )
                   PressedColor: =Self.Color
                   PressedFill: =ColorFade(Self.Fill, -25%)
@@ -225,7 +225,7 @@ Screens:
                   HoverFill: =ColorFade(Self.Fill, -15%)
                   LayoutMinWidth: =100
                   OnSelect: |-
-                    =Refresh(RunListJobs);
+                    =Refresh(TheWhiteBoard);
                     Set(gblRefreshTick, gblRefreshTick + 1)
                   PressedColor: =Self.Color
                   PressedFill: =ColorFade(Self.Fill, -30%)
@@ -615,7 +615,7 @@ Screens:
             AutoPause: =true
             AutoStart: =true
             Duration: =60000
-            OnTimerEnd: =If(IsBlank(locPanel), Refresh(RunListJobs); Set(gblRefreshTick, gblRefreshTick + 1))
+            OnTimerEnd: =If(IsBlank(locPanel), Refresh(TheWhiteBoard); Set(gblRefreshTick, gblRefreshTick + 1))
             Repeat: =true
             Visible: =false
       - tmrPunHousekeep:
@@ -629,10 +629,10 @@ Screens:
                   ForAll(Sequence(CountRows(hk)) As s,
                       With({id: Index(hk, s.Value).ID},
                           IfError(
-                              Patch(RunListJobs, LookUp(RunListJobs, ID = id), {JobStatus: {Value: "Done"}}),
-                              Refresh(RunListJobs);
+                              Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {JobStatus: {Value: "Done"}}),
+                              Refresh(TheWhiteBoard);
                               IfError(
-                                  Patch(RunListJobs, LookUp(RunListJobs, ID = id), {JobStatus: {Value: "Done"}}),
+                                  Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {JobStatus: {Value: "Done"}}),
                                   Notify("Housekeeping could not close a job: " & FirstError.Message, NotificationType.Error, 0)
                               )
                           )

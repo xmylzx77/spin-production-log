@@ -27,7 +27,7 @@ This guide is for agents who write paste-able Power Apps canvas YAML for the Whi
 13. **The App object can't be pasted.** `App.Formulas`, `App.OnStart` and `App.StartScreen` are typed into the formula bar, **without** the leading `=`. (VERIFIED)
 14. **Paste order:** data source → `App.Formulas` → `App.StartScreen` → screens. A screen that refers to a name that doesn't exist yet pastes with errors. (POLICY)
 15. **Behaviour functions** (`Set`, `UpdateContext`, `Patch`, `Navigate`, `Notify`, `Refresh`, `Reset`, `Copy`, `Select`) only go in `On…` properties. (VERIFIED)
-16. **Every query that reaches `RunListJobs` must be delegable** (`list-design.md` pitfall 1). Everything else runs on `ActiveJobs` or `IncomingJobs`. (VERIFIED)
+16. **Every query that reaches `TheWhiteBoard` must be delegable** (`list-design.md` pitfall 1). Everything else runs on `ActiveJobs` or `IncomingJobs`. (VERIFIED)
 17. **Every write uses the write helper** (`list-design.md` pitfall 3), wrapped in `IfError(…, Notify(…))`. (VERIFIED functions)
 18. **Inside galleries, use `Classic/Button` for anything that writes.** Don't attach `OnChange` or `OnCheck` writes to a Toggle, CheckBox, DatePicker or ComboBox in a gallery. They fire when data refreshes, not just when a person taps them. (VERIFIED, Learn gallery best practices)
 19. **Never size or count from `Gallery.AllItems` or `AllItemsCount`.** These only hold the items loaded into view. Use `CountRows(<the Items expression>)`. (VERIFIED)
@@ -50,7 +50,7 @@ Give these steps as written. Each one says where to click.
 7. **Data.**
    - Click the **Data** icon (cylinder) on the left rail, then **Add data**.
    - Search for **SharePoint**, pick the connection and then the team site.
-   - Tick **RunListJobs** and click **Connect**.
+   - Tick **TheWhiteBoard** and click **Connect**.
 8. **Named formulas.**
    - In the **Tree view** (layers icon on the left rail), click **App**.
    - In the property dropdown at the top-left of the formula bar, choose **Formulas**.
@@ -91,7 +91,7 @@ Give these steps as written. Each one says where to click.
 
 1. **Red errors.** Look for red ⊗ marks in Tree view, or open **App checker** (stethoscope icon, top right).
    - If an error says *"Name isn't recognized"* for a control that does exist, the reference was pasted before its target existed. Fix: select the control, open that property, click into the formula bar, type a space at the end, delete it, and press **Enter**. This re-evaluates the formula. PnP gives the same advice ("re-paste the formula back so that the control names resolve correctly").
-2. **Delegation warnings** (yellow triangle, blue underline). Any warning on a formula that uses `RunListJobs` is a bug: report it to the agent.
+2. **Delegation warnings** (yellow triangle, blue underline). Any warning on a formula that uses `TheWhiteBoard` is a bug: report it to the agent.
 3. **Look at the screen** in Preview (**F5** or ▷ at the top right). Press **Esc** to leave.
    - Timers only run in Preview, not in the editor. (VERIFIED)
 4. **Save**: **Ctrl+S**, or the save icon at the top right.
@@ -134,7 +134,7 @@ Number every paste and give each one this header:
 
 ```
 PASTE 3 of 7: screen scrPunch (new screen)
-Before this: Pastes 1-2 done (App.Formulas, StartScreen). RunListJobs connected.
+Before this: Pastes 1-2 done (App.Formulas, StartScreen). TheWhiteBoard connected.
 Where: Tree view → right-click any screen → Paste.
 After: run the 3.4 checks. Expected: 0 errors.
 ```
@@ -323,7 +323,7 @@ Don't use Form, data cards, ComboBox, Data table, charts, Pen input, or any mode
 ### 6.4 Drop-down: `Classic/DropDown@2.3.1`
 
 ```yaml
-            Items: =Choices(RunListJobs.Machine)
+            Items: =Choices(TheWhiteBoard.Machine)
             Items.Value: =Value
             Default: =If(IsBlank(locMachine), "SB8", locMachine)
 ```
@@ -504,7 +504,7 @@ AddColumns(
 - Syntax: `Name = expression;`. Every definition ends with `;`, and they can appear in any order.
 - They can refer to each other, but not in a circle.
 - **No behaviour functions** (`Set`, `Patch`, `Collect`, `Notify`…).
-- They always recalculate: when a `Patch` or `Refresh(RunListJobs)` changes the data, every formula and gallery that uses them updates. That's why the working set lives here and not in collections (`list-design.md` pitfall 2).
+- They always recalculate: when a `Patch` or `Refresh(TheWhiteBoard)` changes the data, every formula and gallery that uses them updates. That's why the working set lives here and not in collections (`list-design.md` pitfall 2).
 - Whether they pick up **other people's** changes after `Refresh()` is UNCERTAIN (U9); test it.
 - Don't make `StartScreen` depend on a variable set in `OnStart`.
 
@@ -588,23 +588,23 @@ SortByColumns(T, "ShipDate", SortOrder.Ascending, "ID", SortOrder.Ascending)
 - `Not` / `!`, `<>`, `IsBlank()`, `in`, `Search`, and `Sort` on a Choice;
 - aggregates (`CountRows`, `Min`, `Sum` on the list);
 - `AddColumns` over the list; `UpdateIf` and `RemoveIf`;
-- `First`, `Index`, `Last`, `FirstN` and `LastN` on the list. Use `LookUp(RunListJobs, …)` to get one row.
+- `First`, `Index`, `Last`, `FirstN` and `LastN` on the list. Use `LookUp(TheWhiteBoard, …)` to get one row.
 
-**Only these may touch `RunListJobs` directly:**
+**Only these may touch `TheWhiteBoard` directly:**
 - the two named formulas;
-- `LookUp(RunListJobs, ID = id)` before a Patch;
-- the Import screen's key lookups (`LookUp(RunListJobs, Title = key)`);
-- the Find box (`Filter(RunListJobs, JobNumber = txtPunFind.Text)`).
+- `LookUp(TheWhiteBoard, ID = id)` before a Patch;
+- the Import screen's key lookups (`LookUp(TheWhiteBoard, Title = key)`);
+- the Find box (`Filter(TheWhiteBoard, JobNumber = txtPunFind.Text)`).
 
 ### 8.8 Writes and errors (VERIFIED functions)
 
 ```
 With({id: ThisItem.ID, v: !ThisItem.PBDone},
     IfError(
-        Patch(RunListJobs, LookUp(RunListJobs, ID = id), {PBDone: v}),
-        Refresh(RunListJobs);
+        Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {PBDone: v}),
+        Refresh(TheWhiteBoard);
         IfError(
-            Patch(RunListJobs, LookUp(RunListJobs, ID = id), {PBDone: v}),
+            Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {PBDone: v}),
             Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
         )
     )
@@ -647,7 +647,7 @@ Switch(Lower(Param("screen")), "punch", scrPunch, "assembly", scrAssembly, "nest
             AutoStart: =true
             Duration: =60000
             OnTimerEnd: |-
-              =If(IsBlank(locPanel), Refresh(RunListJobs))
+              =If(IsBlank(locPanel), Refresh(TheWhiteBoard))
             Repeat: =true
             Visible: =false
 ```
@@ -1156,11 +1156,11 @@ What it shows:
 17. Leaving colours to the theme on a dark screen (unreadable dark-on-dark text, a white Button `PressedFill`).
 
 **Delegation and data breakers**
-18. `!`, `<>`, `IsBlank()`, `in`, `Search`, `<`/`>` on Text or ID, or `Sort` on a Choice, in any formula that reaches `RunListJobs`.
-19. Galleries bound to `RunListJobs` directly, or to collections. Use the named formulas.
+18. `!`, `<>`, `IsBlank()`, `in`, `Search`, `<`/`>` on Text or ID, or `Sort` on a Choice, in any formula that reaches `TheWhiteBoard`.
+19. Galleries bound to `TheWhiteBoard` directly, or to collections. Use the named formulas.
 20. Writes from Toggle/CheckBox/DatePicker/ComboBox `OnChange`/`OnCheck` inside a gallery. Reading `gal.Selected` in a child control's event.
 21. `Patch` without the write helper (`LookUp` base, explicit values, `IfError`, refresh + retry, `Notify`).
-22. `UpdateIf`, `RemoveIf` or `Remove` on `RunListJobs`. Rows are never deleted.
+22. `UpdateIf`, `RemoveIf` or `Remove` on `TheWhiteBoard`. Rows are never deleted.
 23. `Navigate` in `App.OnStart`. Behaviour functions in value properties or named formulas.
 24. Typing a leading `=` in the formula bar.
 
@@ -1178,7 +1178,7 @@ What it shows:
 | U6 | Paste size limit. | None documented. Keep each paste under about 800 lines; split as in 3.8. |
 | U7 | Studio language with `;` argument separators (some European locales). | YAML is stored in the invariant en-US form, so pasting YAML should be unaffected. Formula-bar text (App.Formulas, patches) would need local separators. The person is assumed to use English (US); ask if formulas show errors everywhere. |
 | U8 | UDFs with record or table parameters (user-defined types). | Avoid them. Use scalar parameters or inline patterns. |
-| U9 | Named formulas showing **other users'** changes after `Refresh(RunListJobs)`. | Test it in the first station build: tick on one device, wait for the timer on another. If it doesn't update, put `Refresh(RunListJobs)` in the timer **and** have galleries read the named formula (already the plan). Report it before adding collections. |
+| U9 | Named formulas showing **other users'** changes after `Refresh(TheWhiteBoard)`. | Test it in the first station build: tick on one device, wait for the timer on another. If it doesn't update, put `Refresh(TheWhiteBoard)` in the timer **and** have galleries read the named formula (already the plan). Report it before adding collections. |
 | U10 | `Min()` over a Date column. | Prefer `First(Sort(Filter(…), ShipDate)).ShipDate`. |
 | U11 | `ParseJSON` size limit for a 150 KB paste into a MultiLine text box. | Test it with a real CASMFG copy early. |
 | U12 | `HtmlViewer`, emoji rendering on the TV browser. | Use Labels and Buttons, not HTML. If an emoji shows as a box on a device, switch to `UniChar()` glyphs or plain text. |
@@ -1191,10 +1191,10 @@ What it shows:
 
 1. Run `python3 palint.py <file>.yaml` (appendix A) on each paste, and once on **all screens together** to catch duplicate names across the app. Fix everything until it reports 0 errors.
 2. Re-read section 10 against the snippet.
-3. Every name used in a formula exists: in the paste, in an earlier paste, in `App.Formulas`, or as `RunListJobs` and its column names from `list-design.md`.
+3. Every name used in a formula exists: in the paste, in an earlier paste, in `App.Formulas`, or as `TheWhiteBoard` and its column names from `list-design.md`.
 4. Every gallery: `Items`, `TemplateSize`, `TemplatePadding`, a card container, explicit colours.
 5. Every write: write helper, `ThisItem` (not `Selected`), Button not Toggle.
-6. Every `RunListJobs` query is in the allowed list (8.7).
+6. Every `TheWhiteBoard` query is in the allowed list (8.7).
 7. The hand-over header (3.8) is present, with prerequisites and paste location.
 
 ### Appendix A: `palint.py`

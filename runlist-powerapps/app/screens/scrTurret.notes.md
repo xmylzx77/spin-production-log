@@ -8,7 +8,7 @@ This screen is **one paste**: `scrTurret.yaml` (714 lines, 32 controls plus the 
 
 ```
 PASTE 8 of 12: screen scrTurret (new screen)
-Before this: Pastes 1-7 done (App.OnStart, App.Formulas, scrHome, scrPunch, scrImport, scrAssembly, scrNesting). RunListJobs connected.
+Before this: Pastes 1-7 done (App.OnStart, App.Formulas, scrHome, scrPunch, scrImport, scrAssembly, scrNesting). TheWhiteBoard connected.
              (This screen itself only needs Pastes 1-3: OnStart, Formulas and scrHome.)
 Where: Tree view > Screens tab > right-click any screen > Paste. Copy ALL of scrTurret.yaml
        (use the copy button; the first line is "Screens:", the last line is "            Visible: =false").
@@ -166,7 +166,7 @@ Fallback patch for U-a (only if needed):
 
 | # | Section | Request | Local workaround |
 |---|---|---|---|
-| C1 | 9.1 Refresh button | Add `DisabledColor: =Self.Color` and `DisabledFill: =ColorFade(Self.Fill, -30%)` to the btnXxxRefresh template. The button disables itself while `Refresh(RunListJobs)` runs (AutoDisableOnSelect defaults to true), and the template defaults `ColorFade(Self.Fill, 70%)` / `ColorFade(Self.Fill, 90%)` give a pale-blue box with near-white text. Every screen that copied 9.1 has this. Same as scrNesting's C1. | Added on btnTurRefresh. |
+| C1 | 9.1 Refresh button | Add `DisabledColor: =Self.Color` and `DisabledFill: =ColorFade(Self.Fill, -30%)` to the btnXxxRefresh template. The button disables itself while `Refresh(TheWhiteBoard)` runs (AutoDisableOnSelect defaults to true), and the template defaults `ColorFade(Self.Fill, 70%)` / `ColorFade(Self.Fill, 90%)` give a pale-blue box with near-white text. Every screen that copied 9.1 has this. Same as scrNesting's C1. | Added on btnTurRefresh. |
 | C2 | 9.2 header toggle label | 140 px (and the 130 px this screen had) is too narrow for 14-pt "Show complete(d)" with Wrap off; suggest 150. Same as scrNesting C4 / scrBending request 3. | lblTurShowDone is 150 wide. |
 
 ## Open issues
@@ -188,7 +188,7 @@ Fallback patch for U-a (only if needed):
 
 ## Data and contract compliance
 
-- **RunListJobs** is touched only by the CONTRACT 6.2 write helper on the six gauge buttons, `Patch(RunListJobs, LookUp(RunListJobs, ID = id), {DoneNN: v})` (IfError, then Refresh, retry once, then Notify), and by `Refresh(RunListJobs)`. Each button writes only its own Done column. Nothing else reads RunListJobs; all other reads use `ActiveJobs`, which is in memory, so no delegation warning is expected. Any warning is a bug, so report it.
+- **TheWhiteBoard** is touched only by the CONTRACT 6.2 write helper on the six gauge buttons, `Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {DoneNN: v})` (IfError, then Refresh, retry once, then Notify), and by `Refresh(TheWhiteBoard)`. Each button writes only its own Done column. Nothing else reads TheWhiteBoard; all other reads use `ActiveJobs`, which is in memory, so no delegation warning is expected. Any warning is a bug, so report it.
 - Writes come only from Classic/Button `OnSelect` and use `ThisItem`, never `galTurJobs.Selected`. There is no gauge gallery (CONTRACT 6.2), no `Coalesce(x, "")`, and no `AllItems`.
 - The timer runs every 30000 ms with the tick bump (CONTRACT 7.1). OnVisible is Refresh + tick (7.2). Home is the last header item (9.1).
 - Checked offline (2026-10-02, after both reviews):

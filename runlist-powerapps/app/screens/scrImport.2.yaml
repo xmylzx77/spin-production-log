@@ -78,7 +78,7 @@
                   OnSelect: |-
                     =With({r: ThisItem},
                         With({e: IfError(
-                                Text(Patch(RunListJobs, Defaults(RunListJobs), {
+                                Text(Patch(TheWhiteBoard, Defaults(TheWhiteBoard), {
                                     Title: r.Key,
                                     JobNumber: r.Num,
                                     UnitNumber: r.Unit,
@@ -100,7 +100,7 @@
                             If(e = "",
                                 Patch(colImpResult, LookUp(colImpResult, Key = r.Key), {Kind: "added", Sub: "Incoming", Msg: ""});
                                 Notify(r.Label & " added to the Incoming tray.", NotificationType.Success),
-                                With({again: IfError(LookUp(RunListJobs, Title = r.Key), Blank())},
+                                With({again: IfError(LookUp(TheWhiteBoard, Title = r.Key), Blank())},
                                     If(IsBlank(again),
                                         Patch(colImpResult, LookUp(colImpResult, Key = r.Key), {Msg: r.Key & ": " & Mid(e, 2)});
                                         Notify("Still not saved. " & r.Key & ": " & Mid(e, 2), NotificationType.Error, 0),
@@ -242,7 +242,7 @@
                   HoverFill: =ColorFade(Self.Fill, -15%)
                   OnSelect: |-
                     =With({id: ThisItem.RowID, k: ThisItem.Key, lb: ThisItem.Label, ok: ThisItem.ShipOk, sh: ThisItem.Ship},
-                        With({row: LookUp(RunListJobs, ID = id)},
+                        With({row: LookUp(TheWhiteBoard, ID = id)},
                             If(
                                 IsError(row),
                                     Notify("Couldn't reach the list, so " & lb & " wasn't restored. Tap Restore again.", NotificationType.Error, 0),
@@ -253,10 +253,10 @@
                                     Notify(lb & " is already " & row.JobStatus.Value & ".", NotificationType.Information),
                                 With({hint: If(ok && If(IsBlank(row.ShipDate), "", Text(row.ShipDate, "yyyy-mm-dd")) <> sh, " Tap Import again to bring its ship date up to date.", "")},
                                     IfError(
-                                        Patch(RunListJobs, LookUp(RunListJobs, ID = id), {JobStatus: {Value: "Incoming"}}),
-                                        Refresh(RunListJobs);
+                                        Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {JobStatus: {Value: "Incoming"}}),
+                                        Refresh(TheWhiteBoard);
                                         IfError(
-                                            Patch(RunListJobs, LookUp(RunListJobs, ID = id), {JobStatus: {Value: "Incoming"}}),
+                                            Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {JobStatus: {Value: "Incoming"}}),
                                             Notify("Restore failed: " & FirstError.Message, NotificationType.Error, 0),
                                             Patch(colImpResult, LookUp(colImpResult, Key = k), {Restored: true});
                                             Notify(lb & " restored to the Incoming tray." & hint, NotificationType.Success)

@@ -73,10 +73,10 @@
                 With({res: ForAll(Sequence(CountRows(todo)) As s,
                         With({id: Index(todo, s.Value).ID},
                             IfError(
-                                Patch(RunListJobs, LookUp(RunListJobs, ID = id), {PairNo: newNo}).ID,
-                                Refresh(RunListJobs);
+                                Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {PairNo: newNo}).ID,
+                                Refresh(TheWhiteBoard);
                                 IfError(
-                                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {PairNo: newNo}).ID,
+                                    Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {PairNo: newNo}).ID,
                                     Notify("Pair failed: " & FirstError.Message, NotificationType.Error, 0);
                                     0
                                 )
@@ -126,10 +126,10 @@
                 With({res: ForAll(Sequence(CountRows(grp)) As s,
                         With({id: Index(grp, s.Value).ID},
                             IfError(
-                                Patch(RunListJobs, LookUp(RunListJobs, ID = id), {PairNo: Blank()}).ID,
-                                Refresh(RunListJobs);
+                                Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {PairNo: Blank()}).ID,
+                                Refresh(TheWhiteBoard);
                                 IfError(
-                                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {PairNo: Blank()}).ID,
+                                    Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {PairNo: Blank()}).ID,
                                     Notify("Unpair failed: " & FirstError.Message, NotificationType.Error, 0);
                                     0
                                 )
@@ -254,10 +254,10 @@
             UpdateContext({locPunDismissArm: true}),
             With({id: locId},
                 IfError(
-                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {JobStatus: {Value: "Dismissed"}}),
-                    Refresh(RunListJobs);
+                    Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {JobStatus: {Value: "Dismissed"}}),
+                    Refresh(TheWhiteBoard);
                     IfError(
-                        Patch(RunListJobs, LookUp(RunListJobs, ID = id), {JobStatus: {Value: "Dismissed"}}),
+                        Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {JobStatus: {Value: "Dismissed"}}),
                         Notify("Dismiss failed: " & FirstError.Message, NotificationType.Error, 0),
                         Notify("Job dismissed. Find job # can restore it.", NotificationType.Success);
                         Select(btnPunEdCancel)
@@ -313,7 +313,7 @@
                 sday: dpPunEdShip.SelectedDate,
                 // The row as it is on the server now (blank for Add). locPunJob is the copy
                 // taken when the panel opened, which is what the inputs started from.
-                fresh: If(locPunEdMode <> "add", LookUp(RunListJobs, ID = locId))
+                fresh: If(locPunEdMode <> "add", LookUp(TheWhiteBoard, ID = locId))
             },
         With({
                 size: If(sizeSel = "Auto", With({m: Match(Upper(model), "CASRTU\s*(?<sz>\d+)")}, If(!IsBlank(m) && Value(m.sz) >= 1 && Value(m.sz) <= 4, Value(m.sz), Blank())), Value(sizeSel)),
@@ -352,9 +352,9 @@
                 // Add: one create with every column explicit (pitfall 4); a failed create is re-checked, not retried.
                 IfError(
                     If(line = "",
-                        Patch(RunListJobs, Defaults(RunListJobs), det, keyRec, sch, flags),
-                        Patch(RunListJobs, Defaults(RunListJobs), det, keyRec, sch, flags, {AssemblyLine: {Value: line}})),
-                    With({dup: LookUp(RunListJobs, Title = key)},
+                        Patch(TheWhiteBoard, Defaults(TheWhiteBoard), det, keyRec, sch, flags),
+                        Patch(TheWhiteBoard, Defaults(TheWhiteBoard), det, keyRec, sch, flags, {AssemblyLine: {Value: line}})),
+                    With({dup: LookUp(TheWhiteBoard, Title = key)},
                         If(IsBlank(dup),
                             Notify("Add failed: " & FirstError.Message, NotificationType.Error, 0),
                             Notify("Job " & num & If(unit <> "", "-" & unit) & " is already in the list as " & dup.JobStatus.Value & ". Use Find job # to open it.", NotificationType.Error, 0))),
@@ -362,17 +362,17 @@
                 ),
                 // Edit: write helper; only the columns this panel owns.
                 IfError(
-                    If(isActive && imported, Patch(RunListJobs, LookUp(RunListJobs, ID = id), det, sch),
-                        isActive, Patch(RunListJobs, LookUp(RunListJobs, ID = id), det, sch, keyRec),
-                        imported, Patch(RunListJobs, LookUp(RunListJobs, ID = id), det),
-                        Patch(RunListJobs, LookUp(RunListJobs, ID = id), det, keyRec)),
-                    Refresh(RunListJobs);
+                    If(isActive && imported, Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), det, sch),
+                        isActive, Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), det, sch, keyRec),
+                        imported, Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), det),
+                        Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), det, keyRec)),
+                    Refresh(TheWhiteBoard);
                     IfError(
-                        If(isActive && imported, Patch(RunListJobs, LookUp(RunListJobs, ID = id), det, sch),
-                            isActive, Patch(RunListJobs, LookUp(RunListJobs, ID = id), det, sch, keyRec),
-                            imported, Patch(RunListJobs, LookUp(RunListJobs, ID = id), det),
-                            Patch(RunListJobs, LookUp(RunListJobs, ID = id), det, keyRec)),
-                        With({dup: If(!imported, LookUp(RunListJobs, Title = key))},
+                        If(isActive && imported, Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), det, sch),
+                            isActive, Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), det, sch, keyRec),
+                            imported, Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), det),
+                            Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), det, keyRec)),
+                        With({dup: If(!imported, LookUp(TheWhiteBoard, Title = key))},
                             If(!IsBlank(dup) && dup.ID <> id,
                                 Notify("Job " & num & If(unit <> "", "-" & unit) & " is already in the list as " & dup.JobStatus.Value & ".", NotificationType.Error, 0),
                                 Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0))),
@@ -384,10 +384,10 @@
             // Assembly line is its own small Patch, only when it changed (clearing a Choice is guide U13).
             If(locPunSaved && !isAdd && isActive && line <> (locPunJob.AssemblyLine.Value & ""),
                 IfError(
-                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {AssemblyLine: If(line = "", Blank(), {Value: line})}),
-                    Refresh(RunListJobs);
+                    Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {AssemblyLine: If(line = "", Blank(), {Value: line})}),
+                    Refresh(TheWhiteBoard);
                     IfError(
-                        Patch(RunListJobs, LookUp(RunListJobs, ID = id), {AssemblyLine: If(line = "", Blank(), {Value: line})}),
+                        Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {AssemblyLine: If(line = "", Blank(), {Value: line})}),
                         Notify("Saved, but the assembly line did not change: " & FirstError.Message, NotificationType.Error, 0)
                     )
                 )

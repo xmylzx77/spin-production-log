@@ -23,7 +23,7 @@ All eight pass `tools/palint.py` with 0 errors and 0 warnings, alone and togethe
 
 ```
 PASTE 4a of 12 (scrPunch part 1 of 8): screen scrPunch (new screen)
-Before this: Pastes 0-3 done (setup, App.OnStart, App.Formulas, scrHome). RunListJobs connected.
+Before this: Pastes 0-3 done (setup, App.OnStart, App.Formulas, scrHome). TheWhiteBoard connected.
 Where: Tree view → Screens tab → right-click any screen → Paste.
 After: run the 3.4 checks. Expected: exactly 1 error, on btnPunImport (OnSelect):
        "scrImport" isn't recognized. That is normal; it clears at Paste 12, after scrImport exists.
@@ -154,7 +154,7 @@ These cover the round 2 fixes. Use TEST jobs.
 - **Cards are 3 compact rows (104 px).** app-spec says "one or two rows", but at about 515 px per column the six pills, Nested, ▲▼, ✎, the label box and the flags don't fit in two rows at touch size.
 - **Pair** merges both jobs' groups. Every member gets PairNo = the lowest ID among them (list-design: Min(ID), groups of 2+ allowed). **Unpair** clears the **whole** pair group, like the old board's "Unlink this paired group".
 - **Edit panel, non-active jobs** (opened from Find: Incoming, Done, Dismissed): Machine, Punch day and the Assembly fields are greyed out and not saved, because Place and Reopen own them. Notes, Fan #, Customer, Model, Size and Ship date still save.
-- **Save writes only what you changed** in Machine, Punch day, Assembly line, Assembly date and Ship date. Each of those fields you left alone keeps the row's value **as it is on the server at Save time** (one fresh `LookUp(RunListJobs, ID = …)`), not the copy taken when the panel opened. So Assembly moving the job, Import moving its ship date, or another Punch tablet's ▲▼ while the panel is open is not undone. The punch order and the assembly order are kept unless the job really changes band or cell; then it goes to the end of the new one. Fan #, Customer, Model, Size and Notes are always written from the panel (only this panel edits them).
+- **Save writes only what you changed** in Machine, Punch day, Assembly line, Assembly date and Ship date. Each of those fields you left alone keeps the row's value **as it is on the server at Save time** (one fresh `LookUp(TheWhiteBoard, ID = …)`), not the copy taken when the panel opened. So Assembly moving the job, Import moving its ship date, or another Punch tablet's ▲▼ while the panel is open is not undone. The punch order and the assembly order are kept unless the job really changes band or cell; then it goes to the end of the new one. Fan #, Customer, Model, Size and Notes are always written from the panel (only this panel edits them).
 - **Status writes re-check the row first.** Place needs the row to still be Incoming, Restore needs Dismissed and Reopen needs Done, read fresh from the list. Otherwise the button says so, changes nothing and refreshes.
 - **Need pills re-check a yellow pill** before un-needing it: the card can be up to 60 s old, so if the gauge was punched meanwhile it stays needed (app-spec: a done gauge can't be un-needed). Grey and green pills skip that read.
 - **Pair / Unpair count their writes.** If any member's write fails twice, the button says how many did not change ("Tap Pair again"), instead of "Paired".
@@ -173,13 +173,13 @@ These cover the round 2 fixes. Use TEST jobs.
 |---|---|---|
 | 1 | **Guide U4:** the flexible-height band row growing to fit its inner card galleries (Height = cards × 110). If bands overlap or cards are cut off after Paste 4g, see below. | **F1 (one property patch, try first):** galPunBoard → `TemplateSize` = the formula below. Every band row becomes as tall as the busiest band: more empty space, but nothing is cut off. **F2 (flat list, guide U4):** replace `galPunBoard` with two `Vertical` galleries, one per machine. Each one's rows are band headers plus cards, built with `Ungroup` and sorted by BandKey, IsHeader (descending), PunchGroupOrder, PairKey, PunchSort, ID. Header controls get `Visible = ThisItem.IsHeader`, and the two machines then scroll separately. Ask the agent for "scrPunch board fallback F2" and it will hand over that paste. |
 | 2 | Pasting controls **into a container that sits inside a gallery** (Pastes 4f/4g into `conPunCardS8` / `conPunCardS15`). The guide verifies pasting into containers, not specifically inside a gallery template. (Paste 4h goes into `conPunTray`, a container directly on the screen: the verified route, guide 3.2.) | If Paste isn't offered, click the container and press Ctrl+V. If the controls land directly in `galPunCardsS8` (one level up), that still works: they only use `Parent.Width`, which is the same width there. |
-| 3 | `locPunJob: If(false, LookUp(RunListJobs, ID = 0))` in OnVisible is a *typed blank*. It tells Studio, before any other paste, that `locPunJob` holds one RunListJobs row, so Pastes 4b/4c don't show "name isn't valid" on `locPunJob.FanNumber`. It makes no server call. | If Studio flags it, change that part of scrPunch.OnVisible to `locPunJob: LookUp(RunListJobs, ID = 0)`, which costs one tiny delegable query per visit. |
+| 3 | `locPunJob: If(false, LookUp(TheWhiteBoard, ID = 0))` in OnVisible is a *typed blank*. It tells Studio, before any other paste, that `locPunJob` holds one TheWhiteBoard row, so Pastes 4b/4c don't show "name isn't valid" on `locPunJob.FanNumber`. It makes no server call. | If Studio flags it, change that part of scrPunch.OnVisible to `locPunJob: LookUp(TheWhiteBoard, ID = 0)`, which costs one tiny delegable query per visit. |
 | 4 | Panel inputs follow their `Default` when it changes, and Cancel / Save `Reset` them. So each job opens with its own values and nothing in the openers references a later paste. | If a panel ever shows the previous job's values, tap Cancel and open it again. Report it; the fix is a property patch adding `Reset(...)` to the opener buttons. |
 | 5 | **Unique-key failure:** an Add (or a manual job's Unit # change) whose key already exists should show "Job … is already in the list as <status>". The SharePoint unique rule can't be simulated offline. | Test it once: Add a job with the Job # and Unit # of an existing imported job. If you see a raw "duplicate values" error instead, that's still safe (nothing is written); report it. |
 | 6 | Guide U13: clearing a Choice (Assembly line set back to empty). | Only written when it changed. On failure: "Saved, but the assembly line did not change: …" (the rest is saved). Include it in the go-live test. |
 | 7 | Guide U12: the glyphs ▲ ▼ ◀ ▶ ✓ ✨ 📅 ⚠ · might show as boxes on some device. | Property patch on that one control's `Text` with plain words ("Up", "Down", "Save", "NEW", "Ship", "!"). |
 | 8 | Speed: each card is 21 controls. With 150+ cards on the board, scrolling may lag on older tablets. | Keep "Show completed" off normally. If it's still slow, apply F1/F2 and report it. |
-| 9 | Guide U9: other devices' changes after `Refresh(RunListJobs)`. | Covered by the contract go-live test (list-design step 20 (4)). |
+| 9 | Guide U9: other devices' changes after `Refresh(TheWhiteBoard)`. | Covered by the contract go-live test (list-design step 20 (4)). |
 | 10 | Dismissing one job of a pair leaves its mate with a pair badge of one. | Open the mate with ✎ and tap Unpair. |
 | 11 | An Active job with no Machine (shouldn't happen: Place and Add always set one) isn't on the board. | Find job # → Open → set Machine → Save. |
 | 12 | The round 2 re-checks (Save, Place, Restore, Reopen, yellow pills) are a fresh read just before the write, **not a lock**. Two people changing the *same* field of the same job within a second or so: the last write wins, without a warning. | Accepted for a shop with one or two supervisors. If it ever matters, the fix is a version check (compare `Modified` before the Patch), which needs a contract change. |
@@ -196,13 +196,13 @@ These cover the round 2 fixes. Use TEST jobs.
 
 ## Data rules followed
 
-- **Reads:** board, tray, counts and banner read only `ActiveJobs`, `IncomingJobs`, `PunchBandsOpen` and `PunchBandsAll`. The only direct `RunListJobs` reads are:
-  - `LookUp(RunListJobs, ID = …)` (Patch base; loading the job into the edit panel; and, round 2, a fresh re-read just before a write: the edit Save's merge base, the Place / Restore / Reopen status check and the yellow pill's Done check);
-  - `Filter(RunListJobs, JobNumber = locPunFindText)` and `LookUp(RunListJobs, JobNumber = Trim(txtPunFind.Text))` (Find);
-  - `LookUp(RunListJobs, Title = key)` (Add and manual-key re-check, contract 6.5);
-  - `Choices(RunListJobs.Machine / .AssemblyLine)`.
+- **Reads:** board, tray, counts and banner read only `ActiveJobs`, `IncomingJobs`, `PunchBandsOpen` and `PunchBandsAll`. The only direct `TheWhiteBoard` reads are:
+  - `LookUp(TheWhiteBoard, ID = …)` (Patch base; loading the job into the edit panel; and, round 2, a fresh re-read just before a write: the edit Save's merge base, the Place / Restore / Reopen status check and the yellow pill's Done check);
+  - `Filter(TheWhiteBoard, JobNumber = locPunFindText)` and `LookUp(TheWhiteBoard, JobNumber = Trim(txtPunFind.Text))` (Find);
+  - `LookUp(TheWhiteBoard, Title = key)` (Add and manual-key re-check, contract 6.5);
+  - `Choices(TheWhiteBoard.Machine / .AssemblyLine)`.
   - No delegation warnings are expected; one would be a bug.
-- **Writes:** every write uses the write helper (explicit values in `With`, base `LookUp(RunListJobs, ID = id)`, `IfError`, Refresh, retry, `Notify`) and patches only its own columns:
+- **Writes:** every write uses the write helper (explicit values in `With`, base `LookUp(TheWhiteBoard, ID = id)`, `IfError`, Refresh, retry, `Notify`) and patches only its own columns:
   - pills → `Need12…24`; Nested → `Nested`; ✓ → `NestLabel`; moved tag → `PrevShipDate` (only if the server's ship date still equals the one on the card; otherwise a warning and a refresh, as scrAssembly A15; added in the integration pass);
   - ▲▼ → `PunchOrder` (contract 6.4 snippet, verbatim);
   - Place → status, machine, day, order, Need*; Dismiss / Reopen / Restore → contract 6.4 records;
@@ -234,8 +234,8 @@ These cover the round 2 fixes. Use TEST jobs.
 
 No App.Formulas change is needed: scrPunch uses only existing names (`ActiveJobs`, `IncomingJobs`, `PunchBandsOpen`, `PunchBandsAll`, `TodayDate`, `TodayKey`, `gblRefreshTick`, the `clr…` colours) and defines no named formulas. The round 2 review fixes touch rules that other screens share, so these CONTRACT changes are requested. Each one is already done locally in scrPunch as described.
 
-1. **Section 5, allowed reads, item 1.** Allow `LookUp(RunListJobs, ID = id)` explicitly as a *pre-write re-check* (status guard before Place / Restore / Reopen, Done check before un-needing a gauge, merge base for a panel Save), not only as the Patch base. Same delegable, indexed form. *Local:* used in scrPunch as is.
-2. **Section 6.1, Need-button guard.** Change the snippet to re-read Done before un-needing, because `ThisItem` can be a refresh cycle old: `If(ThisItem.Need14 && (ThisItem.Done14 || LookUp(RunListJobs, ID = id).Done14), Notify(...); If(!ThisItem.Done14, Refresh(RunListJobs); Set(gblRefreshTick, gblRefreshTick + 1)), <helper>)`, with `id` bound in the outer `With`. scrNesting's Need pills have the same gap. *Local:* scrPunch pills only.
+1. **Section 5, allowed reads, item 1.** Allow `LookUp(TheWhiteBoard, ID = id)` explicitly as a *pre-write re-check* (status guard before Place / Restore / Reopen, Done check before un-needing a gauge, merge base for a panel Save), not only as the Patch base. Same delegable, indexed form. *Local:* used in scrPunch as is.
+2. **Section 6.1, Need-button guard.** Change the snippet to re-read Done before un-needing, because `ThisItem` can be a refresh cycle old: `If(ThisItem.Need14 && (ThisItem.Done14 || LookUp(TheWhiteBoard, ID = id).Done14), Notify(...); If(!ThisItem.Done14, Refresh(TheWhiteBoard); Set(gblRefreshTick, gblRefreshTick + 1)), <helper>)`, with `id` bound in the outer `With`. scrNesting's Need pills have the same gap. *Local:* scrPunch pills only.
 3. **Section 6.3, multi-column panel save.** Add the rule: write a field from the panel only if the user changed it (compare with the copy the panel opened with); otherwise write the row's fresh server value, and keep the order unless the band or cell really changes. Without it, a Save undoes changes made on other devices meanwhile (Assembly ▲▼, Import ship moves). *Local:* scrPunch Save.
 4. **Section 6.4, status writes.** Place, Restore and Reopen re-read the row's JobStatus first and refuse (Notify + Refresh + tick bump) if it isn't Incoming / Dismissed / Done. *Local:* done.
 5. **Section 6.4, Pair / Unpair.** Have each ForAll step return the row ID or 0, and report `CountIf(res, Value = 0)` failures instead of a success toast. *Local:* done.

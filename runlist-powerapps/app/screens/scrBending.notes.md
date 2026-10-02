@@ -8,7 +8,7 @@ This screen is **one paste**: `scrBending.yaml` (661 lines, 31 controls plus the
 
 ```
 PASTE 9 of 12: screen scrBending (new screen)
-Before this: Pastes 1-8 done (App.OnStart, App.Formulas, scrHome, scrPunch, scrImport, scrAssembly, scrNesting, scrTurret). RunListJobs connected.
+Before this: Pastes 1-8 done (App.OnStart, App.Formulas, scrHome, scrPunch, scrImport, scrAssembly, scrNesting, scrTurret). TheWhiteBoard connected.
              (This screen itself only needs Pastes 1-3: OnStart, Formulas and scrHome.)
 Where: Tree view > Screens tab > right-click any screen > Paste. Copy ALL of scrBending.yaml
        (use the copy button; the first line is "Screens:", the last line is "            Visible: =false").
@@ -119,10 +119,10 @@ P1-PB:
 ```
 With({id: ThisItem.ID, v: !ThisItem.PBDone},
     IfError(
-        Patch(RunListJobs, LookUp(RunListJobs, ID = id), {PBDone: v}),
-        Refresh(RunListJobs);
+        Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {PBDone: v}),
+        Refresh(TheWhiteBoard);
         IfError(
-            Patch(RunListJobs, LookUp(RunListJobs, ID = id), {PBDone: v}),
+            Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {PBDone: v}),
             Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
         )
     )
@@ -133,10 +133,10 @@ P1-P4:
 ```
 With({id: ThisItem.ID, v: !ThisItem.P4Done},
     IfError(
-        Patch(RunListJobs, LookUp(RunListJobs, ID = id), {P4Done: v}),
-        Refresh(RunListJobs);
+        Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {P4Done: v}),
+        Refresh(TheWhiteBoard);
         IfError(
-            Patch(RunListJobs, LookUp(RunListJobs, ID = id), {P4Done: v}),
+            Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {P4Done: v}),
             Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
         )
     )
@@ -170,7 +170,7 @@ With({id: ThisItem.ID, v: !ThisItem.P4Done},
 3. **9.2 header toggle.**
    - Add `AccessibleLabel` (the text of the label next to it), so App checker doesn't flag the switch. Local: on tglBenReady and tglBenShowDone.
    - The label width 140 is too narrow for "Show completed" at Size 14. It needs about 145 px, and 135 px is available after the default right padding. Use 160. Local: "Show complete" here is 150 wide.
-4. **6.1 write helper.** Note that a button may wrap the Patch as `With({saved: Patch(...)}, ...)` to read the saved row. This screen does it for the banner (A5). It adds no `RunListJobs` read. If the contract prefers the plain shape everywhere, apply P1.
+4. **6.1 write helper.** Note that a button may wrap the Patch as `With({saved: Patch(...)}, ...)` to read the saved row. This screen does it for the banner (A5). It adds no `TheWhiteBoard` read. If the contract prefers the plain shape everywhere, apply P1.
 
 ## Open issues
 
@@ -183,13 +183,13 @@ With({id: ThisItem.ID, v: !ThisItem.P4Done},
 
 ## Data and contract compliance
 
-- **RunListJobs** is touched only in two ways:
-  - `Patch(RunListJobs, LookUp(RunListJobs, ID = id), …)`, 4 times (first try and retry, for PB and for P4);
-  - `Refresh(RunListJobs)`: in OnVisible, the Refresh button, the timer, and the helper's retry.
+- **TheWhiteBoard** is touched only in two ways:
+  - `Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), …)`, 4 times (first try and retry, for PB and for P4);
+  - `Refresh(TheWhiteBoard)`: in OnVisible, the Refresh button, the timer, and the helper's retry.
 - Everything shown reads `ActiveJobs` (in memory), so no delegation warning is expected. Report any you see. The banner reads the record that Patch returns, not a new query.
 - **Every write** is the CONTRACT 6.1 helper:
   - values frozen in `With`;
-  - base record `LookUp(RunListJobs, ID = id)`;
+  - base record `LookUp(TheWhiteBoard, ID = id)`;
   - `IfError`, then Refresh, retry once, then `Notify(..., NotificationType.Error, 0)`;
   - `ThisItem`, never `Selected`.
 - The only addition is the optional success banner. Each Patch sits in a `With({saved: …})` whose body shows the banner when the saved row has both ticks and Show complete is off. A failed Patch makes that body an error, so `IfError` still sees it and runs the retry or the error message. Each button patches only its own column:
@@ -201,13 +201,13 @@ With({id: ThisItem.ID, v: !ThisItem.P4Done},
 
 - The gauge pills, pair badge and switches never write.
 - There are no collections, no `AllItems`, no `Coalesce(x, "")`, no new global variables and no context variables.
-- **Refresh:** `tmrBenRefresh` runs every 30 000 ms (CONTRACT 1 and 7.1) with `AutoPause` on. OnVisible and the Refresh button both run `Refresh(RunListJobs); Set(gblRefreshTick, gblRefreshTick + 1)` (CONTRACT 7.2).
+- **Refresh:** `tmrBenRefresh` runs every 30 000 ms (CONTRACT 1 and 7.1) with `AutoPause` on. OnVisible and the Refresh button both run `Refresh(TheWhiteBoard); Set(gblRefreshTick, gblRefreshTick + 1)` (CONTRACT 7.2).
 
 ## Offline verification done (2026-10-02, after both reviews)
 
 - **palint:** `python3 tools/palint.py` reports 0 errors and 0 warnings on this file alone (32 names). Together with every screen file present, it also reports 0 errors and 0 warnings (425 names, no duplicates).
 - **Properties:** all 454 control properties exist in the Sept 2026 Studio control templates for their control types. That includes `AccessibleLabel` on Classic/Toggle 2.1.0 and `FocusedBorderThickness` on Gallery 2.15.0.
-- **Type check:** all 456 formulas type-check in the Power Fx 1.8.1 interpreter, in default and V1 mode. They were checked against the current App.Formulas and sample RunListJobs rows (Notify and Refresh stubbed), each in its gallery-row context. This includes the new `With({saved: Patch(...)}, ...)` OnSelect.
+- **Type check:** all 456 formulas type-check in the Power Fx 1.8.1 interpreter, in default and V1 mode. They were checked against the current App.Formulas and sample TheWhiteBoard rows (Notify and Refresh stubbed), each in its gallery-row context. This includes the new `With({saved: Patch(...)}, ...)` OnSelect.
 - **Behaviour:** 108 assertions pass (today = Fri 2026-10-02), in default and V1 mode. The 87 original assertions cover:
   - the order with each of the four switch combinations, the counts, and both empty-list messages;
   - the card texts, the pair badge, and gauge pill packing;

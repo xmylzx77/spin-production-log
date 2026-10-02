@@ -1,4 +1,4 @@
-# Set up the RunListJobs list in SharePoint
+# Set up the SharePoint list (TheWhiteBoard)
 
 This takes about 30 minutes in a web browser on your work PC. A site **owner** (you or IT) must do steps 1 and 9.
 
@@ -11,7 +11,7 @@ This takes about 30 minutes in a web browser on your work PC. A site **owner** (
 - Every tablet and the TV must sign in with a licensed Microsoft 365 work account (E3 is fine) that is in one of these groups.
 
 ## 2. Create the list
-Site home > **+ New** > **List** > **Blank list**. Name: `RunListJobs` (exactly like that, no spaces) > **Create**. Never rename it.
+Site home > **+ New** > **List** > **Blank list**. Name: `TheWhiteBoard` (exactly like that, no spaces) > **Create**. Never rename it.
 
 ## 3. Set up the Title column (the job key)
 Gear > **List settings** > under Columns click **Title**. Keep the name **Title**. Set **Require that this column contains information** = Yes and **Enforce unique values** = Yes. When it says the column must be indexed, click **OK**. Then click **OK** again.

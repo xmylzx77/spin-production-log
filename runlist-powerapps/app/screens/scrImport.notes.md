@@ -17,7 +17,7 @@ Round 1 review fixes are listed at the end ("Review round 1").
 
 ```
 PASTE 5a of 12 (scrImport part 1 of 2): screen scrImport (new screen)
-Before this: Pastes 0-4 done (setup, App.OnStart, App.Formulas, scrHome, scrPunch). RunListJobs connected.
+Before this: Pastes 0-4 done (setup, App.OnStart, App.Formulas, scrHome, scrPunch). TheWhiteBoard connected.
 Where: Tree view → Screens tab → right-click any screen → Paste.
        Copy ALL of scrImport.1.yaml with the copy button (first line "Screens:",
        last line "                              Y: =66"; that line appears only once).
@@ -161,7 +161,7 @@ The failure paths (a SharePoint read or write failing part-way through a run, Re
 
 | # | What I did | Why | If you want it different |
 |---|---|---|---|
-| A1 | **Open jobs are first compared with the board's in-memory copy.** Only jobs whose ship date or CASMFG id differs are re-read with `LookUp(RunListJobs, ID = id)`, and every write is decided from that fresh row. | list-design says "re-read the row … and decide from that fresh row", and pitfall 12 asks for speed. Re-reading all 100-300 open jobs on every paste would take minutes. The board copy is refreshed at the start of each run, so a change missed this way can only come from an edit made in the same few seconds, and the next import catches it. | Ask, and every open match will be re-read (slower). |
+| A1 | **Open jobs are first compared with the board's in-memory copy.** Only jobs whose ship date or CASMFG id differs are re-read with `LookUp(TheWhiteBoard, ID = id)`, and every write is decided from that fresh row. | list-design says "re-read the row … and decide from that fresh row", and pitfall 12 asks for speed. Re-reading all 100-300 open jobs on every paste would take minutes. The board copy is refreshed at the start of each run, so a change missed this way can only come from an edit made in the same few seconds, and the next import catches it. | Ask, and every open match will be re-read (slower). |
 | A2 | **Failures inside the run go to the red Failed list**, with one summary banner at the end, instead of one error banner per row. This covers failed writes and failed reads: the board copy, the fresh re-read of an open job, the key check, and the re-check after a failed create. A new job that couldn't be created, or whose key check failed, gets **Retry**. A failed ship-date or id change, or a failed re-read, says "Tap Import again to retry". | One banner per row would overwrite itself. list-design asks for the Failed list for creates; the other failures use the same list. Each write still tries, then Refresh, then retries once (pitfall 3). A failed read is never dropped or left as an error inside the results, so the counts always add up. A failed re-check after a failed create counts as "not found", so the job lands in Failed with Retry; Retry handles both "made elsewhere" and "still missing". | None needed. |
 | A3 | **Stale copy (over 2 hours, or no copy time): two taps.** The first tap shows the amber box, and the button becomes **Import anyway**. The confirming tap must come at least 1 second after the question; a faster tap (a double tap) only asks again. Changing the pasted text cancels the question. | No overlay or panel is needed, and it mirrors Punch's "tap again to dismiss". The 1-second rule stops a double tap from skipping the question: importing an old copy can put ship dates back and set wrong "moved from" flags. | Ask for a pop-up panel instead. |
 | A4 | **A narrow pull still imports**, under the red banner. | list-design and app-spec ask only for a banner. Adds and moves inside 16 days are still correct, and the original app imported narrow pulls too. | Ask if a narrow pull should be refused. |
@@ -210,16 +210,16 @@ Requested CONTRACT changes (each already handled locally in scrImport, so nothin
 1. **Section 6 (writes) / 9.1: one disabled style for write buttons.** Section 6 keeps `AutoDisableOnSelect` on, so every write button is drawn disabled while it saves. The contract gives no disabled colours, and the template defaults are near-white on a pale fill. Screens now differ: most use `DisabledColor: =Self.Color` + `DisabledFill: =ColorFade(Self.Fill, -30%)`, while scrImport uses `clrMuted` + `ColorFade(clrBlue, -55%)` to match its own Import button (review 1 #4).
    - *Request:* add one standard pair to 9.1 and the 6.x snippets.
    - *Local:* btnImpImport, btnImpClear, btnImpRetry, btnImpRestore, btnImpPunch and btnImpHome all set their own.
-2. **Section 6: reads that decide a write in a bulk loop.** The write helper guards the Patch, not the `LookUp` that decides it. In a ForAll, a failed `LookUp(RunListJobs, …)` either drops the row or leaves an error inside the results collection, which breaks every count (review 2 #1).
+2. **Section 6: reads that decide a write in a bulk loop.** The write helper guards the Patch, not the `LookUp` that decides it. In a ForAll, a failed `LookUp(TheWhiteBoard, …)` either drops the row or leaves an error inside the results collection, which breaks every count (review 2 #1).
    - *Request:* add a rule: "test a deciding read with `IsError()` and record it as a failure; a re-check where 'not found' is the safe answer may use `IfError(LookUp(…), Blank())`".
    - *Local:* done in btnImpImport (board copy, fresh re-read, key check, re-check), btnImpRetry (re-check) and btnImpRestore (re-read).
 3. **For the guide owner (not a foundation file):** guide 6.13 lists TimeUnit as Days, Months, Years, Hours, Minutes. Learn (DateAdd/DateDiff) also documents Milliseconds, Seconds and Quarters. scrImport uses `TimeUnit.Milliseconds`, because DateDiff counts unit boundaries: two times 0.2 s apart can differ by "1 second".
 
 ## Data and contract compliance
 
-**RunListJobs reads** (all delegable equality, CONTRACT 5):
-- `LookUp(RunListJobs, Title = key)`: the import key look-up for new, Done or Dismissed jobs within 16 days or with no valid ship date. It is also the re-check after a failed create (in the run and in Retry).
-- `LookUp(RunListJobs, ID = id)`: the fresh re-read of an open job before a ship or id change, the Restore re-check, and every Patch base record.
+**TheWhiteBoard reads** (all delegable equality, CONTRACT 5):
+- `LookUp(TheWhiteBoard, Title = key)`: the import key look-up for new, Done or Dismissed jobs within 16 days or with no valid ship date. It is also the re-check after a failed create (in the run and in Retry).
+- `LookUp(TheWhiteBoard, ID = id)`: the fresh re-read of an open job before a ship or id change, the Restore re-check, and every Patch base record.
 - A read that fails during the run is caught (`IsError`) and listed under Failed. The re-checks after a failed create use `IfError(…, Blank())`, so a failed re-check means "not found", which gives Failed + Retry.
 - No delegation warning is expected anywhere. Report any.
 
@@ -243,9 +243,9 @@ Every write comes from a Classic Button's `OnSelect`. Rows are never deleted. Th
    - (a) the job is open → ship move and CasmfgId refresh, decided from a fresh read (a failed read → Failed);
    - (c) it isn't open and ships after today + 16 → watch only, with no server call;
    - (b) otherwise → `LookUp(Title = key)`: a failed check goes to Failed (Retry), Dismissed goes to Blocked, Done counts as Already had, and not found creates the job (re-checked if the create fails).
-3. Inside the ForAll there are only Patch and Refresh on RunListJobs and `Collect` into `colImpResult`. There is no UpdateContext, Clear or ClearCollect inside it (Learn ForAll), and no step depends on the order of the rows.
+3. Inside the ForAll there are only Patch and Refresh on TheWhiteBoard and `Collect` into `colImpResult`. There is no UpdateContext, Clear or ClearCollect inside it (Learn ForAll), and no step depends on the order of the rows.
 
-**Refresh:** OnVisible and the start of each run do `Refresh(RunListJobs); Set(gblRefreshTick, gblRefreshTick + 1)` (CONTRACT 7.2). There is no timer (CONTRACT 1).
+**Refresh:** OnVisible and the start of each run do `Refresh(TheWhiteBoard); Set(gblRefreshTick, gblRefreshTick + 1)` (CONTRACT 7.2). There is no timer (CONTRACT 1).
 
 **Collections** are only transient import data, named `colImp…` (CONTRACT 2). No Coalesce on text (`& ""` is used instead), no `AllItems`, and no `gal.Selected`.
 
@@ -253,7 +253,7 @@ Every write comes from a Classic Button's `OnSelect`. Rows are never deleted. Th
 
 - **Lint.** `palint.py`: 0 errors and 0 warnings on each file, on both together, and on all screens together (426 names on 2026-10-02, no duplicates). Every one-line formula is under 100 characters and has no `:`, `#`, `{` or `}`; no tabs, trailing spaces or non-ASCII.
 - **Properties.** Every property used exists in the Sept 2026 control templates (Label 2.5.1, Button 2.2.0, TextInput 2.3.2, Gallery 2.15.0, GroupContainer 1.5.0). Round 1 added only `DisplayMode`, `DisabledColor`, `DisabledFill` (buttons) and `Tooltip`, `PaddingTop`, `PaddingBottom` (labels).
-- **Types.** All 587 property formulas type-check and evaluate, with no error values, in the Power Fx 1.8.1 interpreter, in default and V1 mode. They were run against the current `App.Formulas.txt` and sample RunListJobs rows, with gallery-row contexts and these stubs: Notify, Refresh, Reset, UpdateContext → Set, and Navigate.
+- **Types.** All 587 property formulas type-check and evaluate, with no error values, in the Power Fx 1.8.1 interpreter, in default and V1 mode. They were run against the current `App.Formulas.txt` and sample TheWhiteBoard rows, with gallery-row contexts and these stubs: Notify, Refresh, Reset, UpdateContext → Set, and Navigate.
 - **Behaviour.** 145 checks across 15 scenario groups, in both modes:
   - a 26-row paste covering every rule:
     - Active moves, including move-back and keep-first-date, and the moved-row text ("flagged", "flag cleared", nothing for a job with no earlier date);

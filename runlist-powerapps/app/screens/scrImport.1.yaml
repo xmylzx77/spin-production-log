@@ -3,7 +3,7 @@ Screens:
     Properties:
       Fill: =clrPage
       OnVisible: |-
-        =Refresh(RunListJobs);
+        =Refresh(TheWhiteBoard);
         Set(gblRefreshTick, gblRefreshTick + 1);
         // locImpRunning is NOT reset here: only the end of a run clears it (blank on the first visit reads as false)
         UpdateContext({locImpAsk: false, locImpMsg: "", locImpNarrow: false});
@@ -212,7 +212,7 @@ Screens:
                           UpdateContext({locImpAsk: true, locImpAskFor: locImpPulledTxt, locImpAskLen: Len(txtImpPaste.Text), locImpAskAt: Now()}),
                       // ---- 3. IMPORT RUN (list-design, status model) ----
                       UpdateContext({locImpRunning: true, locImpAsk: false});
-                      Refresh(RunListJobs);
+                      Refresh(TheWhiteBoard);
                       Set(gblRefreshTick, gblRefreshTick + 1);
                       Clear(colImpResult);
                       With({
@@ -232,7 +232,7 @@ Screens:
                                       Collect(colImpResult, Patch(p, {Kind: "had", Sub: If(IsBlank(oa), "Incoming", "Active"), Moved: false, OldShow: "", IdNew: false, Msg: "", RowID: o.ID, Modified: Blank(), Restored: false})),
                                   // (a) open job that may need a ship move or a CasmfgId refresh: decide from a fresh row
                                   !IsBlank(o),
-                                      With({row: LookUp(RunListJobs, ID = o.ID)},
+                                      With({row: LookUp(TheWhiteBoard, ID = o.ID)},
                                       If(IsError(row),
                                           // the fresh read failed: list it as failed (Tap Import again), never drop it
                                           Collect(colImpResult, Patch(p, {Kind: "failed", Sub: "update", Moved: false, OldShow: "", IdNew: false, Msg: p.Label & ": couldn't read this job from the list (" & IfError(Text(row.ID), FirstError.Message) & ")", RowID: o.ID, Modified: Blank(), Restored: false})),
@@ -250,16 +250,16 @@ Screens:
                                               e1: Switch(mv,
                                                   "inc",
                                                       IfError(
-                                                          Text(Patch(RunListJobs, LookUp(RunListJobs, ID = o.ID), {ShipDate: p.ShipDate}).ID),
-                                                          Refresh(RunListJobs);
-                                                          IfError(Text(Patch(RunListJobs, LookUp(RunListJobs, ID = o.ID), {ShipDate: p.ShipDate}).ID), "!" & FirstError.Message, ""),
+                                                          Text(Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = o.ID), {ShipDate: p.ShipDate}).ID),
+                                                          Refresh(TheWhiteBoard);
+                                                          IfError(Text(Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = o.ID), {ShipDate: p.ShipDate}).ID), "!" & FirstError.Message, ""),
                                                           ""
                                                       ),
                                                   "act",
                                                       IfError(
-                                                          Text(Patch(RunListJobs, LookUp(RunListJobs, ID = o.ID), {PrevShipDate: np, ShipDate: p.ShipDate}).ID),
-                                                          Refresh(RunListJobs);
-                                                          IfError(Text(Patch(RunListJobs, LookUp(RunListJobs, ID = o.ID), {PrevShipDate: np, ShipDate: p.ShipDate}).ID), "!" & FirstError.Message, ""),
+                                                          Text(Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = o.ID), {PrevShipDate: np, ShipDate: p.ShipDate}).ID),
+                                                          Refresh(TheWhiteBoard);
+                                                          IfError(Text(Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = o.ID), {PrevShipDate: np, ShipDate: p.ShipDate}).ID), "!" & FirstError.Message, ""),
                                                           ""
                                                       ),
                                                   ""
@@ -268,9 +268,9 @@ Screens:
                                       With({
                                               e2: If(idNew,
                                                   IfError(
-                                                      Text(Patch(RunListJobs, LookUp(RunListJobs, ID = o.ID), {CasmfgId: p.CasId}).ID),
-                                                      Refresh(RunListJobs);
-                                                      IfError(Text(Patch(RunListJobs, LookUp(RunListJobs, ID = o.ID), {CasmfgId: p.CasId}).ID), "!" & FirstError.Message, ""),
+                                                      Text(Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = o.ID), {CasmfgId: p.CasId}).ID),
+                                                      Refresh(TheWhiteBoard);
+                                                      IfError(Text(Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = o.ID), {CasmfgId: p.CasId}).ID), "!" & FirstError.Message, ""),
                                                       ""
                                                   ),
                                                   ""
@@ -297,7 +297,7 @@ Screens:
                                   p.ShipOk && p.ShipKey > hz,
                                       Collect(colImpResult, Patch(p, {Kind: "watch", Sub: "", Moved: false, OldShow: "", IdNew: false, Msg: "", RowID: 0, Modified: Blank(), Restored: false})),
                                   // (b) not open, ships within 16 days (or no valid ship date): look the key up in any status
-                                  With({f: LookUp(RunListJobs, Title = p.Key)},
+                                  With({f: LookUp(TheWhiteBoard, Title = p.Key)},
                                       If(
                                           // the key check failed (network, SharePoint busy): list it as failed with Retry, never drop it
                                           IsError(f),
@@ -306,7 +306,7 @@ Screens:
                                               Collect(colImpResult, Patch(p, {Kind: If(f.JobStatus.Value = "Dismissed", "blocked", "had"), Sub: f.JobStatus.Value & "", Moved: false, OldShow: "", IdNew: false, Msg: "", RowID: f.ID, Modified: f.Modified, Restored: false})),
                                           // not found: create an Incoming job with every value explicit
                                           With({e: IfError(
-                                                  Text(Patch(RunListJobs, Defaults(RunListJobs), {
+                                                  Text(Patch(TheWhiteBoard, Defaults(TheWhiteBoard), {
                                                       Title: p.Key,
                                                       JobNumber: p.Num,
                                                       UnitNumber: p.Unit,
@@ -329,7 +329,7 @@ Screens:
                                                   Collect(colImpResult, Patch(p, {Kind: "added", Sub: "Incoming", Moved: false, OldShow: "", IdNew: false, Msg: "", RowID: 0, Modified: Blank(), Restored: false})),
                                                   // the create failed: re-check before calling it a failure (another import may have made it).
                                                   // A failed re-check counts as not found, so the job lands in Failed with Retry.
-                                                  With({again: IfError(LookUp(RunListJobs, Title = p.Key), Blank())},
+                                                  With({again: IfError(LookUp(TheWhiteBoard, Title = p.Key), Blank())},
                                                       Collect(colImpResult, Patch(p, {
                                                           Kind: If(IsBlank(again), "failed", "had"),
                                                           Sub: If(IsBlank(again), "create", again.JobStatus.Value & ""),

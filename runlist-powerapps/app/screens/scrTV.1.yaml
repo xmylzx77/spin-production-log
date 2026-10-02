@@ -4,7 +4,7 @@ Screens:
       Fill: =clrPage
       OnVisible: |-
         =UpdateContext({locTvPage: 0});
-        Refresh(RunListJobs);
+        Refresh(TheWhiteBoard);
         Set(gblRefreshTick, gblRefreshTick + 1)
     Children:
       - conTvHeader:

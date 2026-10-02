@@ -75,7 +75,7 @@
       HoverFill: =clrNone
       Icon: =Icon.Edit
       OnSelect: |-
-        =UpdateContext({locPanel: "edit", locId: ThisItem.ID, locPunEdMode: "edit", locPunEdFrom: "", locPunJob: LookUp(RunListJobs, ID = ThisItem.ID), locPunEdClrPunch: false, locPunEdClrAsm: false, locPunDismissArm: false})
+        =UpdateContext({locPanel: "edit", locId: ThisItem.ID, locPunEdMode: "edit", locPunEdFrom: "", locPunJob: LookUp(TheWhiteBoard, ID = ThisItem.ID), locPunEdClrPunch: false, locPunEdClrAsm: false, locPunDismissArm: false})
       PaddingBottom: =5
       PaddingLeft: =13
       PaddingRight: =13
@@ -130,14 +130,14 @@
         =With({id: ThisItem.ID, v: !ThisItem.Need12},
             // A punched gauge can't be un-needed (app-spec). ThisItem can be up to 60 s old, so a
             // yellow pill re-reads the row before un-needing; grey and green pills skip that read.
-            If(ThisItem.Need12 && (ThisItem.Done12 || LookUp(RunListJobs, ID = id).Done12),
+            If(ThisItem.Need12 && (ThisItem.Done12 || LookUp(TheWhiteBoard, ID = id).Done12),
                 Notify("12 ga is already punched, so it stays selected.", NotificationType.Warning);
-                If(!ThisItem.Done12, Refresh(RunListJobs); Set(gblRefreshTick, gblRefreshTick + 1)),
+                If(!ThisItem.Done12, Refresh(TheWhiteBoard); Set(gblRefreshTick, gblRefreshTick + 1)),
                 IfError(
-                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need12: v}),
-                    Refresh(RunListJobs);
+                    Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Need12: v}),
+                    Refresh(TheWhiteBoard);
                     IfError(
-                        Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need12: v}),
+                        Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Need12: v}),
                         Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
                     )
                 )
@@ -173,14 +173,14 @@
         =With({id: ThisItem.ID, v: !ThisItem.Need14},
             // A punched gauge can't be un-needed (app-spec). ThisItem can be up to 60 s old, so a
             // yellow pill re-reads the row before un-needing; grey and green pills skip that read.
-            If(ThisItem.Need14 && (ThisItem.Done14 || LookUp(RunListJobs, ID = id).Done14),
+            If(ThisItem.Need14 && (ThisItem.Done14 || LookUp(TheWhiteBoard, ID = id).Done14),
                 Notify("14 ga is already punched, so it stays selected.", NotificationType.Warning);
-                If(!ThisItem.Done14, Refresh(RunListJobs); Set(gblRefreshTick, gblRefreshTick + 1)),
+                If(!ThisItem.Done14, Refresh(TheWhiteBoard); Set(gblRefreshTick, gblRefreshTick + 1)),
                 IfError(
-                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need14: v}),
-                    Refresh(RunListJobs);
+                    Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Need14: v}),
+                    Refresh(TheWhiteBoard);
                     IfError(
-                        Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need14: v}),
+                        Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Need14: v}),
                         Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
                     )
                 )
@@ -216,14 +216,14 @@
         =With({id: ThisItem.ID, v: !ThisItem.Need16},
             // A punched gauge can't be un-needed (app-spec). ThisItem can be up to 60 s old, so a
             // yellow pill re-reads the row before un-needing; grey and green pills skip that read.
-            If(ThisItem.Need16 && (ThisItem.Done16 || LookUp(RunListJobs, ID = id).Done16),
+            If(ThisItem.Need16 && (ThisItem.Done16 || LookUp(TheWhiteBoard, ID = id).Done16),
                 Notify("16 ga is already punched, so it stays selected.", NotificationType.Warning);
-                If(!ThisItem.Done16, Refresh(RunListJobs); Set(gblRefreshTick, gblRefreshTick + 1)),
+                If(!ThisItem.Done16, Refresh(TheWhiteBoard); Set(gblRefreshTick, gblRefreshTick + 1)),
                 IfError(
-                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need16: v}),
-                    Refresh(RunListJobs);
+                    Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Need16: v}),
+                    Refresh(TheWhiteBoard);
                     IfError(
-                        Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need16: v}),
+                        Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Need16: v}),
                         Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
                     )
                 )
@@ -259,14 +259,14 @@
         =With({id: ThisItem.ID, v: !ThisItem.Need18},
             // A punched gauge can't be un-needed (app-spec). ThisItem can be up to 60 s old, so a
             // yellow pill re-reads the row before un-needing; grey and green pills skip that read.
-            If(ThisItem.Need18 && (ThisItem.Done18 || LookUp(RunListJobs, ID = id).Done18),
+            If(ThisItem.Need18 && (ThisItem.Done18 || LookUp(TheWhiteBoard, ID = id).Done18),
                 Notify("18 ga is already punched, so it stays selected.", NotificationType.Warning);
-                If(!ThisItem.Done18, Refresh(RunListJobs); Set(gblRefreshTick, gblRefreshTick + 1)),
+                If(!ThisItem.Done18, Refresh(TheWhiteBoard); Set(gblRefreshTick, gblRefreshTick + 1)),
                 IfError(
-                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need18: v}),
-                    Refresh(RunListJobs);
+                    Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Need18: v}),
+                    Refresh(TheWhiteBoard);
                     IfError(
-                        Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need18: v}),
+                        Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Need18: v}),
                         Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
                     )
                 )
@@ -302,14 +302,14 @@
         =With({id: ThisItem.ID, v: !ThisItem.Need20},
             // A punched gauge can't be un-needed (app-spec). ThisItem can be up to 60 s old, so a
             // yellow pill re-reads the row before un-needing; grey and green pills skip that read.
-            If(ThisItem.Need20 && (ThisItem.Done20 || LookUp(RunListJobs, ID = id).Done20),
+            If(ThisItem.Need20 && (ThisItem.Done20 || LookUp(TheWhiteBoard, ID = id).Done20),
                 Notify("20 ga is already punched, so it stays selected.", NotificationType.Warning);
-                If(!ThisItem.Done20, Refresh(RunListJobs); Set(gblRefreshTick, gblRefreshTick + 1)),
+                If(!ThisItem.Done20, Refresh(TheWhiteBoard); Set(gblRefreshTick, gblRefreshTick + 1)),
                 IfError(
-                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need20: v}),
-                    Refresh(RunListJobs);
+                    Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Need20: v}),
+                    Refresh(TheWhiteBoard);
                     IfError(
-                        Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need20: v}),
+                        Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Need20: v}),
                         Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
                     )
                 )
@@ -345,14 +345,14 @@
         =With({id: ThisItem.ID, v: !ThisItem.Need24},
             // A punched gauge can't be un-needed (app-spec). ThisItem can be up to 60 s old, so a
             // yellow pill re-reads the row before un-needing; grey and green pills skip that read.
-            If(ThisItem.Need24 && (ThisItem.Done24 || LookUp(RunListJobs, ID = id).Done24),
+            If(ThisItem.Need24 && (ThisItem.Done24 || LookUp(TheWhiteBoard, ID = id).Done24),
                 Notify("24 ga is already punched, so it stays selected.", NotificationType.Warning);
-                If(!ThisItem.Done24, Refresh(RunListJobs); Set(gblRefreshTick, gblRefreshTick + 1)),
+                If(!ThisItem.Done24, Refresh(TheWhiteBoard); Set(gblRefreshTick, gblRefreshTick + 1)),
                 IfError(
-                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need24: v}),
-                    Refresh(RunListJobs);
+                    Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Need24: v}),
+                    Refresh(TheWhiteBoard);
                     IfError(
-                        Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need24: v}),
+                        Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Need24: v}),
                         Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
                     )
                 )
@@ -387,10 +387,10 @@
       OnSelect: |-
         =With({id: ThisItem.ID, v: !ThisItem.Nested},
             IfError(
-                Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Nested: v}),
-                Refresh(RunListJobs);
+                Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Nested: v}),
+                Refresh(TheWhiteBoard);
                 IfError(
-                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Nested: v}),
+                    Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Nested: v}),
                     Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
                 )
             )
@@ -435,10 +435,10 @@
             With({id: First(SortByColumns(Filter(ActiveJobs, PunchBand = c.PunchBand && If(IsBlank(mover.pn), ID = mover.uid, PairNo = mover.pn)), "PunchSort", SortOrder.Ascending, "ID", SortOrder.Ascending)).ID,
                   v: If(IsBlank(above2), above.go - 1, (above2.go + above.go) / 2)},
                 IfError(
-                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {PunchOrder: v}),
-                    Refresh(RunListJobs);
+                    Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {PunchOrder: v}),
+                    Refresh(TheWhiteBoard);
                     IfError(
-                        Patch(RunListJobs, LookUp(RunListJobs, ID = id), {PunchOrder: v}),
+                        Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {PunchOrder: v}),
                         Notify("Move failed: " & FirstError.Message, NotificationType.Error, 0)
                     )
                 )
@@ -485,10 +485,10 @@
             With({id: First(SortByColumns(Filter(ActiveJobs, PunchBand = c.PunchBand && If(IsBlank(mover.pn), ID = mover.uid, PairNo = mover.pn)), "PunchSort", SortOrder.Ascending, "ID", SortOrder.Ascending)).ID,
                   v: If(IsBlank(above2), above.go - 1, (above2.go + above.go) / 2)},
                 IfError(
-                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {PunchOrder: v}),
-                    Refresh(RunListJobs);
+                    Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {PunchOrder: v}),
+                    Refresh(TheWhiteBoard);
                     IfError(
-                        Patch(RunListJobs, LookUp(RunListJobs, ID = id), {PunchOrder: v}),
+                        Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {PunchOrder: v}),
                         Notify("Move failed: " & FirstError.Message, NotificationType.Error, 0)
                     )
                 )
@@ -554,10 +554,10 @@
       OnSelect: |-
         =With({id: ThisItem.ID, v: Trim(txtPunNestS8.Text)},
             IfError(
-                Patch(RunListJobs, LookUp(RunListJobs, ID = id), {NestLabel: v}),
-                Refresh(RunListJobs);
+                Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {NestLabel: v}),
+                Refresh(TheWhiteBoard);
                 IfError(
-                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {NestLabel: v}),
+                    Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {NestLabel: v}),
                     Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
                 )
             )
@@ -612,19 +612,19 @@
       HoverFill: =ColorFade(Self.Fill, -10%)
       OnSelect: |-
         =With({id: ThisItem.ID, seen: ThisItem.ShipYmd},
-        With({cur: LookUp(RunListJobs, ID = id)},
+        With({cur: LookUp(TheWhiteBoard, ID = id)},
             // An import can move the ship date again and keep the first PrevShipDate.
             // Only clear the flag for the ship date this card is showing (as scrAssembly).
             If(
                 If(IsBlank(cur.ShipDate), "", Text(cur.ShipDate, "yyyy-mm-dd")) <> seen,
                 Notify("CASMFG moved this ship date again. Check the new date on the card, then tap the tag again.", NotificationType.Warning);
-                Refresh(RunListJobs);
+                Refresh(TheWhiteBoard);
                 Set(gblRefreshTick, gblRefreshTick + 1),
                 IfError(
-                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {PrevShipDate: Blank()}),
-                    Refresh(RunListJobs);
+                    Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {PrevShipDate: Blank()}),
+                    Refresh(TheWhiteBoard);
                     IfError(
-                        Patch(RunListJobs, LookUp(RunListJobs, ID = id), {PrevShipDate: Blank()}),
+                        Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {PrevShipDate: Blank()}),
                         Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
                     )
                 )

@@ -75,7 +75,7 @@
       Height: =48
       HoverColor: =clrText
       HoverFill: =clrCard
-      Items: =Choices(RunListJobs.AssemblyLine)
+      Items: =Choices(TheWhiteBoard.AssemblyLine)
       Items.Value: =Value
       PressedColor: =clrText
       PressedFill: =clrCard
@@ -201,7 +201,7 @@
                 // The timer does not refresh while this panel is open. Fetch the latest rows
                 // first, so the cell max and the same-cell check see changes made on other tablets.
                 // ln and d were read above, before a refresh can reset the drop-down and picker.
-                Refresh(RunListJobs);
+                Refresh(TheWhiteBoard);
                 Set(gblRefreshTick, gblRefreshTick + 1);
                 With(
                     {band: ln & "|" & Text(d, "yyyy-mm-dd"), cur: LookUp(ActiveJobs, ID = id)},
@@ -224,10 +224,10 @@
                                 }
                             },
                             IfError(
-                                Patch(RunListJobs, LookUp(RunListJobs, ID = id), changes),
-                                Refresh(RunListJobs);
+                                Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), changes),
+                                Refresh(TheWhiteBoard);
                                 IfError(
-                                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), changes),
+                                    Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), changes),
                                     Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0),
                                     Reset(ddAsmLine);
                                     Reset(dpAsmDate);

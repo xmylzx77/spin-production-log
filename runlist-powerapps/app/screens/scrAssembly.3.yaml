@@ -256,19 +256,19 @@
       HoverFill: =ColorFade(Self.Fill, -10%)
       OnSelect: |-
         =With({id: ThisItem.Job.ID, seen: ThisItem.Job.ShipYmd},
-        With({cur: LookUp(RunListJobs, ID = id)},
+        With({cur: LookUp(TheWhiteBoard, ID = id)},
             // An import can move the ship date again and keep the first PrevShipDate.
             // Only clear the flag for the ship date this card is showing.
             If(
                 If(IsBlank(cur.ShipDate), "", Text(cur.ShipDate, "yyyy-mm-dd")) <> seen,
                 Notify("CASMFG moved this ship date again. Check the new date on the card, then tap the chip again.", NotificationType.Warning);
-                Refresh(RunListJobs);
+                Refresh(TheWhiteBoard);
                 Set(gblRefreshTick, gblRefreshTick + 1),
                 IfError(
-                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {PrevShipDate: Blank()}),
-                    Refresh(RunListJobs);
+                    Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {PrevShipDate: Blank()}),
+                    Refresh(TheWhiteBoard);
                     IfError(
-                        Patch(RunListJobs, LookUp(RunListJobs, ID = id), {PrevShipDate: Blank()}),
+                        Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {PrevShipDate: Blank()}),
                         Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
                     )
                 )
@@ -307,12 +307,12 @@
         =With({id: ThisItem.Job.ID, v: !ThisItem.Job.Started},
         // If another tablet already started this job, keep its StartedOn, so the
         // 30-day housekeeping clock is not restarted by a stale Start tap.
-        With({so: If(v, With({cur: LookUp(RunListJobs, ID = id)}, If(cur.Started && !IsBlank(cur.StartedOn), cur.StartedOn, Today())), Blank())},
+        With({so: If(v, With({cur: LookUp(TheWhiteBoard, ID = id)}, If(cur.Started && !IsBlank(cur.StartedOn), cur.StartedOn, Today())), Blank())},
             IfError(
-                Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Started: v, StartedOn: so}),
-                Refresh(RunListJobs);
+                Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Started: v, StartedOn: so}),
+                Refresh(TheWhiteBoard);
                 IfError(
-                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Started: v, StartedOn: so}),
+                    Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Started: v, StartedOn: so}),
                     Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
                 )
             )
@@ -388,10 +388,10 @@
             With({id: First(SortByColumns(Filter(ActiveJobs, AsmBand = c.AsmBand && If(IsBlank(mover.pn), ID = mover.uid, PairNo = mover.pn)), "AsmSort", SortOrder.Ascending, "ID", SortOrder.Ascending)).ID,
                   v: If(IsBlank(above2), above.go - 1, (above2.go + above.go) / 2)},
                 IfError(
-                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {AssemblyOrder: v}),
-                    Refresh(RunListJobs);
+                    Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {AssemblyOrder: v}),
+                    Refresh(TheWhiteBoard);
                     IfError(
-                        Patch(RunListJobs, LookUp(RunListJobs, ID = id), {AssemblyOrder: v}),
+                        Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {AssemblyOrder: v}),
                         Notify("Move failed: " & FirstError.Message, NotificationType.Error, 0)
                     )
                 )
@@ -437,10 +437,10 @@
             With({id: First(SortByColumns(Filter(ActiveJobs, AsmBand = c.AsmBand && If(IsBlank(mover.pn), ID = mover.uid, PairNo = mover.pn)), "AsmSort", SortOrder.Ascending, "ID", SortOrder.Ascending)).ID,
                   v: If(IsBlank(above2), above.go - 1, (above2.go + above.go) / 2)},
                 IfError(
-                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {AssemblyOrder: v}),
-                    Refresh(RunListJobs);
+                    Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {AssemblyOrder: v}),
+                    Refresh(TheWhiteBoard);
                     IfError(
-                        Patch(RunListJobs, LookUp(RunListJobs, ID = id), {AssemblyOrder: v}),
+                        Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {AssemblyOrder: v}),
                         Notify("Move failed: " & FirstError.Message, NotificationType.Error, 0)
                     )
                 )

@@ -732,7 +732,7 @@
       AutoStart: =true
       Duration: =60000
       OnTimerEnd: |-
-        =Refresh(RunListJobs);
+        =Refresh(TheWhiteBoard);
         Set(gblRefreshTick, gblRefreshTick + 1)
       Repeat: =true
       Visible: =false

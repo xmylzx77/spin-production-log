@@ -39,7 +39,7 @@
       DelayItemLoading: =false
       Fill: =clrNone
       Height: =376
-      Items: =Filter(RunListJobs, JobNumber = locPunFindText)
+      Items: =Filter(TheWhiteBoard, JobNumber = locPunFindText)
       LoadingSpinner: =LoadingSpinner.None
       ShowScrollbar: =true
       TemplatePadding: =0
@@ -131,7 +131,7 @@
                   HoverColor: =Self.Color
                   HoverFill: =ColorFade(Self.Fill, -10%)
                   OnSelect: |-
-                    =UpdateContext({locPanel: "edit", locId: ThisItem.ID, locPunEdMode: "edit", locPunEdFrom: "find", locPunJob: LookUp(RunListJobs, ID = ThisItem.ID), locPunEdClrPunch: false, locPunEdClrAsm: false, locPunDismissArm: false})
+                    =UpdateContext({locPanel: "edit", locId: ThisItem.ID, locPunEdMode: "edit", locPunEdFrom: "find", locPunJob: LookUp(TheWhiteBoard, ID = ThisItem.ID), locPunEdClrPunch: false, locPunEdClrAsm: false, locPunDismissArm: false})
                   PressedColor: =Self.Color
                   PressedFill: =ColorFade(Self.Fill, -25%)
                   RadiusBottomLeft: =8
@@ -159,15 +159,15 @@
                   OnSelect: |-
                     =With({id: ThisItem.ID},
                         // Re-read the row: another device may already have reopened it (and ticked Started since).
-                        If(LookUp(RunListJobs, ID = id).JobStatus.Value <> "Done",
+                        If(LookUp(TheWhiteBoard, ID = id).JobStatus.Value <> "Done",
                             Notify("This job is no longer Done (it changed on another device). Nothing was changed; the list is refreshed.", NotificationType.Warning);
-                            Refresh(RunListJobs);
+                            Refresh(TheWhiteBoard);
                             Set(gblRefreshTick, gblRefreshTick + 1),
                             IfError(
-                                Patch(RunListJobs, LookUp(RunListJobs, ID = id), {JobStatus: {Value: "Active"}, Started: false, StartedOn: Blank()}),
-                                Refresh(RunListJobs);
+                                Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {JobStatus: {Value: "Active"}, Started: false, StartedOn: Blank()}),
+                                Refresh(TheWhiteBoard);
                                 IfError(
-                                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {JobStatus: {Value: "Active"}, Started: false, StartedOn: Blank()}),
+                                    Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {JobStatus: {Value: "Active"}, Started: false, StartedOn: Blank()}),
                                     Notify("Reopen failed: " & FirstError.Message, NotificationType.Error, 0),
                                     Notify("Reopened. The job is back on the boards.", NotificationType.Success)
                                 ),
@@ -204,15 +204,15 @@
                   OnSelect: |-
                     =With({id: ThisItem.ID},
                         // Re-read the row: another device may already have restored (and placed) it.
-                        If(LookUp(RunListJobs, ID = id).JobStatus.Value <> "Dismissed",
+                        If(LookUp(TheWhiteBoard, ID = id).JobStatus.Value <> "Dismissed",
                             Notify("This job is no longer dismissed (it changed on another device). Nothing was changed; the list is refreshed.", NotificationType.Warning);
-                            Refresh(RunListJobs);
+                            Refresh(TheWhiteBoard);
                             Set(gblRefreshTick, gblRefreshTick + 1),
                             IfError(
-                                Patch(RunListJobs, LookUp(RunListJobs, ID = id), {JobStatus: {Value: "Incoming"}}),
-                                Refresh(RunListJobs);
+                                Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {JobStatus: {Value: "Incoming"}}),
+                                Refresh(TheWhiteBoard);
                                 IfError(
-                                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {JobStatus: {Value: "Incoming"}}),
+                                    Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {JobStatus: {Value: "Incoming"}}),
                                     Notify("Restore failed: " & FirstError.Message, NotificationType.Error, 0),
                                     Notify("Restored to the Incoming tray.", NotificationType.Success)
                                 ),

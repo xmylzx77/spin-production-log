@@ -4,7 +4,7 @@ Screens:
       Fill: =clrPage
       OnVisible: |-
         =UpdateContext({locNesHold: 0, locNesSaveKey: ""});
-        Refresh(RunListJobs);
+        Refresh(TheWhiteBoard);
         Set(gblRefreshTick, gblRefreshTick + 1)
     Children:
       - conNesHeader:
@@ -99,7 +99,7 @@ Screens:
                   HoverFill: =ColorFade(Self.Fill, -15%)
                   LayoutMinWidth: =110
                   OnSelect: |-
-                    =Refresh(RunListJobs);
+                    =Refresh(TheWhiteBoard);
                     Set(gblRefreshTick, gblRefreshTick + 1)
                   PressedColor: =Self.Color
                   PressedFill: =ColorFade(Self.Fill, -30%)
@@ -373,14 +373,14 @@ Screens:
                         OnSelect: |-
                           =With({id: ThisItem.ID, v: !ThisItem.Need12},
                               If(
-                                  ThisItem.Need12 && (ThisItem.Done12 || LookUp(RunListJobs, ID = id).Done12),
+                                  ThisItem.Need12 && (ThisItem.Done12 || LookUp(TheWhiteBoard, ID = id).Done12),
                                   Notify("12 ga is already punched, so it stays selected", NotificationType.Warning);
-                                  If(!ThisItem.Done12, Refresh(RunListJobs); Set(gblRefreshTick, gblRefreshTick + 1)),
+                                  If(!ThisItem.Done12, Refresh(TheWhiteBoard); Set(gblRefreshTick, gblRefreshTick + 1)),
                                   IfError(
-                                      Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need12: v}),
-                                      Refresh(RunListJobs);
+                                      Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Need12: v}),
+                                      Refresh(TheWhiteBoard);
                                       IfError(
-                                          Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need12: v}),
+                                          Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Need12: v}),
                                           Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
                                       )
                                   )
@@ -415,14 +415,14 @@ Screens:
                         OnSelect: |-
                           =With({id: ThisItem.ID, v: !ThisItem.Need14},
                               If(
-                                  ThisItem.Need14 && (ThisItem.Done14 || LookUp(RunListJobs, ID = id).Done14),
+                                  ThisItem.Need14 && (ThisItem.Done14 || LookUp(TheWhiteBoard, ID = id).Done14),
                                   Notify("14 ga is already punched, so it stays selected", NotificationType.Warning);
-                                  If(!ThisItem.Done14, Refresh(RunListJobs); Set(gblRefreshTick, gblRefreshTick + 1)),
+                                  If(!ThisItem.Done14, Refresh(TheWhiteBoard); Set(gblRefreshTick, gblRefreshTick + 1)),
                                   IfError(
-                                      Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need14: v}),
-                                      Refresh(RunListJobs);
+                                      Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Need14: v}),
+                                      Refresh(TheWhiteBoard);
                                       IfError(
-                                          Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need14: v}),
+                                          Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Need14: v}),
                                           Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
                                       )
                                   )
@@ -457,14 +457,14 @@ Screens:
                         OnSelect: |-
                           =With({id: ThisItem.ID, v: !ThisItem.Need16},
                               If(
-                                  ThisItem.Need16 && (ThisItem.Done16 || LookUp(RunListJobs, ID = id).Done16),
+                                  ThisItem.Need16 && (ThisItem.Done16 || LookUp(TheWhiteBoard, ID = id).Done16),
                                   Notify("16 ga is already punched, so it stays selected", NotificationType.Warning);
-                                  If(!ThisItem.Done16, Refresh(RunListJobs); Set(gblRefreshTick, gblRefreshTick + 1)),
+                                  If(!ThisItem.Done16, Refresh(TheWhiteBoard); Set(gblRefreshTick, gblRefreshTick + 1)),
                                   IfError(
-                                      Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need16: v}),
-                                      Refresh(RunListJobs);
+                                      Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Need16: v}),
+                                      Refresh(TheWhiteBoard);
                                       IfError(
-                                          Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need16: v}),
+                                          Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Need16: v}),
                                           Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
                                       )
                                   )
@@ -499,14 +499,14 @@ Screens:
                         OnSelect: |-
                           =With({id: ThisItem.ID, v: !ThisItem.Need18},
                               If(
-                                  ThisItem.Need18 && (ThisItem.Done18 || LookUp(RunListJobs, ID = id).Done18),
+                                  ThisItem.Need18 && (ThisItem.Done18 || LookUp(TheWhiteBoard, ID = id).Done18),
                                   Notify("18 ga is already punched, so it stays selected", NotificationType.Warning);
-                                  If(!ThisItem.Done18, Refresh(RunListJobs); Set(gblRefreshTick, gblRefreshTick + 1)),
+                                  If(!ThisItem.Done18, Refresh(TheWhiteBoard); Set(gblRefreshTick, gblRefreshTick + 1)),
                                   IfError(
-                                      Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need18: v}),
-                                      Refresh(RunListJobs);
+                                      Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Need18: v}),
+                                      Refresh(TheWhiteBoard);
                                       IfError(
-                                          Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need18: v}),
+                                          Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Need18: v}),
                                           Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
                                       )
                                   )
@@ -541,14 +541,14 @@ Screens:
                         OnSelect: |-
                           =With({id: ThisItem.ID, v: !ThisItem.Need20},
                               If(
-                                  ThisItem.Need20 && (ThisItem.Done20 || LookUp(RunListJobs, ID = id).Done20),
+                                  ThisItem.Need20 && (ThisItem.Done20 || LookUp(TheWhiteBoard, ID = id).Done20),
                                   Notify("20 ga is already punched, so it stays selected", NotificationType.Warning);
-                                  If(!ThisItem.Done20, Refresh(RunListJobs); Set(gblRefreshTick, gblRefreshTick + 1)),
+                                  If(!ThisItem.Done20, Refresh(TheWhiteBoard); Set(gblRefreshTick, gblRefreshTick + 1)),
                                   IfError(
-                                      Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need20: v}),
-                                      Refresh(RunListJobs);
+                                      Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Need20: v}),
+                                      Refresh(TheWhiteBoard);
                                       IfError(
-                                          Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need20: v}),
+                                          Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Need20: v}),
                                           Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
                                       )
                                   )
@@ -583,14 +583,14 @@ Screens:
                         OnSelect: |-
                           =With({id: ThisItem.ID, v: !ThisItem.Need24},
                               If(
-                                  ThisItem.Need24 && (ThisItem.Done24 || LookUp(RunListJobs, ID = id).Done24),
+                                  ThisItem.Need24 && (ThisItem.Done24 || LookUp(TheWhiteBoard, ID = id).Done24),
                                   Notify("24 ga is already punched, so it stays selected", NotificationType.Warning);
-                                  If(!ThisItem.Done24, Refresh(RunListJobs); Set(gblRefreshTick, gblRefreshTick + 1)),
+                                  If(!ThisItem.Done24, Refresh(TheWhiteBoard); Set(gblRefreshTick, gblRefreshTick + 1)),
                                   IfError(
-                                      Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need24: v}),
-                                      Refresh(RunListJobs);
+                                      Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Need24: v}),
+                                      Refresh(TheWhiteBoard);
                                       IfError(
-                                          Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need24: v}),
+                                          Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Need24: v}),
                                           Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
                                       )
                                   )
@@ -632,10 +632,10 @@ Screens:
                               If(v <> was && locNesSaveKey <> k,
                                   UpdateContext({locNesSaveKey: k, locNesHold: 0});
                                   IfError(
-                                      Patch(RunListJobs, LookUp(RunListJobs, ID = id), {NestLabel: v}),
-                                      Refresh(RunListJobs);
+                                      Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {NestLabel: v}),
+                                      Refresh(TheWhiteBoard);
                                       IfError(
-                                          Patch(RunListJobs, LookUp(RunListJobs, ID = id), {NestLabel: v}),
+                                          Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {NestLabel: v}),
                                           Notify("Nest label not saved: " & FirstError.Message, NotificationType.Error, 0);
                                           UpdateContext({locNesSaveKey: ""})
                                       )
@@ -670,10 +670,10 @@ Screens:
                               If(v <> was && locNesSaveKey <> k,
                                   UpdateContext({locNesSaveKey: k, locNesHold: 0});
                                   IfError(
-                                      Patch(RunListJobs, LookUp(RunListJobs, ID = id), {NestLabel: v}),
-                                      Refresh(RunListJobs);
+                                      Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {NestLabel: v}),
+                                      Refresh(TheWhiteBoard);
                                       IfError(
-                                          Patch(RunListJobs, LookUp(RunListJobs, ID = id), {NestLabel: v}),
+                                          Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {NestLabel: v}),
                                           Notify("Nest label not saved: " & FirstError.Message, NotificationType.Error, 0);
                                           UpdateContext({locNesSaveKey: ""})
                                       )
@@ -711,10 +711,10 @@ Screens:
                         OnSelect: |-
                           =With({id: ThisItem.ID, v: !ThisItem.Nested, lbl: ThisItem.JobLabel, nc: ThisItem.NeedCount},
                               IfError(
-                                  Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Nested: v}),
-                                  Refresh(RunListJobs);
+                                  Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Nested: v}),
+                                  Refresh(TheWhiteBoard);
                                   IfError(
-                                      Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Nested: v}),
+                                      Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Nested: v}),
                                       Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0),
                                       If(v, Notify(lbl & " marked Nested" & If(nc = 0, ", but it has no gauges selected yet. Switch off Not nested only to see it and pick its gauges.", "."), If(nc = 0, NotificationType.Warning, NotificationType.Success), If(nc = 0, 8000, 3000)))
                                   ),
@@ -756,7 +756,7 @@ Screens:
             OnTimerEnd: |-
               =If(locNesHold > 0,
                   UpdateContext({locNesHold: locNesHold - 1}),
-                  Refresh(RunListJobs);
+                  Refresh(TheWhiteBoard);
                   Set(gblRefreshTick, gblRefreshTick + 1)
               )
             Repeat: =true

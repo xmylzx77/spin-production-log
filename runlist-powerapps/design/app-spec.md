@@ -4,7 +4,7 @@ Source of truth for every screen. Data rules are in `list-design.md`, and that f
 
 ## App basics
 - Canvas app, **Tablet** format, 1366 × 768, landscape, Scale to fit **On**. Tablets, the TV and PCs all get the same layout, and nothing is responsive.
-- One data source: SharePoint list **RunListJobs**. Settings > General > **Data row limit = 2000**.
+- One data source: SharePoint list **TheWhiteBoard**. Settings > General > **Data row limit = 2000**.
 - Dark theme like the White Board today:
   - Page background `#0f172a`, cards `#1e293b`, card border `#334155`, text `#e5e7eb`, muted text `#94a3b8`.
   - Accent green (done) `#22c55e`. Yellow (needed, not done) `#eab308`. Amber warning `#f59e0b`. Red `#ef4444`. Blue (buttons) `#2563eb`.
@@ -37,13 +37,13 @@ Source of truth for every screen. Data rules are in `list-design.md`, and that f
   - `JobLabel` = JobNumber & If(!IsBlank(FanNumber), "-" & FanNumber).
   - `SizeText` = If(IsBlank(JobSize), "SET SIZE", "Size " & JobSize).
 - `IncomingJobs`: Filter on `JobStatus.Value = "Incoming"`.
-- Screens never query RunListJobs directly, except a single-row `LookUp(RunListJobs, ID = n)` before a Patch, the Import screen's key lookups, and the Find box.
-- Delegation rules are in `list-design.md` (pitfall 1). Any delegation warning on a RunListJobs formula is a bug.
+- Screens never query TheWhiteBoard directly, except a single-row `LookUp(TheWhiteBoard, ID = n)` before a Patch, the Import screen's key lookups, and the Find box.
+- Delegation rules are in `list-design.md` (pitfall 1). Any delegation warning on a TheWhiteBoard formula is a bug.
 
 ## Writes
 Every Patch follows the write helper in `list-design.md` (pitfall 3):
 - explicit values
-- base record = `LookUp(RunListJobs, ID = id)`
+- base record = `LookUp(TheWhiteBoard, ID = id)`
 - `IfError`, then Refresh, then retry once, then `Notify` on failure
 
 Each button patches only the columns it owns. Creates set every column explicitly (pitfall 4).
@@ -85,7 +85,7 @@ Mirrors `app.js`.
   - Add job: same panel, empty. It creates an Active job with Title = the manual key rule.
 - **Find job #:** results list across all statuses (indexed JobNumber equality). Each result has Open (edit), Reopen (if Done) and Restore (if Dismissed).
 - **Housekeeping:** on OnVisible and every 10 minutes (Timer), set JobStatus Done on PunchDone && Started jobs whose StartedOn is 30 or more days ago.
-- **Auto-refresh:** a Timer refreshes RunListJobs every 60 s, but skips while a panel is open.
+- **Auto-refresh:** a Timer refreshes TheWhiteBoard every 60 s, but skips while a panel is open.
 
 ### scrAssembly (supervisor)
 Mirrors `assembly.js`.

@@ -3,7 +3,7 @@ Screens:
     Properties:
       Fill: =clrPage
       OnVisible: |-
-        =Refresh(RunListJobs);
+        =Refresh(TheWhiteBoard);
         Set(gblRefreshTick, gblRefreshTick + 1)
     Children:
       - conBenHeader:
@@ -119,7 +119,7 @@ Screens:
                   HoverFill: =ColorFade(Self.Fill, -15%)
                   LayoutMinWidth: =110
                   OnSelect: |-
-                    =Refresh(RunListJobs);
+                    =Refresh(TheWhiteBoard);
                     Set(gblRefreshTick, gblRefreshTick + 1)
                   PressedColor: =Self.Color
                   PressedFill: =ColorFade(Self.Fill, -30%)
@@ -546,13 +546,13 @@ Screens:
                               {id: ThisItem.ID, v: !ThisItem.PBDone, lbl: ThisItem.JobLabel},
                               IfError(
                                   With(
-                                      {saved: Patch(RunListJobs, LookUp(RunListJobs, ID = id), {PBDone: v})},
+                                      {saved: Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {PBDone: v})},
                                       If(saved.PBDone && saved.P4Done && !tglBenShowDone.Value, Notify(lbl & " finished on PB and P4. Turn on Show complete to see it again.", NotificationType.Success, 4000))
                                   ),
-                                  Refresh(RunListJobs);
+                                  Refresh(TheWhiteBoard);
                                   IfError(
                                       With(
-                                          {saved: Patch(RunListJobs, LookUp(RunListJobs, ID = id), {PBDone: v})},
+                                          {saved: Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {PBDone: v})},
                                           If(saved.PBDone && saved.P4Done && !tglBenShowDone.Value, Notify(lbl & " finished on PB and P4. Turn on Show complete to see it again.", NotificationType.Success, 4000))
                                       ),
                                       Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
@@ -594,13 +594,13 @@ Screens:
                               {id: ThisItem.ID, v: !ThisItem.P4Done, lbl: ThisItem.JobLabel},
                               IfError(
                                   With(
-                                      {saved: Patch(RunListJobs, LookUp(RunListJobs, ID = id), {P4Done: v})},
+                                      {saved: Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {P4Done: v})},
                                       If(saved.PBDone && saved.P4Done && !tglBenShowDone.Value, Notify(lbl & " finished on PB and P4. Turn on Show complete to see it again.", NotificationType.Success, 4000))
                                   ),
-                                  Refresh(RunListJobs);
+                                  Refresh(TheWhiteBoard);
                                   IfError(
                                       With(
-                                          {saved: Patch(RunListJobs, LookUp(RunListJobs, ID = id), {P4Done: v})},
+                                          {saved: Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {P4Done: v})},
                                           If(saved.PBDone && saved.P4Done && !tglBenShowDone.Value, Notify(lbl & " finished on PB and P4. Turn on Show complete to see it again.", NotificationType.Success, 4000))
                                       ),
                                       Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
@@ -655,7 +655,7 @@ Screens:
             AutoStart: =true
             Duration: =30000
             OnTimerEnd: |-
-              =Refresh(RunListJobs);
+              =Refresh(TheWhiteBoard);
               Set(gblRefreshTick, gblRefreshTick + 1)
             Repeat: =true
             Visible: =false

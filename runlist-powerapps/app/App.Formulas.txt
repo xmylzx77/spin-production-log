@@ -9,7 +9,7 @@
 // - Text columns that can be empty are built with If(IsBlank(x), "", x) or
 //   x & "", never Coalesce(x, ""): Coalesce returns BLANK when every argument
 //   is blank or "" (Learn), and Blank() <> "" is true.
-// - RunListJobs is touched only by the two indexed, delegable filters
+// - TheWhiteBoard is touched only by the two indexed, delegable filters
 //   JobStatus.Value = "Active" / "Incoming" (list-design pitfall 1).
 // - Every working table is wrapped in With(): Learn says With creates
 //   collections internally, so screens filter and sort it locally with no
@@ -64,7 +64,7 @@ IncomingJobs =
     AddColumns(
         AddColumns(
             ShowColumns(
-                Filter(RunListJobs, JobStatus.Value = "Incoming"),
+                Filter(TheWhiteBoard, JobStatus.Value = "Incoming"),
                 ID, Title, JobNumber, UnitNumber, FanNumber, JobName, ProductModel, NestLabel, CasmfgId, Notes,
                 JobSize, PairNo, PunchOrder, AssemblyOrder,
                 ShipDate, PrevShipDate, PunchDay, AssemblyDate, StartedOn, Created,
@@ -123,7 +123,7 @@ ActiveBase =
     AddColumns(
         AddColumns(
             ShowColumns(
-                Filter(RunListJobs, JobStatus.Value = "Active"),
+                Filter(TheWhiteBoard, JobStatus.Value = "Active"),
                 ID, Title, JobNumber, UnitNumber, FanNumber, JobName, ProductModel, NestLabel, CasmfgId, Notes,
                 JobSize, PairNo, PunchOrder, AssemblyOrder,
                 ShipDate, PrevShipDate, PunchDay, AssemblyDate, StartedOn, Created,

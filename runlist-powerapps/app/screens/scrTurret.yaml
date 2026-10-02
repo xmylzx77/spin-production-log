@@ -3,7 +3,7 @@ Screens:
     Properties:
       Fill: =clrPage
       OnVisible: |-
-        =Refresh(RunListJobs);
+        =Refresh(TheWhiteBoard);
         Set(gblRefreshTick, gblRefreshTick + 1)
     Children:
       - lblTurMachine:
@@ -122,7 +122,7 @@ Screens:
                   HoverFill: =ColorFade(Self.Fill, -15%)
                   LayoutMinWidth: =110
                   OnSelect: |-
-                    =Refresh(RunListJobs);
+                    =Refresh(TheWhiteBoard);
                     Set(gblRefreshTick, gblRefreshTick + 1)
                   PressedColor: =Self.Color
                   PressedFill: =ColorFade(Self.Fill, -30%)
@@ -383,10 +383,10 @@ Screens:
                                   fin: !ThisItem.Done12 && CountRows(Filter(ThisItem.Gauges As gg, gg.Need && !gg.Done)) = 1
                               },
                               IfError(
-                                  Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Done12: v}),
-                                  Refresh(RunListJobs);
+                                  Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Done12: v}),
+                                  Refresh(TheWhiteBoard);
                                   IfError(
-                                      Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Done12: v}),
+                                      Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Done12: v}),
                                       Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0),
                                       If(fin && !tglTurShowDone.Value, Notify(lbl & " - all gauges punched. It leaves this list (turn on Show complete to undo).", NotificationType.Success, 5000))
                                   ),
@@ -429,10 +429,10 @@ Screens:
                                   fin: !ThisItem.Done14 && CountRows(Filter(ThisItem.Gauges As gg, gg.Need && !gg.Done)) = 1
                               },
                               IfError(
-                                  Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Done14: v}),
-                                  Refresh(RunListJobs);
+                                  Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Done14: v}),
+                                  Refresh(TheWhiteBoard);
                                   IfError(
-                                      Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Done14: v}),
+                                      Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Done14: v}),
                                       Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0),
                                       If(fin && !tglTurShowDone.Value, Notify(lbl & " - all gauges punched. It leaves this list (turn on Show complete to undo).", NotificationType.Success, 5000))
                                   ),
@@ -476,10 +476,10 @@ Screens:
                                   fin: !ThisItem.Done16 && CountRows(Filter(ThisItem.Gauges As gg, gg.Need && !gg.Done)) = 1
                               },
                               IfError(
-                                  Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Done16: v}),
-                                  Refresh(RunListJobs);
+                                  Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Done16: v}),
+                                  Refresh(TheWhiteBoard);
                                   IfError(
-                                      Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Done16: v}),
+                                      Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Done16: v}),
                                       Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0),
                                       If(fin && !tglTurShowDone.Value, Notify(lbl & " - all gauges punched. It leaves this list (turn on Show complete to undo).", NotificationType.Success, 5000))
                                   ),
@@ -523,10 +523,10 @@ Screens:
                                   fin: !ThisItem.Done18 && CountRows(Filter(ThisItem.Gauges As gg, gg.Need && !gg.Done)) = 1
                               },
                               IfError(
-                                  Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Done18: v}),
-                                  Refresh(RunListJobs);
+                                  Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Done18: v}),
+                                  Refresh(TheWhiteBoard);
                                   IfError(
-                                      Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Done18: v}),
+                                      Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Done18: v}),
                                       Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0),
                                       If(fin && !tglTurShowDone.Value, Notify(lbl & " - all gauges punched. It leaves this list (turn on Show complete to undo).", NotificationType.Success, 5000))
                                   ),
@@ -570,10 +570,10 @@ Screens:
                                   fin: !ThisItem.Done20 && CountRows(Filter(ThisItem.Gauges As gg, gg.Need && !gg.Done)) = 1
                               },
                               IfError(
-                                  Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Done20: v}),
-                                  Refresh(RunListJobs);
+                                  Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Done20: v}),
+                                  Refresh(TheWhiteBoard);
                                   IfError(
-                                      Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Done20: v}),
+                                      Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Done20: v}),
                                       Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0),
                                       If(fin && !tglTurShowDone.Value, Notify(lbl & " - all gauges punched. It leaves this list (turn on Show complete to undo).", NotificationType.Success, 5000))
                                   ),
@@ -617,10 +617,10 @@ Screens:
                                   fin: !ThisItem.Done24 && CountRows(Filter(ThisItem.Gauges As gg, gg.Need && !gg.Done)) = 1
                               },
                               IfError(
-                                  Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Done24: v}),
-                                  Refresh(RunListJobs);
+                                  Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Done24: v}),
+                                  Refresh(TheWhiteBoard);
                                   IfError(
-                                      Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Done24: v}),
+                                      Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Done24: v}),
                                       Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0),
                                       If(fin && !tglTurShowDone.Value, Notify(lbl & " - all gauges punched. It leaves this list (turn on Show complete to undo).", NotificationType.Success, 5000))
                                   ),
@@ -708,7 +708,7 @@ Screens:
             AutoStart: =true
             Duration: =30000
             OnTimerEnd: |-
-              =Refresh(RunListJobs);
+              =Refresh(TheWhiteBoard);
               Set(gblRefreshTick, gblRefreshTick + 1)
             Repeat: =true
             Visible: =false

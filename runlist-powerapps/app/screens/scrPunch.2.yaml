@@ -329,7 +329,7 @@
       Height: =42
       HoverColor: =clrText
       HoverFill: =clrCard
-      Items: =Choices(RunListJobs.Machine)
+      Items: =Choices(TheWhiteBoard.Machine)
       Items.Value: =Value
       PressedColor: =clrText
       PressedFill: =clrCard
@@ -457,7 +457,7 @@
       Height: =42
       HoverColor: =clrText
       HoverFill: =clrCard
-      Items: =Choices(RunListJobs.AssemblyLine)
+      Items: =Choices(TheWhiteBoard.AssemblyLine)
       Items.Value: =Value
       PressedColor: =clrText
       PressedFill: =clrCard

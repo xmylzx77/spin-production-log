@@ -267,7 +267,7 @@ With({cards: Filter(ActiveJobs, MachineText = "SB15" && (show || !TurretDone))},
 - **Template** (one row height, `TemplateSize` 110, as the old card lists): `conPunCardS8` (the card, `Visible = !ThisItem.IsHeader`) and the two header labels (`Visible = ThisItem.IsHeader`; "No jobs" also needs `BandN = 0`). The header is drawn at the bottom of its row (Y 76, or Y 44 with "No jobs" at 78), so it sits 4 px above its first card, like the old band header. The same layout leaves the empty strip at the top of each list.
 - **Widths.** Each list is 8 px wider than its cards (528 / 654 px; cards `Parent.TemplateWidth - 8` = 520 / 646, the old card widths), so the scroll bar runs in the gap between the columns and right of SB15. SB8 starts at X 308 (56 with the tray hidden), SB15 at 838 (712), as the old columns did. Height and Y are galPunBoard's (they move down when the banner shows).
 - **The card files are unchanged.** Inside the new lists, `ThisItem` is a flat row that has every ActiveJobs column, and `Parent.Width` (the card container) is 520 / 646 px as before. ▲ ▼ filter the band with `PunchBand = c.PunchBand && (tglPunShowDone.Value || !TurretDone)`, which is exactly the set of cards the list shows under that day (CONTRACT 6.4 rule).
-- Nothing outside the board changed: no App.Formulas or CONTRACT change is needed, no other screen refers to the board, and the list reads only `ActiveJobs` and the band tables (no `RunListJobs` query, so no delegation question).
+- Nothing outside the board changed: no App.Formulas or CONTRACT change is needed, no other screen refers to the board, and the list reads only `ActiveJobs` and the band tables (no `TheWhiteBoard` query, so no delegation question).
 
 ## How this was checked offline
 
