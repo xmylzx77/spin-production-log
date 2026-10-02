@@ -1,5 +1,7 @@
 # Set up the SharePoint list (TheWhiteBoard)
 
+> **Status:** done on the **-RTU Build Schedule** site, with the time zone set to Pacific. Steps 2 (groups) and 9 (permissions) are **skipped for now**: the list uses the site's own Members (edit) and Visitors (read) groups. Done24 was accidentally set to Required: turn that off (List settings > Done24 > Require that this column contains information = No > OK).
+
 This takes about 30 minutes in a web browser on your work PC. A site **owner** (you or IT) must do steps 1 and 9.
 
 ## 1. Where it goes and who gets access

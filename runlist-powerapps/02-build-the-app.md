@@ -3,7 +3,7 @@
 This guide builds the app in Power Apps. You copy a file from the `app` folder, paste it into Power Apps Studio, and check that it looks right. There are 22 pastes, a few settings, then sharing, links for each device and a go-live test.
 
 - **Time:** about 2 hours for the pastes, and about 1.5 hours for the tests.
-- **Before this:** `01-sharepoint-list-setup.md` is done. The list TheWhiteBoard exists, and IT has made the **RunList Users** and **RunList Viewers** groups. Your own account is a site Owner or in RunList Users (a plain site Member can only read the list, so the tests in Part G can't save).
+- **Before this:** `01-sharepoint-list-setup.md` is done, and the list TheWhiteBoard exists on the **-RTU Build Schedule** site. For now the list uses the site's own groups instead of RunList Users and RunList Viewers: **-RTU Build Schedule Members** can change jobs, and **-RTU Build Schedule Visitors** can only look. Your own account must be a site **Owner** or **Member**.
 - **Nothing premium:** the app uses only the SharePoint list TheWhiteBoard.
 - **More detail:** each screen has a notes file next to its code, for example `app/screens/scrPunch.notes.md`. Open it if a step here isn't enough.
 
@@ -374,11 +374,17 @@ Two boards use lists whose rows grow to fit the cards inside them, which may not
 
 1. Go to https://make.powerapps.com > **Apps**.
 2. Next to **White Board**, click **...** (More commands) > **Share**.
-3. Type `RunList Users`, pick the group, and leave **Co-owner** unticked.
-4. Type `RunList Viewers`, pick the group, and leave **Co-owner** unticked.
-5. Click **Share**.
+3. Type each person's name (and each tablet or TV account), pick them, and leave **Co-owner** unticked.
+   - You can try typing `-RTU Build Schedule` to share with the whole site group at once. If it doesn't show up, use names.
+4. Click **Share**.
 
-Sharing the app does **not** give access to the list. The list permissions from `01-sharepoint-list-setup.md` step 9 do that. RunList Users can change jobs; RunList Viewers (the TV) can only look. Only these Entra security groups work here; a SharePoint group can't be used to share an app.
+Sharing the app does **not** give access to the list. Everyone you share with must also be on the site:
+- **-RTU Build Schedule Members:** anyone who changes jobs (supervisors, the nester, floor tablets).
+- **-RTU Build Schedule Visitors:** look-only accounts (the TV).
+
+To add people: on the site, click the gear > **Site permissions** (or **Members** at the top right) > **Add members**.
+
+Site Members can also delete rows and change columns in SharePoint. Tell everyone to make changes in the app only, never in SharePoint. If a row is deleted by mistake, it can be restored from the site **Recycle bin** for 93 days. The stricter setup in `01-sharepoint-list-setup.md` step 9 can be added later.
 
 The first time someone opens the app, it asks to use the SharePoint connection: click **Allow**.
 
@@ -404,7 +410,7 @@ Every device gets its own bookmark that opens straight on its screen.
 Example: `https://apps.powerapps.com/play/e/abc/a/123?tenantId=xyz&hint=789&screen=sb8`.
 
 On each device:
-- Sign in to the browser with that device's licensed work account (in RunList Users, or RunList Viewers for the TV).
+- Sign in to the browser with that device's licensed work account (a site Member, or a Visitor for the TV).
 - Open its link, click **Allow** when asked, and save it as a bookmark. To open it at start-up in Edge: **Settings > Start, home, and new tabs > Open these pages**.
 - The device's time zone must be the shop's time zone (the same as the SharePoint site).
 - **Floor tablets and the TV:** keep the app's tab in front (browsers slow down timers in hidden tabs). On the TV, press **F11** for full screen and turn off sleep and the screen saver.
