@@ -388,8 +388,10 @@
                     Refresh(TheWhiteBoard);
                     IfError(
                         Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {AssemblyLine: If(line = "", Blank(), {Value: line})}),
-                        Notify("Saved, but the assembly line did not change: " & FirstError.Message, NotificationType.Error, 0)
-                    )
+                        Notify("Saved, but the assembly line did not change: " & FirstError.Message, NotificationType.Error, 0),
+                        true
+                    ),
+                    true
                 )
             );
             If(locPunSaved,

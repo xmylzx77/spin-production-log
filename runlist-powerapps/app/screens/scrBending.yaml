@@ -555,8 +555,10 @@ Screens:
                                           {saved: Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {PBDone: v})},
                                           If(saved.PBDone && saved.P4Done && !tglBenShowDone.Value, Notify(lbl & " finished on PB and P4. Turn on Show complete to see it again.", NotificationType.Success, 4000))
                                       ),
-                                      Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
-                                  )
+                                      Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0),
+                                      true
+                                  ),
+                                  true
                               )
                           )
                         PressedColor: =Self.Color
@@ -603,8 +605,10 @@ Screens:
                                           {saved: Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {P4Done: v})},
                                           If(saved.PBDone && saved.P4Done && !tglBenShowDone.Value, Notify(lbl & " finished on PB and P4. Turn on Show complete to see it again.", NotificationType.Success, 4000))
                                       ),
-                                      Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
-                                  )
+                                      Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0),
+                                      true
+                                  ),
+                                  true
                               )
                           )
                         PressedColor: =Self.Color

@@ -269,8 +269,10 @@
                     Refresh(TheWhiteBoard);
                     IfError(
                         Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {PrevShipDate: Blank()}),
-                        Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
-                    )
+                        Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0),
+                        true
+                    ),
+                    true
                 )
             )
         ))
@@ -313,8 +315,10 @@
                 Refresh(TheWhiteBoard);
                 IfError(
                     Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Started: v, StartedOn: so}),
-                    Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
-                )
+                    Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0),
+                    true
+                ),
+                true
             )
         ))
       PaddingLeft: =4
@@ -392,8 +396,10 @@
                     Refresh(TheWhiteBoard);
                     IfError(
                         Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {AssemblyOrder: v}),
-                        Notify("Move failed: " & FirstError.Message, NotificationType.Error, 0)
-                    )
+                        Notify("Move failed: " & FirstError.Message, NotificationType.Error, 0),
+                        true
+                    ),
+                    true
                 )
             )
         )))))))
@@ -441,8 +447,10 @@
                     Refresh(TheWhiteBoard);
                     IfError(
                         Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {AssemblyOrder: v}),
-                        Notify("Move failed: " & FirstError.Message, NotificationType.Error, 0)
-                    )
+                        Notify("Move failed: " & FirstError.Message, NotificationType.Error, 0),
+                        true
+                    ),
+                    true
                 )
             )
         )))))))

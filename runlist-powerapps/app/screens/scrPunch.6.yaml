@@ -138,8 +138,10 @@
                     Refresh(TheWhiteBoard);
                     IfError(
                         Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Need12: v}),
-                        Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
-                    )
+                        Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0),
+                        true
+                    ),
+                    true
                 )
             )
         )
@@ -181,8 +183,10 @@
                     Refresh(TheWhiteBoard);
                     IfError(
                         Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Need14: v}),
-                        Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
-                    )
+                        Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0),
+                        true
+                    ),
+                    true
                 )
             )
         )
@@ -224,8 +228,10 @@
                     Refresh(TheWhiteBoard);
                     IfError(
                         Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Need16: v}),
-                        Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
-                    )
+                        Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0),
+                        true
+                    ),
+                    true
                 )
             )
         )
@@ -267,8 +273,10 @@
                     Refresh(TheWhiteBoard);
                     IfError(
                         Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Need18: v}),
-                        Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
-                    )
+                        Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0),
+                        true
+                    ),
+                    true
                 )
             )
         )
@@ -310,8 +318,10 @@
                     Refresh(TheWhiteBoard);
                     IfError(
                         Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Need20: v}),
-                        Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
-                    )
+                        Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0),
+                        true
+                    ),
+                    true
                 )
             )
         )
@@ -353,8 +363,10 @@
                     Refresh(TheWhiteBoard);
                     IfError(
                         Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Need24: v}),
-                        Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
-                    )
+                        Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0),
+                        true
+                    ),
+                    true
                 )
             )
         )
@@ -391,8 +403,10 @@
                 Refresh(TheWhiteBoard);
                 IfError(
                     Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Nested: v}),
-                    Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
-                )
+                    Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0),
+                    true
+                ),
+                true
             )
         )
       PaddingLeft: =0
@@ -439,8 +453,10 @@
                     Refresh(TheWhiteBoard);
                     IfError(
                         Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {PunchOrder: v}),
-                        Notify("Move failed: " & FirstError.Message, NotificationType.Error, 0)
-                    )
+                        Notify("Move failed: " & FirstError.Message, NotificationType.Error, 0),
+                        true
+                    ),
+                    true
                 )
             )
         )))))))
@@ -489,8 +505,10 @@
                     Refresh(TheWhiteBoard);
                     IfError(
                         Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {PunchOrder: v}),
-                        Notify("Move failed: " & FirstError.Message, NotificationType.Error, 0)
-                    )
+                        Notify("Move failed: " & FirstError.Message, NotificationType.Error, 0),
+                        true
+                    ),
+                    true
                 )
             )
         )))))))
@@ -558,8 +576,10 @@
                 Refresh(TheWhiteBoard);
                 IfError(
                     Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {NestLabel: v}),
-                    Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
-                )
+                    Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0),
+                    true
+                ),
+                true
             )
         )
       PaddingLeft: =0
@@ -625,8 +645,10 @@
                     Refresh(TheWhiteBoard);
                     IfError(
                         Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {PrevShipDate: Blank()}),
-                        Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
-                    )
+                        Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0),
+                        true
+                    ),
+                    true
                 )
             )
         ))

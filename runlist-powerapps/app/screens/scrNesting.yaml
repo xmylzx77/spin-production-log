@@ -381,8 +381,10 @@ Screens:
                                       Refresh(TheWhiteBoard);
                                       IfError(
                                           Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Need12: v}),
-                                          Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
-                                      )
+                                          Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0),
+                                          true
+                                      ),
+                                      true
                                   )
                               )
                           )
@@ -423,8 +425,10 @@ Screens:
                                       Refresh(TheWhiteBoard);
                                       IfError(
                                           Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Need14: v}),
-                                          Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
-                                      )
+                                          Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0),
+                                          true
+                                      ),
+                                      true
                                   )
                               )
                           )
@@ -465,8 +469,10 @@ Screens:
                                       Refresh(TheWhiteBoard);
                                       IfError(
                                           Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Need16: v}),
-                                          Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
-                                      )
+                                          Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0),
+                                          true
+                                      ),
+                                      true
                                   )
                               )
                           )
@@ -507,8 +513,10 @@ Screens:
                                       Refresh(TheWhiteBoard);
                                       IfError(
                                           Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Need18: v}),
-                                          Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
-                                      )
+                                          Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0),
+                                          true
+                                      ),
+                                      true
                                   )
                               )
                           )
@@ -549,8 +557,10 @@ Screens:
                                       Refresh(TheWhiteBoard);
                                       IfError(
                                           Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Need20: v}),
-                                          Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
-                                      )
+                                          Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0),
+                                          true
+                                      ),
+                                      true
                                   )
                               )
                           )
@@ -591,8 +601,10 @@ Screens:
                                       Refresh(TheWhiteBoard);
                                       IfError(
                                           Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {Need24: v}),
-                                          Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
-                                      )
+                                          Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0),
+                                          true
+                                      ),
+                                      true
                                   )
                               )
                           )
@@ -637,8 +649,10 @@ Screens:
                                       IfError(
                                           Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {NestLabel: v}),
                                           Notify("Nest label not saved: " & FirstError.Message, NotificationType.Error, 0);
-                                          UpdateContext({locNesSaveKey: ""})
-                                      )
+                                          UpdateContext({locNesSaveKey: ""}),
+                                          true
+                                      ),
+                                      true
                                   )
                               )
                           ))
@@ -675,8 +689,10 @@ Screens:
                                       IfError(
                                           Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {NestLabel: v}),
                                           Notify("Nest label not saved: " & FirstError.Message, NotificationType.Error, 0);
-                                          UpdateContext({locNesSaveKey: ""})
-                                      )
+                                          UpdateContext({locNesSaveKey: ""}),
+                                          true
+                                      ),
+                                      true
                                   )
                               )
                           ))

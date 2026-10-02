@@ -254,11 +254,15 @@ With({id: ThisItem.ID, v: !ThisItem.PBDone},
         Refresh(TheWhiteBoard);
         IfError(
             Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {PBDone: v}),
-            Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
-        )
+            Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0),
+            true
+        ),
+        true
     )
 )
 ```
+
+**Studio rule (found in Studio, 2026-10-02):** an `IfError` whose value is a record (a `Patch`) and whose fallback is a Boolean (`Notify`, `UpdateContext`, another `IfError`) must end with a DefaultResult of the same type as the fallback (`true`). Without it, Studio reports "Invalid argument type (Boolean). Expecting a Record value instead". Every write helper in the screens now has it.
 
 Change only `ThisItem.PBDone` and `{PBDone: v}` (e.g. `Nested`, `Need14`, `Done14`, `P4Done`). A Need button must refuse to un-need a done gauge (app-spec). The card can be a refresh cycle old, so re-read Done before un-needing (`&&` and `||` stop early, so a grey pill makes no extra read):
 
