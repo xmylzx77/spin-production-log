@@ -1,0 +1,104 @@
+If(Trim(txtPunEdJob.Text) = "",
+    Notify("Type a Job # first.", NotificationType.Warning),
+With({
+        id: locId,
+        isAdd: locPunEdMode = "add",
+        isActive: locPunEdMode = "add" || locPunJob.JobStatus.Value = "Active",
+        imported: !IsBlank(locPunJob.CasmfgId),
+        num: Trim(txtPunEdJob.Text),
+        unit: Trim(txtPunEdUnit.Text),
+        model: Trim(txtPunEdModel.Text),
+        sizeSel: ddPunEdSize.Selected.Value,
+        mach: ddPunEdMachine.Selected.Value,
+        pday: dpPunEdPunch.SelectedDate,
+        line: ddPunEdLine.Selected.Value & "",
+        aday: dpPunEdAsm.SelectedDate,
+        sday: dpPunEdShip.SelectedDate,
+        // The row as it is on the server now (blank for Add). locPunJob is the copy
+        // taken when the panel opened, which is what the inputs started from.
+        fresh: If(locPunEdMode <> "add", LookUp(TheWhiteBoard, ID = locId))
+    },
+With({
+        size: If(sizeSel = "Auto", With({m: Match(Upper(model), "CASRTU\s*(?<sz>\d+)")}, If(!IsBlank(m) && Value(m.sz) >= 1 && Value(m.sz) <= 4, Value(m.sz), Blank())), Value(sizeSel)),
+        // Job key (list-design Title rule). Imported rows never get a new key.
+        key: If(unit <> "", Upper(num) & "|" & Upper(unit),
+                !isAdd && !IsBlank(Find("|M", locPunJob.Title & "")), locPunJob.Title,
+                Upper(num) & "|M" & Text(Now(), "yymmddhhmmss")),
+        // Schedule and ship values: the panel's value only if the user changed it; otherwise
+        // the row's current server value, so a change made on another device meanwhile
+        // (Assembly, Import, another Punch tablet) is not written back over.
+        effMach: If(isAdd || mach <> (locPunJob.Machine.Value & "") || IsBlank(fresh.Machine.Value), mach, fresh.Machine.Value),
+        effPday: If(isAdd || (Text(pday, "yyyy-mm-dd") & "") <> (Text(locPunJob.PunchDay, "yyyy-mm-dd") & ""), pday, fresh.PunchDay),
+        effLine: If(isAdd || line <> (locPunJob.AssemblyLine.Value & ""), line, fresh.AssemblyLine.Value & ""),
+        effAday: If(isAdd || (Text(aday, "yyyy-mm-dd") & "") <> (Text(locPunJob.AssemblyDate, "yyyy-mm-dd") & ""), aday, fresh.AssemblyDate),
+        effShip: If(isAdd || (Text(sday, "yyyy-mm-dd") & "") <> (Text(locPunJob.ShipDate, "yyyy-mm-dd") & ""), sday, fresh.ShipDate),
+        curBand: (fresh.Machine.Value & "") & "|" & If(IsBlank(fresh.PunchDay), "", Text(fresh.PunchDay, "yyyy-mm-dd")),
+        curCell: (fresh.AssemblyLine.Value & "") & "|" & If(IsBlank(fresh.AssemblyDate), "", Text(fresh.AssemblyDate, "yyyy-mm-dd"))
+    },
+With({
+        band: effMach & "|" & If(IsBlank(effPday), "", Text(effPday, "yyyy-mm-dd")),
+        cell: effLine & "|" & If(IsBlank(effAday), "", Text(effAday, "yyyy-mm-dd"))
+    },
+With({
+        det: {FanNumber: Trim(txtPunEdFan.Text), JobName: Trim(txtPunEdCust.Text), ProductModel: model, JobSize: size, ShipDate: effShip, Notes: txtPunEdNotes.Text},
+        keyRec: {Title: key, JobNumber: num, UnitNumber: unit},
+        // Only a job whose band (machine + punch day) or assembly cell really changes goes
+        // to the end of the new one; otherwise its current order is kept.
+        sch: {Machine: {Value: effMach}, PunchDay: effPday,
+              PunchOrder: If(isAdd || band <> curBand, Coalesce(Max(Filter(ActiveJobs, PunchBand = band && ID <> id), PunchSort), 0) + 1, fresh.PunchOrder),
+              AssemblyDate: effAday,
+              AssemblyOrder: If(effLine <> "" && !IsBlank(effAday) && (isAdd || cell <> curCell), Coalesce(Max(Filter(ActiveJobs, AsmBand = cell && ID <> id), AsmSort), 0) + 1, fresh.AssemblyOrder)},
+        flags: {JobStatus: {Value: "Active"}, Nested: false, Need12: false, Need14: false, Need16: false, Need18: false, Need20: false, Need24: false, Done12: false, Done14: false, Done16: false, Done18: false, Done20: false, Done24: false, PBDone: false, P4Done: false, Started: false}
+    },
+    UpdateContext({locPunSaved: false});
+    If(isAdd,
+        // Add: one create with every column explicit (pitfall 4); a failed create is re-checked, not retried.
+        IfError(
+            If(line = "",
+                Patch(TheWhiteBoard, Defaults(TheWhiteBoard), det, keyRec, sch, flags),
+                Patch(TheWhiteBoard, Defaults(TheWhiteBoard), det, keyRec, sch, flags, {AssemblyLine: {Value: line}})),
+            With({dup: LookUp(TheWhiteBoard, Title = key)},
+                If(IsBlank(dup),
+                    Notify("Add failed: " & FirstError.Message, NotificationType.Error, 0),
+                    Notify("Job " & num & If(unit <> "", "-" & unit) & " is already in the list as " & dup.JobStatus.Value & ". Use Find job # to open it.", NotificationType.Error, 0))),
+            UpdateContext({locPunSaved: true})
+        ),
+        // Edit: write helper; only the columns this panel owns.
+        IfError(
+            If(isActive && imported, Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), det, sch),
+                isActive, Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), det, sch, keyRec),
+                imported, Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), det),
+                Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), det, keyRec)),
+            Refresh(TheWhiteBoard);
+            IfError(
+                If(isActive && imported, Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), det, sch),
+                    isActive, Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), det, sch, keyRec),
+                    imported, Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), det),
+                    Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), det, keyRec)),
+                With({dup: If(!imported, LookUp(TheWhiteBoard, Title = key))},
+                    If(!IsBlank(dup) && dup.ID <> id,
+                        Notify("Job " & num & If(unit <> "", "-" & unit) & " is already in the list as " & dup.JobStatus.Value & ".", NotificationType.Error, 0),
+                        Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0))),
+                UpdateContext({locPunSaved: true})
+            ),
+            UpdateContext({locPunSaved: true})
+        )
+    );
+    // Assembly line is its own small Patch, only when it changed (clearing a Choice is guide U13).
+    If(locPunSaved && !isAdd && isActive && line <> (locPunJob.AssemblyLine.Value & ""),
+        IfError(
+            Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {AssemblyLine: If(line = "", Blank(), {Value: line})}),
+            Refresh(TheWhiteBoard);
+            IfError(
+                Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {AssemblyLine: If(line = "", Blank(), {Value: line})}),
+                Notify("Saved, but the assembly line did not change: " & FirstError.Message, NotificationType.Error, 0),
+                true
+            ),
+            true
+        )
+    );
+    If(locPunSaved,
+        Notify(If(isAdd, "Job added.", "Saved."), NotificationType.Success);
+        Select(btnPunEdCancel)
+    )
+)))))
