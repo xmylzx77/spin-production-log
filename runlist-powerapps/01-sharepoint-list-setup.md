@@ -18,7 +18,7 @@ Gear > **List settings** > under Columns click **Title**. Keep the name **Title*
 
 ## 4. Add the other 36 columns
 Go back to the list and click **+ Add column** > pick the type > **Next** > type the name **exactly** as shown (no spaces; the first name you type is permanent) > set the options > **Save**.
-- **Every Yes/No:** set Default value to **No**. It starts at Yes.
+- **Every Yes/No:** try to set Default value to **No**. SharePoint often doesn't keep it and shows Yes again. That's fine: the app always fills every Yes/No in itself, so the default never matters.
 - **Every Choice:** delete the "Choice 1/2/3" placeholders. Under More options, set **Allow multiple selections** Off and **Can add values manually** Off.
 - **Every Date:** set **Include time** Off.
 
@@ -83,7 +83,7 @@ The owners keep Full Control, and they are the only people who can delete. If st
 2. Add a test row: **+ New** > Title `TEST|1`, JobNumber `TEST`, ShipDate today > **Save**.
 3. Check three things:
    - JobStatus shows **Incoming**.
-   - Every Yes/No column shows **No**.
+   - Every Yes/No column shows **No**, or is blank. Blank is fine here (see step 4).
    - ShipDate shows today.
 4. Then delete the test row. You are an owner, so you can.
 
