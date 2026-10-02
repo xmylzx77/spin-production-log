@@ -1,0 +1,714 @@
+Screens:
+  scrTurret:
+    Properties:
+      Fill: =clrPage
+      OnVisible: |-
+        =Refresh(RunListJobs);
+        Set(gblRefreshTick, gblRefreshTick + 1)
+    Children:
+      - lblTurMachine:
+          Control: Label@2.5.1
+          Properties:
+            Height: =20
+            Text: |-
+              =Coalesce(varMachine, If(Lower(Trim(Param("screen"))) = "sb15", "SB15", "SB8"))
+            Visible: =false
+            Width: =60
+            X: =0
+            Y: =0
+      - conTurHeader:
+          Control: GroupContainer@1.5.0
+          Variant: AutoLayout
+          Properties:
+            BorderThickness: =0
+            DropShadow: =DropShadow.None
+            Fill: =clrCard
+            Height: =64
+            LayoutAlignItems: =LayoutAlignItems.Center
+            LayoutDirection: =LayoutDirection.Horizontal
+            LayoutGap: =12
+            LayoutJustifyContent: =LayoutJustifyContent.Start
+            PaddingLeft: =16
+            PaddingRight: =16
+            Width: =1366
+            X: =0
+            Y: =0
+          Children:
+            - lblTurTitle:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =If(lblTurMachine.Text = "SB15", clrSB15, clrSB8)
+                  FillPortions: =0
+                  FontWeight: =FontWeight.Bold
+                  Height: =44
+                  LayoutMinWidth: =90
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  Size: =26
+                  Text: =lblTurMachine.Text & ""
+                  Width: =90
+                  Wrap: =false
+            - lblTurSub:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrMuted
+                  FillPortions: =1
+                  Height: =44
+                  LayoutMinWidth: =200
+                  PaddingLeft: =0
+                  Size: =16
+                  Text: |-
+                    ="Turret: check off gauges"
+                  Wrap: =false
+            - lblTurCount:
+                Control: Label@2.5.1
+                Properties:
+                  Align: =Align.Right
+                  Color: =clrText
+                  FillPortions: =0
+                  FontWeight: =FontWeight.Semibold
+                  Height: =44
+                  LayoutMinWidth: =190
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  Size: =15
+                  Text: |-
+                    =With(
+                        {n: CountRows(Filter(ActiveJobs, MachineText = lblTurMachine.Text && Nested && !TurretDone))},
+                        n & If(n = 1, " job to punch", " jobs to punch")
+                    )
+                  Width: =190
+                  Wrap: =false
+            - tglTurShowDone:
+                Control: Classic/Toggle@2.1.0
+                Properties:
+                  Default: =false
+                  FalseFill: =clrGrey
+                  FalseHoverFill: =clrGrey
+                  FillPortions: =0
+                  FocusedBorderThickness: =0
+                  HandleFill: =clrText
+                  Height: =36
+                  LayoutMinWidth: =64
+                  ShowLabel: =false
+                  TrueFill: =clrGreen
+                  TrueHoverFill: =clrGreen
+                  Width: =64
+            - lblTurShowDone:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrText
+                  FillPortions: =0
+                  Height: =44
+                  LayoutMinWidth: =150
+                  PaddingLeft: =0
+                  Size: =14
+                  Text: ="Show complete"
+                  Width: =150
+                  Wrap: =false
+            - btnTurRefresh:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =clrWhite
+                  DisabledColor: =Self.Color
+                  DisabledFill: =ColorFade(Self.Fill, -30%)
+                  Fill: =clrBlue
+                  FillPortions: =0
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Semibold
+                  Height: =44
+                  HoverColor: =Self.Color
+                  HoverFill: =ColorFade(Self.Fill, -15%)
+                  LayoutMinWidth: =110
+                  OnSelect: |-
+                    =Refresh(RunListJobs);
+                    Set(gblRefreshTick, gblRefreshTick + 1)
+                  PressedColor: =Self.Color
+                  PressedFill: =ColorFade(Self.Fill, -30%)
+                  RadiusBottomLeft: =8
+                  RadiusBottomRight: =8
+                  RadiusTopLeft: =8
+                  RadiusTopRight: =8
+                  Size: =15
+                  Text: ="Refresh"
+                  Width: =110
+            - btnTurHome:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =clrWhite
+                  Fill: =clrGrey
+                  FillPortions: =0
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Semibold
+                  Height: =44
+                  HoverColor: =Self.Color
+                  HoverFill: =ColorFade(Self.Fill, -15%)
+                  LayoutMinWidth: =100
+                  OnSelect: =Navigate(scrHome, ScreenTransition.None)
+                  PressedColor: =Self.Color
+                  PressedFill: =ColorFade(Self.Fill, -30%)
+                  RadiusBottomLeft: =8
+                  RadiusBottomRight: =8
+                  RadiusTopLeft: =8
+                  RadiusTopRight: =8
+                  Size: =15
+                  Text: ="Home"
+                  Width: =100
+      - recTurAccent:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderThickness: =0
+            Fill: =If(lblTurMachine.Text = "SB15", clrSB15, clrSB8)
+            Height: =4
+            Width: =1366
+            X: =0
+            Y: =64
+      - galTurJobs:
+          Control: Gallery@2.15.0
+          Variant: VariableHeight
+          Properties:
+            BorderThickness: =0
+            DelayItemLoading: =false
+            Fill: =clrNone
+            Height: =690
+            Items: |-
+              =With(
+                  {
+                      tVis: SortByColumns(
+                          Filter(ActiveJobs, MachineText = lblTurMachine.Text && Nested && (tglTurShowDone.Value || !TurretDone)),
+                          "PunchDayKey", SortOrder.Ascending,
+                          "GroupShipKey", SortOrder.Ascending,
+                          "GroupShipMaxKey", SortOrder.Ascending,
+                          "PairKey", SortOrder.Ascending,
+                          "PunchSort", SortOrder.Ascending,
+                          "ID", SortOrder.Ascending
+                      )
+                  },
+                  AddColumns(
+                      tVis As j,
+                      TurFirst, j.ID = First(Filter(tVis, PunchDayKey = j.PunchDayKey)).ID,
+                      TurDayCount, CountRows(Filter(tVis, PunchDayKey = j.PunchDayKey)),
+                      TurDayOpen, CountRows(Filter(tVis, PunchDayKey = j.PunchDayKey && !TurretDone)),
+                      TurDayLabel, If(j.PunchDayKey = 0, "Unscheduled", If(j.PunchDayKey = TodayKey, "Today  ", "") & Text(j.PunchDay, "ddd mmm d", "en-US"))
+                  )
+              )
+            LoadingSpinner: =LoadingSpinner.None
+            ShowScrollbar: =true
+            TemplateFill: =clrNone
+            TemplatePadding: =0
+            TemplateSize: =156
+            Width: =1342
+            X: =16
+            Y: =72
+          Children:
+            - lblTurDay:
+                Control: Label@2.5.1
+                Properties:
+                  Color: |-
+                    =If(ThisItem.PunchDayKey > 0 && ThisItem.PunchDayKey < TodayKey && ThisItem.TurDayOpen > 0, clrAmber, clrText)
+                  Fill: =ColorFade(If(lblTurMachine.Text = "SB15", clrSB15, clrSB8), -70%)
+                  FontWeight: =FontWeight.Bold
+                  Height: =42
+                  PaddingLeft: =14
+                  Size: =17
+                  Text: =ThisItem.TurDayLabel
+                  Visible: =ThisItem.TurFirst
+                  Width: =Parent.TemplateWidth - 12
+                  Wrap: =false
+                  X: =0
+                  Y: =8
+            - lblTurDayCount:
+                Control: Label@2.5.1
+                Properties:
+                  Align: =Align.Right
+                  Color: =clrText
+                  Fill: =clrNone
+                  Height: =42
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  Size: =15
+                  Text: =ThisItem.TurDayCount & If(ThisItem.TurDayCount = 1, " job", " jobs")
+                  Visible: =ThisItem.TurFirst
+                  Width: =160
+                  Wrap: =false
+                  X: =Parent.TemplateWidth - 12 - Self.Width - 16
+                  Y: =8
+            - conTurCard:
+                Control: GroupContainer@1.5.0
+                Variant: ManualLayout
+                Properties:
+                  BorderColor: =If(ThisItem.TurretDone, clrGreen, clrBorder)
+                  BorderThickness: =If(ThisItem.TurretDone, 2, 1)
+                  DropShadow: =DropShadow.None
+                  Fill: =If(ThisItem.TurretDone, ColorFade(clrCard, -35%), clrCard)
+                  Height: =148
+                  RadiusBottomLeft: =10
+                  RadiusBottomRight: =10
+                  RadiusTopLeft: =10
+                  RadiusTopRight: =10
+                  Width: =Parent.TemplateWidth - 12
+                  X: =0
+                  Y: =If(ThisItem.TurFirst, 58, 8)
+                Children:
+                  - recTurPairBar:
+                      Control: Rectangle@2.3.0
+                      Properties:
+                        BorderThickness: =0
+                        Fill: =ThisItem.PairColor
+                        Height: =Parent.Height - 24
+                        Visible: =!IsBlank(ThisItem.PairNo)
+                        Width: =6
+                        X: =0
+                        Y: =12
+                  - lblTurModel:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =If(ThisItem.TurretDone, clrMuted, clrText)
+                        FontWeight: =FontWeight.Bold
+                        Height: =40
+                        PaddingLeft: =0
+                        Size: =22
+                        Text: |-
+                          =If(
+                              !IsBlank(ThisItem.ProductModel), ThisItem.ProductModel,
+                              !IsBlank(ThisItem.JobName), ThisItem.JobName,
+                              "(no model)"
+                          )
+                        Width: =500
+                        Wrap: =false
+                        X: =20
+                        Y: =6
+                  - lblTurCust:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =clrMuted
+                        Height: =40
+                        PaddingLeft: =0
+                        Size: =15
+                        Text: =ThisItem.CustShort
+                        Width: =170
+                        Wrap: =false
+                        X: =530
+                        Y: =6
+                  - lblTurShip:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =If(IsBlank(ThisItem.ShipDate), clrRed, clrText)
+                        FontWeight: =FontWeight.Semibold
+                        Height: =40
+                        PaddingLeft: =0
+                        Size: =16
+                        Text: |-
+                          ="📅 " & ThisItem.ShipText
+                        Width: =180
+                        Wrap: =false
+                        X: =710
+                        Y: =6
+                  - lblTurJob:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =clrText
+                        FontWeight: =FontWeight.Bold
+                        Height: =40
+                        PaddingLeft: =0
+                        Size: =17
+                        Text: |-
+                          ="#" & ThisItem.JobLabel
+                        Width: =260
+                        Wrap: =false
+                        X: =900
+                        Y: =6
+                  - btnTurPair:
+                      Control: Classic/Button@2.2.0
+                      Properties:
+                        BorderThickness: =0
+                        Color: =clrPage
+                        Fill: =ThisItem.PairColor
+                        FocusedBorderThickness: =0
+                        FontWeight: =FontWeight.Bold
+                        Height: =34
+                        HoverColor: =Self.Color
+                        HoverFill: =Self.Fill
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        PressedColor: =Self.Color
+                        PressedFill: =Self.Fill
+                        RadiusBottomLeft: =17
+                        RadiusBottomRight: =17
+                        RadiusTopLeft: =17
+                        RadiusTopRight: =17
+                        Size: =14
+                        Text: =Text(ThisItem.PairRank)
+                        Tooltip: ="Paired job, same number and colour as its mate"
+                        Visible: =!IsBlank(ThisItem.PairNo)
+                        Width: =34
+                        X: =Parent.Width - Self.Width - 14
+                        Y: =9
+                  - lblTurNotes:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =clrMuted
+                        Height: =24
+                        Italic: =true
+                        PaddingLeft: =0
+                        Size: =13
+                        Text: |-
+                          =Substitute(Substitute(ThisItem.Notes & "", Char(13), ""), Char(10), "  ")
+                        Visible: =!IsBlank(ThisItem.Notes)
+                        Width: =Parent.Width - 40
+                        Wrap: =false
+                        X: =20
+                        Y: =46
+                  - btnTurG12:
+                      Control: Classic/Button@2.2.0
+                      Properties:
+                        BorderThickness: =0
+                        Color: =clrPage
+                        DisabledColor: =clrPage
+                        DisabledFill: =ColorFade(If(ThisItem.Done12, clrGreen, clrYellow), -40%)
+                        Fill: =If(ThisItem.Done12, clrGreen, clrYellow)
+                        FocusedBorderThickness: =0
+                        FontWeight: =FontWeight.Bold
+                        Height: =64
+                        HoverColor: =Self.Color
+                        HoverFill: =ColorFade(Self.Fill, -10%)
+                        OnSelect: |-
+                          =With(
+                              {
+                                  id: ThisItem.ID,
+                                  v: !ThisItem.Done12,
+                                  lbl: ThisItem.JobLabel,
+                                  fin: !ThisItem.Done12 && CountRows(Filter(ThisItem.Gauges As gg, gg.Need && !gg.Done)) = 1
+                              },
+                              IfError(
+                                  Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Done12: v}),
+                                  Refresh(RunListJobs);
+                                  IfError(
+                                      Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Done12: v}),
+                                      Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0),
+                                      If(fin && !tglTurShowDone.Value, Notify(lbl & " - all gauges punched. It leaves this list (turn on Show complete to undo).", NotificationType.Success, 5000))
+                                  ),
+                                  If(fin && !tglTurShowDone.Value, Notify(lbl & " - all gauges punched. It leaves this list (turn on Show complete to undo).", NotificationType.Success, 5000))
+                              )
+                          )
+                        PressedColor: =Self.Color
+                        PressedFill: =ColorFade(Self.Fill, -25%)
+                        RadiusBottomLeft: =10
+                        RadiusBottomRight: =10
+                        RadiusTopLeft: =10
+                        RadiusTopRight: =10
+                        Size: =20
+                        Text: |-
+                          =If(ThisItem.Done12, "✓ 12 ga", "12 ga")
+                        Tooltip: ="Tap when 12 ga is punched. Tap again to undo."
+                        Visible: =ThisItem.Need12
+                        Width: =130
+                        X: =20
+                        Y: =74
+                  - btnTurG14:
+                      Control: Classic/Button@2.2.0
+                      Properties:
+                        BorderThickness: =0
+                        Color: =clrPage
+                        DisabledColor: =clrPage
+                        DisabledFill: =ColorFade(If(ThisItem.Done14, clrGreen, clrYellow), -40%)
+                        Fill: =If(ThisItem.Done14, clrGreen, clrYellow)
+                        FocusedBorderThickness: =0
+                        FontWeight: =FontWeight.Bold
+                        Height: =64
+                        HoverColor: =Self.Color
+                        HoverFill: =ColorFade(Self.Fill, -10%)
+                        OnSelect: |-
+                          =With(
+                              {
+                                  id: ThisItem.ID,
+                                  v: !ThisItem.Done14,
+                                  lbl: ThisItem.JobLabel,
+                                  fin: !ThisItem.Done14 && CountRows(Filter(ThisItem.Gauges As gg, gg.Need && !gg.Done)) = 1
+                              },
+                              IfError(
+                                  Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Done14: v}),
+                                  Refresh(RunListJobs);
+                                  IfError(
+                                      Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Done14: v}),
+                                      Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0),
+                                      If(fin && !tglTurShowDone.Value, Notify(lbl & " - all gauges punched. It leaves this list (turn on Show complete to undo).", NotificationType.Success, 5000))
+                                  ),
+                                  If(fin && !tglTurShowDone.Value, Notify(lbl & " - all gauges punched. It leaves this list (turn on Show complete to undo).", NotificationType.Success, 5000))
+                              )
+                          )
+                        PressedColor: =Self.Color
+                        PressedFill: =ColorFade(Self.Fill, -25%)
+                        RadiusBottomLeft: =10
+                        RadiusBottomRight: =10
+                        RadiusTopLeft: =10
+                        RadiusTopRight: =10
+                        Size: =20
+                        Text: |-
+                          =If(ThisItem.Done14, "✓ 14 ga", "14 ga")
+                        Tooltip: ="Tap when 14 ga is punched. Tap again to undo."
+                        Visible: =ThisItem.Need14
+                        Width: =130
+                        X: |-
+                          =20 + (If(ThisItem.Need12, 1, 0)) * 140
+                        Y: =74
+                  - btnTurG16:
+                      Control: Classic/Button@2.2.0
+                      Properties:
+                        BorderThickness: =0
+                        Color: =clrPage
+                        DisabledColor: =clrPage
+                        DisabledFill: =ColorFade(If(ThisItem.Done16, clrGreen, clrYellow), -40%)
+                        Fill: =If(ThisItem.Done16, clrGreen, clrYellow)
+                        FocusedBorderThickness: =0
+                        FontWeight: =FontWeight.Bold
+                        Height: =64
+                        HoverColor: =Self.Color
+                        HoverFill: =ColorFade(Self.Fill, -10%)
+                        OnSelect: |-
+                          =With(
+                              {
+                                  id: ThisItem.ID,
+                                  v: !ThisItem.Done16,
+                                  lbl: ThisItem.JobLabel,
+                                  fin: !ThisItem.Done16 && CountRows(Filter(ThisItem.Gauges As gg, gg.Need && !gg.Done)) = 1
+                              },
+                              IfError(
+                                  Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Done16: v}),
+                                  Refresh(RunListJobs);
+                                  IfError(
+                                      Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Done16: v}),
+                                      Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0),
+                                      If(fin && !tglTurShowDone.Value, Notify(lbl & " - all gauges punched. It leaves this list (turn on Show complete to undo).", NotificationType.Success, 5000))
+                                  ),
+                                  If(fin && !tglTurShowDone.Value, Notify(lbl & " - all gauges punched. It leaves this list (turn on Show complete to undo).", NotificationType.Success, 5000))
+                              )
+                          )
+                        PressedColor: =Self.Color
+                        PressedFill: =ColorFade(Self.Fill, -25%)
+                        RadiusBottomLeft: =10
+                        RadiusBottomRight: =10
+                        RadiusTopLeft: =10
+                        RadiusTopRight: =10
+                        Size: =20
+                        Text: |-
+                          =If(ThisItem.Done16, "✓ 16 ga", "16 ga")
+                        Tooltip: ="Tap when 16 ga is punched. Tap again to undo."
+                        Visible: =ThisItem.Need16
+                        Width: =130
+                        X: |-
+                          =20 + (If(ThisItem.Need12, 1, 0) + If(ThisItem.Need14, 1, 0)) * 140
+                        Y: =74
+                  - btnTurG18:
+                      Control: Classic/Button@2.2.0
+                      Properties:
+                        BorderThickness: =0
+                        Color: =clrPage
+                        DisabledColor: =clrPage
+                        DisabledFill: =ColorFade(If(ThisItem.Done18, clrGreen, clrYellow), -40%)
+                        Fill: =If(ThisItem.Done18, clrGreen, clrYellow)
+                        FocusedBorderThickness: =0
+                        FontWeight: =FontWeight.Bold
+                        Height: =64
+                        HoverColor: =Self.Color
+                        HoverFill: =ColorFade(Self.Fill, -10%)
+                        OnSelect: |-
+                          =With(
+                              {
+                                  id: ThisItem.ID,
+                                  v: !ThisItem.Done18,
+                                  lbl: ThisItem.JobLabel,
+                                  fin: !ThisItem.Done18 && CountRows(Filter(ThisItem.Gauges As gg, gg.Need && !gg.Done)) = 1
+                              },
+                              IfError(
+                                  Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Done18: v}),
+                                  Refresh(RunListJobs);
+                                  IfError(
+                                      Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Done18: v}),
+                                      Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0),
+                                      If(fin && !tglTurShowDone.Value, Notify(lbl & " - all gauges punched. It leaves this list (turn on Show complete to undo).", NotificationType.Success, 5000))
+                                  ),
+                                  If(fin && !tglTurShowDone.Value, Notify(lbl & " - all gauges punched. It leaves this list (turn on Show complete to undo).", NotificationType.Success, 5000))
+                              )
+                          )
+                        PressedColor: =Self.Color
+                        PressedFill: =ColorFade(Self.Fill, -25%)
+                        RadiusBottomLeft: =10
+                        RadiusBottomRight: =10
+                        RadiusTopLeft: =10
+                        RadiusTopRight: =10
+                        Size: =20
+                        Text: |-
+                          =If(ThisItem.Done18, "✓ 18 ga", "18 ga")
+                        Tooltip: ="Tap when 18 ga is punched. Tap again to undo."
+                        Visible: =ThisItem.Need18
+                        Width: =130
+                        X: |-
+                          =20 + (If(ThisItem.Need12, 1, 0) + If(ThisItem.Need14, 1, 0) + If(ThisItem.Need16, 1, 0)) * 140
+                        Y: =74
+                  - btnTurG20:
+                      Control: Classic/Button@2.2.0
+                      Properties:
+                        BorderThickness: =0
+                        Color: =clrPage
+                        DisabledColor: =clrPage
+                        DisabledFill: =ColorFade(If(ThisItem.Done20, clrGreen, clrYellow), -40%)
+                        Fill: =If(ThisItem.Done20, clrGreen, clrYellow)
+                        FocusedBorderThickness: =0
+                        FontWeight: =FontWeight.Bold
+                        Height: =64
+                        HoverColor: =Self.Color
+                        HoverFill: =ColorFade(Self.Fill, -10%)
+                        OnSelect: |-
+                          =With(
+                              {
+                                  id: ThisItem.ID,
+                                  v: !ThisItem.Done20,
+                                  lbl: ThisItem.JobLabel,
+                                  fin: !ThisItem.Done20 && CountRows(Filter(ThisItem.Gauges As gg, gg.Need && !gg.Done)) = 1
+                              },
+                              IfError(
+                                  Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Done20: v}),
+                                  Refresh(RunListJobs);
+                                  IfError(
+                                      Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Done20: v}),
+                                      Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0),
+                                      If(fin && !tglTurShowDone.Value, Notify(lbl & " - all gauges punched. It leaves this list (turn on Show complete to undo).", NotificationType.Success, 5000))
+                                  ),
+                                  If(fin && !tglTurShowDone.Value, Notify(lbl & " - all gauges punched. It leaves this list (turn on Show complete to undo).", NotificationType.Success, 5000))
+                              )
+                          )
+                        PressedColor: =Self.Color
+                        PressedFill: =ColorFade(Self.Fill, -25%)
+                        RadiusBottomLeft: =10
+                        RadiusBottomRight: =10
+                        RadiusTopLeft: =10
+                        RadiusTopRight: =10
+                        Size: =20
+                        Text: |-
+                          =If(ThisItem.Done20, "✓ 20 ga", "20 ga")
+                        Tooltip: ="Tap when 20 ga is punched. Tap again to undo."
+                        Visible: =ThisItem.Need20
+                        Width: =130
+                        X: |-
+                          =20 + (If(ThisItem.Need12, 1, 0) + If(ThisItem.Need14, 1, 0) + If(ThisItem.Need16, 1, 0) + If(ThisItem.Need18, 1, 0)) * 140
+                        Y: =74
+                  - btnTurG24:
+                      Control: Classic/Button@2.2.0
+                      Properties:
+                        BorderThickness: =0
+                        Color: =clrPage
+                        DisabledColor: =clrPage
+                        DisabledFill: =ColorFade(If(ThisItem.Done24, clrGreen, clrYellow), -40%)
+                        Fill: =If(ThisItem.Done24, clrGreen, clrYellow)
+                        FocusedBorderThickness: =0
+                        FontWeight: =FontWeight.Bold
+                        Height: =64
+                        HoverColor: =Self.Color
+                        HoverFill: =ColorFade(Self.Fill, -10%)
+                        OnSelect: |-
+                          =With(
+                              {
+                                  id: ThisItem.ID,
+                                  v: !ThisItem.Done24,
+                                  lbl: ThisItem.JobLabel,
+                                  fin: !ThisItem.Done24 && CountRows(Filter(ThisItem.Gauges As gg, gg.Need && !gg.Done)) = 1
+                              },
+                              IfError(
+                                  Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Done24: v}),
+                                  Refresh(RunListJobs);
+                                  IfError(
+                                      Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Done24: v}),
+                                      Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0),
+                                      If(fin && !tglTurShowDone.Value, Notify(lbl & " - all gauges punched. It leaves this list (turn on Show complete to undo).", NotificationType.Success, 5000))
+                                  ),
+                                  If(fin && !tglTurShowDone.Value, Notify(lbl & " - all gauges punched. It leaves this list (turn on Show complete to undo).", NotificationType.Success, 5000))
+                              )
+                          )
+                        PressedColor: =Self.Color
+                        PressedFill: =ColorFade(Self.Fill, -25%)
+                        RadiusBottomLeft: =10
+                        RadiusBottomRight: =10
+                        RadiusTopLeft: =10
+                        RadiusTopRight: =10
+                        Size: =20
+                        Text: |-
+                          =If(ThisItem.Done24, "✓ 24 ga", "24 ga")
+                        Tooltip: ="Tap when 24 ga is punched. Tap again to undo."
+                        Visible: =ThisItem.Need24
+                        Width: =130
+                        X: |-
+                          =20 + (If(ThisItem.Need12, 1, 0) + If(ThisItem.Need14, 1, 0) + If(ThisItem.Need16, 1, 0) + If(ThisItem.Need18, 1, 0) + If(ThisItem.Need20, 1, 0)) * 140
+                        Y: =74
+                  - lblTurNoGauges:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =clrAmber
+                        FontWeight: =FontWeight.Semibold
+                        Height: =64
+                        PaddingLeft: =0
+                        Size: =16
+                        Text: ="No gauges selected"
+                        Visible: =ThisItem.NeedCount = 0
+                        Width: =240
+                        Wrap: =false
+                        X: =20
+                        Y: =74
+                  - lblTurNest:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =If(IsBlank(ThisItem.NestLabel), clrMuted, clrText)
+                        FontWeight: =If(IsBlank(ThisItem.NestLabel), FontWeight.Normal, FontWeight.Bold)
+                        Height: =64
+                        Italic: =IsBlank(ThisItem.NestLabel)
+                        PaddingLeft: =0
+                        Size: =18
+                        Text: =If(IsBlank(ThisItem.NestLabel), "no nest label", ThisItem.NestLabel)
+                        Width: =Parent.Width - Self.X - 200
+                        X: =28 + If(ThisItem.NeedCount = 0, 240, ThisItem.NeedCount * 140)
+                        Y: =74
+                  - lblTurComplete:
+                      Control: Label@2.5.1
+                      Properties:
+                        Align: =Align.Right
+                        Color: =clrGreen
+                        FontWeight: =FontWeight.Bold
+                        Height: =64
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        Size: =18
+                        Text: |-
+                          ="✓ Complete"
+                        Visible: =ThisItem.TurretDone
+                        Width: =170
+                        Wrap: =false
+                        X: =Parent.Width - Self.Width - 20
+                        Y: =74
+      - lblTurEmpty:
+          Control: Label@2.5.1
+          Properties:
+            Align: =Align.Center
+            Color: =clrMuted
+            Height: =110
+            Size: =18
+            Text: |-
+              =If(tglTurShowDone.Value, "No nested jobs on " & lblTurMachine.Text & ".", "Nothing waiting on " & lblTurMachine.Text & " right now.") &
+              Char(10) & "Jobs show here once the supervisor puts them on " & lblTurMachine.Text & " and they are marked Nested."
+            Visible: |-
+              =IsEmpty(Filter(ActiveJobs, MachineText = lblTurMachine.Text && Nested && (tglTurShowDone.Value || !TurretDone)))
+            Width: =1366
+            X: =0
+            Y: =220
+      - tmrTurRefresh:
+          Control: Timer@2.1.0
+          Properties:
+            AutoPause: =true
+            AutoStart: =true
+            Duration: =30000
+            OnTimerEnd: |-
+              =Refresh(RunListJobs);
+              Set(gblRefreshTick, gblRefreshTick + 1)
+            Repeat: =true
+            Visible: =false

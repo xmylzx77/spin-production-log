@@ -1,0 +1,410 @@
+- lblPunEdPairL:
+    Control: Label@2.5.1
+    Properties:
+      Color: =clrText
+      FontWeight: =FontWeight.Semibold
+      Height: =26
+      PaddingBottom: =0
+      PaddingLeft: =0
+      PaddingRight: =0
+      PaddingTop: =0
+      Size: =13
+      Text: |-
+        ="Pair with job #"
+      Width: =140
+      Wrap: =false
+      X: =24
+      Y: =482
+- txtPunEdPair:
+    Control: Classic/TextInput@2.3.2
+    Properties:
+      BorderColor: =clrBorder
+      BorderThickness: =1
+      Color: =clrText
+      Default: =""
+      DisabledColor: =clrMuted
+      DisabledFill: =clrCard
+      DisplayMode: |-
+        =If(locPunEdMode = "edit" && locPunJob.JobStatus.Value = "Active", DisplayMode.Edit, DisplayMode.Disabled)
+      Fill: =clrPage
+      FocusedBorderColor: =clrBlue
+      FocusedBorderThickness: =2
+      Height: =42
+      HintText: |-
+        ="Job # or job-fan"
+      HoverColor: =clrText
+      HoverFill: =clrPage
+      PressedColor: =clrText
+      PressedFill: =clrPage
+      Size: =14
+      Width: =180
+      X: =168
+      Y: =474
+- btnPunEdPair:
+    Control: Classic/Button@2.2.0
+    Properties:
+      BorderThickness: =0
+      Color: =clrWhite
+      DisabledColor: =clrMuted
+      DisabledFill: =ColorFade(clrGrey, -40%)
+      DisplayMode: |-
+        =If(locPunEdMode = "edit" && locPunJob.JobStatus.Value = "Active", DisplayMode.Edit, DisplayMode.Disabled)
+      Fill: =clrBlue
+      FocusedBorderThickness: =0
+      FontWeight: =FontWeight.Semibold
+      Height: =42
+      HoverColor: =Self.Color
+      HoverFill: =ColorFade(Self.Fill, -10%)
+      OnSelect: |-
+        =With({t: Upper(Trim(txtPunEdPair.Text)), me: LookUp(ActiveJobs, ID = locId)},
+        With({hits: Filter(ActiveJobs, ID <> locId && (Upper(JobLabel) = t || Upper(JobNumber & "") = t))},
+        With({exact: Filter(hits, Upper(JobLabel) = t)},
+        With({cand: If(CountRows(exact) = 1, exact, hits)},
+            If(IsBlank(me), Notify("Only active jobs can be paired.", NotificationType.Warning),
+                t = "", Notify("Type the job # (or job-fan) to pair with.", NotificationType.Warning),
+                IsEmpty(cand), Notify("No active job " & t & " found.", NotificationType.Warning),
+                CountRows(cand) > 1, Notify("More than one active job matches " & t & ". Type the full job-fan, for example " & First(cand).JobLabel & ".", NotificationType.Warning),
+                // Pair: every job in both groups gets PairNo = the lowest ID among them (list-design).
+                With({mate: First(cand)},
+                With({grp: Filter(ActiveJobs, ID = me.ID || ID = mate.ID || (!IsBlank(PairNo) && (PairNo = me.PairNo || PairNo = mate.PairNo)))},
+                With({newNo: Min(grp, ID)},
+                With({todo: Filter(grp, IsBlank(PairNo) || PairNo <> newNo)},
+                // Each write gives back the row's ID, or 0 if it failed twice, so a half-done pair is reported.
+                With({res: ForAll(Sequence(CountRows(todo)) As s,
+                        With({id: Index(todo, s.Value).ID},
+                            IfError(
+                                Patch(RunListJobs, LookUp(RunListJobs, ID = id), {PairNo: newNo}).ID,
+                                Refresh(RunListJobs);
+                                IfError(
+                                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {PairNo: newNo}).ID,
+                                    Notify("Pair failed: " & FirstError.Message, NotificationType.Error, 0);
+                                    0
+                                )
+                            )
+                        )
+                    )},
+                    If(CountIf(res, Value = 0) = 0,
+                        Reset(txtPunEdPair);
+                        Notify("Paired with " & mate.JobLabel, NotificationType.Success),
+                        Notify(CountIf(res, Value = 0) & " job(s) did not pair. Tap Pair again.", NotificationType.Error, 0)
+                    )
+                )))))
+            )
+        ))))
+      PressedColor: =Self.Color
+      PressedFill: =ColorFade(Self.Fill, -25%)
+      RadiusBottomLeft: =8
+      RadiusBottomRight: =8
+      RadiusTopLeft: =8
+      RadiusTopRight: =8
+      Size: =14
+      Text: ="Pair"
+      Width: =90
+      X: =358
+      Y: =474
+- btnPunEdUnpair:
+    Control: Classic/Button@2.2.0
+    Properties:
+      BorderThickness: =0
+      Color: =clrText
+      DisabledColor: =clrMuted
+      DisabledFill: =ColorFade(clrGrey, -40%)
+      DisplayMode: |-
+        =If(locPunEdMode = "edit" && locPunJob.JobStatus.Value = "Active", DisplayMode.Edit, DisplayMode.Disabled)
+      Fill: =clrGrey
+      FocusedBorderThickness: =0
+      FontWeight: =FontWeight.Semibold
+      Height: =42
+      HoverColor: =Self.Color
+      HoverFill: =ColorFade(Self.Fill, -10%)
+      OnSelect: |-
+        =With({me: LookUp(ActiveJobs, ID = locId)},
+            If(IsBlank(me.PairNo),
+                Notify("This job isn't paired.", NotificationType.Information),
+                // Unpair clears the whole pair group, as the old board did.
+                With({grp: Filter(ActiveJobs, PairNo = me.PairNo)},
+                With({res: ForAll(Sequence(CountRows(grp)) As s,
+                        With({id: Index(grp, s.Value).ID},
+                            IfError(
+                                Patch(RunListJobs, LookUp(RunListJobs, ID = id), {PairNo: Blank()}).ID,
+                                Refresh(RunListJobs);
+                                IfError(
+                                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {PairNo: Blank()}).ID,
+                                    Notify("Unpair failed: " & FirstError.Message, NotificationType.Error, 0);
+                                    0
+                                )
+                            )
+                        )
+                    )},
+                    If(CountIf(res, Value = 0) = 0,
+                        Notify("Pair removed.", NotificationType.Success),
+                        Notify(CountIf(res, Value = 0) & " job(s) are still paired. Tap Unpair again, or open that job and tap Unpair.", NotificationType.Error, 0)
+                    )
+                ))
+            )
+        )
+      PressedColor: =Self.Color
+      PressedFill: =ColorFade(Self.Fill, -25%)
+      RadiusBottomLeft: =8
+      RadiusBottomRight: =8
+      RadiusTopLeft: =8
+      RadiusTopRight: =8
+      Size: =14
+      Text: ="Unpair"
+      Tooltip: ="Unpair removes the whole pair group"
+      Width: =120
+      X: =458
+      Y: =474
+- lblPunEdMates:
+    Control: Label@2.5.1
+    Properties:
+      Color: =clrMuted
+      Height: =48
+      PaddingBottom: =0
+      PaddingLeft: =0
+      PaddingRight: =0
+      PaddingTop: =0
+      Size: =13
+      Text: |-
+        =With({me: LookUp(ActiveJobs, ID = locId)},
+            If(locPunEdMode = "add", "Save the job first, then open it again to pair it.",
+                IsBlank(me), "Only active jobs can be paired.",
+                IsBlank(me.PairNo), "Not paired.",
+                "Paired with " & Concat(Filter(ActiveJobs, PairNo = me.PairNo && ID <> me.ID), JobLabel, ", ")
+            )
+        )
+      Width: =326
+      Wrap: =true
+      X: =590
+      Y: =474
+- lblPunEdWarn:
+    Control: Label@2.5.1
+    Properties:
+      Color: =clrAmber
+      Height: =46
+      PaddingBottom: =0
+      PaddingLeft: =0
+      PaddingRight: =0
+      PaddingTop: =0
+      Size: =13
+      Text: |-
+        =With({s: If(ddPunEdSize.Selected.Value = "Auto", With({m: Match(Upper(Trim(txtPunEdModel.Text)), "CASRTU\s*(?<sz>\d+)")}, If(!IsBlank(m) && Value(m.sz) >= 1 && Value(m.sz) <= 4, Value(m.sz), Blank())), Value(ddPunEdSize.Selected.Value)),
+               active: (locPunEdMode = "add" || locPunJob.JobStatus.Value = "Active")},
+            If(!active, "This job is " & locPunJob.JobStatus.Value & ". Its machine and dates are set by Place (Incoming) or Reopen (Done).   ", "")
+            & If(active && ddPunEdMachine.Selected.Value = "SB15" && (s = 1 || s = 4), "⚠ Size " & s & " normally punches on SB8. You can still save it on SB15.   ", "")
+            & If(IsBlank(s), "No size: the card will show SET SIZE. Pick 1-4 if the model has no CASRTU size.", "")
+        )
+      Width: =892
+      Wrap: =true
+      X: =24
+      Y: =526
+- btnPunEdCancel:
+    Control: Classic/Button@2.2.0
+    Properties:
+      BorderThickness: =0
+      Color: =clrWhite
+      Fill: =clrGrey
+      FocusedBorderThickness: =0
+      FontWeight: =FontWeight.Semibold
+      Height: =48
+      HoverColor: =Self.Color
+      HoverFill: =ColorFade(Self.Fill, -10%)
+      OnSelect: |-
+        =UpdateContext({locPanel: If(locPunEdFrom = "find", "find", ""), locId: 0, locPunJob: Blank(), locPunEdMode: "", locPunEdFrom: "", locPunDismissArm: false, locPunEdClrPunch: false, locPunEdClrAsm: false});
+        // Reset every input so the next job opens with its own values.
+        Reset(txtPunEdJob);
+        Reset(txtPunEdUnit);
+        Reset(txtPunEdFan);
+        Reset(txtPunEdCust);
+        Reset(txtPunEdModel);
+        Reset(ddPunEdSize);
+        Reset(dpPunEdShip);
+        Reset(ddPunEdMachine);
+        Reset(dpPunEdPunch);
+        Reset(ddPunEdLine);
+        Reset(dpPunEdAsm);
+        Reset(txtPunEdNotes);
+        Reset(txtPunEdPair)
+      PressedColor: =Self.Color
+      PressedFill: =ColorFade(Self.Fill, -25%)
+      RadiusBottomLeft: =8
+      RadiusBottomRight: =8
+      RadiusTopLeft: =8
+      RadiusTopRight: =8
+      Size: =15
+      Text: ="Cancel"
+      Width: =140
+      X: =620
+      Y: =576
+- btnPunEdDismiss:
+    Control: Classic/Button@2.2.0
+    Properties:
+      BorderThickness: =0
+      Color: =clrWhite
+      DisabledColor: =Self.Color
+      DisabledFill: =ColorFade(Self.Fill, -30%)
+      Fill: =clrRed
+      FocusedBorderThickness: =0
+      FontWeight: =FontWeight.Semibold
+      Height: =48
+      HoverColor: =Self.Color
+      HoverFill: =ColorFade(Self.Fill, -10%)
+      OnSelect: |-
+        =If(!locPunDismissArm,
+            UpdateContext({locPunDismissArm: true}),
+            With({id: locId},
+                IfError(
+                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {JobStatus: {Value: "Dismissed"}}),
+                    Refresh(RunListJobs);
+                    IfError(
+                        Patch(RunListJobs, LookUp(RunListJobs, ID = id), {JobStatus: {Value: "Dismissed"}}),
+                        Notify("Dismiss failed: " & FirstError.Message, NotificationType.Error, 0),
+                        Notify("Job dismissed. Find job # can restore it.", NotificationType.Success);
+                        Select(btnPunEdCancel)
+                    ),
+                    Notify("Job dismissed. Find job # can restore it.", NotificationType.Success);
+                    Select(btnPunEdCancel)
+                )
+            )
+        )
+      PressedColor: =Self.Color
+      PressedFill: =ColorFade(Self.Fill, -25%)
+      RadiusBottomLeft: =8
+      RadiusBottomRight: =8
+      RadiusTopLeft: =8
+      RadiusTopRight: =8
+      Size: =15
+      Text: =If(locPunDismissArm, "Tap again to dismiss", "Dismiss job")
+      Tooltip: ="Dismiss hides the job from every board (it is never deleted)"
+      Visible: |-
+        =locPunEdMode = "edit" && (locPunJob.JobStatus.Value = "Active" || locPunJob.JobStatus.Value = "Incoming")
+      Width: =220
+      X: =24
+      Y: =576
+- btnPunEdSave:
+    Control: Classic/Button@2.2.0
+    Properties:
+      BorderThickness: =0
+      Color: =clrWhite
+      DisabledColor: =Self.Color
+      DisabledFill: =ColorFade(Self.Fill, -30%)
+      Fill: =clrBlue
+      FocusedBorderThickness: =0
+      FontWeight: =FontWeight.Semibold
+      Height: =48
+      HoverColor: =Self.Color
+      HoverFill: =ColorFade(Self.Fill, -10%)
+      OnSelect: |-
+        =If(Trim(txtPunEdJob.Text) = "",
+            Notify("Type a Job # first.", NotificationType.Warning),
+        With({
+                id: locId,
+                isAdd: locPunEdMode = "add",
+                isActive: locPunEdMode = "add" || locPunJob.JobStatus.Value = "Active",
+                imported: !IsBlank(locPunJob.CasmfgId),
+                num: Trim(txtPunEdJob.Text),
+                unit: Trim(txtPunEdUnit.Text),
+                model: Trim(txtPunEdModel.Text),
+                sizeSel: ddPunEdSize.Selected.Value,
+                mach: ddPunEdMachine.Selected.Value,
+                pday: dpPunEdPunch.SelectedDate,
+                line: ddPunEdLine.Selected.Value & "",
+                aday: dpPunEdAsm.SelectedDate,
+                sday: dpPunEdShip.SelectedDate,
+                // The row as it is on the server now (blank for Add). locPunJob is the copy
+                // taken when the panel opened, which is what the inputs started from.
+                fresh: If(locPunEdMode <> "add", LookUp(RunListJobs, ID = locId))
+            },
+        With({
+                size: If(sizeSel = "Auto", With({m: Match(Upper(model), "CASRTU\s*(?<sz>\d+)")}, If(!IsBlank(m) && Value(m.sz) >= 1 && Value(m.sz) <= 4, Value(m.sz), Blank())), Value(sizeSel)),
+                // Job key (list-design Title rule). Imported rows never get a new key.
+                key: If(unit <> "", Upper(num) & "|" & Upper(unit),
+                        !isAdd && !IsBlank(Find("|M", locPunJob.Title & "")), locPunJob.Title,
+                        Upper(num) & "|M" & Text(Now(), "yymmddhhmmss")),
+                // Schedule and ship values: the panel's value only if the user changed it; otherwise
+                // the row's current server value, so a change made on another device meanwhile
+                // (Assembly, Import, another Punch tablet) is not written back over.
+                effMach: If(isAdd || mach <> (locPunJob.Machine.Value & "") || IsBlank(fresh.Machine.Value), mach, fresh.Machine.Value),
+                effPday: If(isAdd || (Text(pday, "yyyy-mm-dd") & "") <> (Text(locPunJob.PunchDay, "yyyy-mm-dd") & ""), pday, fresh.PunchDay),
+                effLine: If(isAdd || line <> (locPunJob.AssemblyLine.Value & ""), line, fresh.AssemblyLine.Value & ""),
+                effAday: If(isAdd || (Text(aday, "yyyy-mm-dd") & "") <> (Text(locPunJob.AssemblyDate, "yyyy-mm-dd") & ""), aday, fresh.AssemblyDate),
+                effShip: If(isAdd || (Text(sday, "yyyy-mm-dd") & "") <> (Text(locPunJob.ShipDate, "yyyy-mm-dd") & ""), sday, fresh.ShipDate),
+                curBand: (fresh.Machine.Value & "") & "|" & If(IsBlank(fresh.PunchDay), "", Text(fresh.PunchDay, "yyyy-mm-dd")),
+                curCell: (fresh.AssemblyLine.Value & "") & "|" & If(IsBlank(fresh.AssemblyDate), "", Text(fresh.AssemblyDate, "yyyy-mm-dd"))
+            },
+        With({
+                band: effMach & "|" & If(IsBlank(effPday), "", Text(effPday, "yyyy-mm-dd")),
+                cell: effLine & "|" & If(IsBlank(effAday), "", Text(effAday, "yyyy-mm-dd"))
+            },
+        With({
+                det: {FanNumber: Trim(txtPunEdFan.Text), JobName: Trim(txtPunEdCust.Text), ProductModel: model, JobSize: size, ShipDate: effShip, Notes: txtPunEdNotes.Text},
+                keyRec: {Title: key, JobNumber: num, UnitNumber: unit},
+                // Only a job whose band (machine + punch day) or assembly cell really changes goes
+                // to the end of the new one; otherwise its current order is kept.
+                sch: {Machine: {Value: effMach}, PunchDay: effPday,
+                      PunchOrder: If(isAdd || band <> curBand, Coalesce(Max(Filter(ActiveJobs, PunchBand = band && ID <> id), PunchSort), 0) + 1, fresh.PunchOrder),
+                      AssemblyDate: effAday,
+                      AssemblyOrder: If(effLine <> "" && !IsBlank(effAday) && (isAdd || cell <> curCell), Coalesce(Max(Filter(ActiveJobs, AsmBand = cell && ID <> id), AsmSort), 0) + 1, fresh.AssemblyOrder)},
+                flags: {JobStatus: {Value: "Active"}, Nested: false, Need12: false, Need14: false, Need16: false, Need18: false, Need20: false, Need24: false, Done12: false, Done14: false, Done16: false, Done18: false, Done20: false, Done24: false, PBDone: false, P4Done: false, Started: false}
+            },
+            UpdateContext({locPunSaved: false});
+            If(isAdd,
+                // Add: one create with every column explicit (pitfall 4); a failed create is re-checked, not retried.
+                IfError(
+                    If(line = "",
+                        Patch(RunListJobs, Defaults(RunListJobs), det, keyRec, sch, flags),
+                        Patch(RunListJobs, Defaults(RunListJobs), det, keyRec, sch, flags, {AssemblyLine: {Value: line}})),
+                    With({dup: LookUp(RunListJobs, Title = key)},
+                        If(IsBlank(dup),
+                            Notify("Add failed: " & FirstError.Message, NotificationType.Error, 0),
+                            Notify("Job " & num & If(unit <> "", "-" & unit) & " is already in the list as " & dup.JobStatus.Value & ". Use Find job # to open it.", NotificationType.Error, 0))),
+                    UpdateContext({locPunSaved: true})
+                ),
+                // Edit: write helper; only the columns this panel owns.
+                IfError(
+                    If(isActive && imported, Patch(RunListJobs, LookUp(RunListJobs, ID = id), det, sch),
+                        isActive, Patch(RunListJobs, LookUp(RunListJobs, ID = id), det, sch, keyRec),
+                        imported, Patch(RunListJobs, LookUp(RunListJobs, ID = id), det),
+                        Patch(RunListJobs, LookUp(RunListJobs, ID = id), det, keyRec)),
+                    Refresh(RunListJobs);
+                    IfError(
+                        If(isActive && imported, Patch(RunListJobs, LookUp(RunListJobs, ID = id), det, sch),
+                            isActive, Patch(RunListJobs, LookUp(RunListJobs, ID = id), det, sch, keyRec),
+                            imported, Patch(RunListJobs, LookUp(RunListJobs, ID = id), det),
+                            Patch(RunListJobs, LookUp(RunListJobs, ID = id), det, keyRec)),
+                        With({dup: If(!imported, LookUp(RunListJobs, Title = key))},
+                            If(!IsBlank(dup) && dup.ID <> id,
+                                Notify("Job " & num & If(unit <> "", "-" & unit) & " is already in the list as " & dup.JobStatus.Value & ".", NotificationType.Error, 0),
+                                Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0))),
+                        UpdateContext({locPunSaved: true})
+                    ),
+                    UpdateContext({locPunSaved: true})
+                )
+            );
+            // Assembly line is its own small Patch, only when it changed (clearing a Choice is guide U13).
+            If(locPunSaved && !isAdd && isActive && line <> (locPunJob.AssemblyLine.Value & ""),
+                IfError(
+                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {AssemblyLine: If(line = "", Blank(), {Value: line})}),
+                    Refresh(RunListJobs);
+                    IfError(
+                        Patch(RunListJobs, LookUp(RunListJobs, ID = id), {AssemblyLine: If(line = "", Blank(), {Value: line})}),
+                        Notify("Saved, but the assembly line did not change: " & FirstError.Message, NotificationType.Error, 0)
+                    )
+                )
+            );
+            If(locPunSaved,
+                Notify(If(isAdd, "Job added.", "Saved."), NotificationType.Success);
+                Select(btnPunEdCancel)
+            )
+        )))))
+      PressedColor: =Self.Color
+      PressedFill: =ColorFade(Self.Fill, -25%)
+      RadiusBottomLeft: =8
+      RadiusBottomRight: =8
+      RadiusTopLeft: =8
+      RadiusTopRight: =8
+      Size: =15
+      Text: ="Save"
+      Width: =140
+      X: =776
+      Y: =576

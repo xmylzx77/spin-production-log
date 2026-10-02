@@ -1,0 +1,748 @@
+- galTvBoard:
+    Control: Gallery@2.15.0
+    Variant: Vertical
+    Properties:
+      BorderThickness: =0
+      DelayItemLoading: =false
+      Fill: =clrNone
+      Height: =648
+      Items: |-
+        =// One row = the k-th SB-8 and k-th SB-15 card of a day band (no Unscheduled band).
+        // Bands: today and the next 5 days, plus every other day that holds a TV job, in date
+        // order. Same days as Filter(PunchBandsOpen, BandKey > 0), built here so that a punch
+        // day more than 400 days away still gets a row (scrTV notes, request R1).
+        // A band takes Max(1, cards per machine) rows; only one page of 9 rows shows.
+        With({perPage: 9, win: PunchWindow},
+        With({extra: Filter(Distinct(Filter(ActiveJobs, !TurretDone && MachineText <> "" && PunchDayKey > 0), PunchDayKey) As u, IsBlank(LookUp(win, BandKey = u.Value)))},
+        With({keys: SortByColumns(ForAll(Sequence(CountRows(win) + CountRows(extra)) As s,
+                {K: If(s.Value <= CountRows(win), Index(win, s.Value).BandKey, Index(extra, s.Value - CountRows(win)).Value)}), "K", SortOrder.Ascending)},
+        With({bands: ForAll(keys As b,
+            With({d: Date(RoundDown(b.K / 10000, 0), Mod(RoundDown(b.K / 100, 0), 100), Mod(b.K, 100))},
+            With({ymd: Text(d, "yyyy-mm-dd")},
+            With({s8: SortByColumns(Filter(ActiveJobs, PunchBand = "SB8|" & ymd && !TurretDone), "PunchGroupOrder", SortOrder.Ascending, "PairKey", SortOrder.Ascending, "PunchSort", SortOrder.Ascending, "ID", SortOrder.Ascending),
+                  s15: SortByColumns(Filter(ActiveJobs, PunchBand = "SB15|" & ymd && !TurretDone), "PunchGroupOrder", SortOrder.Ascending, "PairKey", SortOrder.Ascending, "PunchSort", SortOrder.Ascending, "ID", SortOrder.Ascending)},
+                {BandKey: b.K, IsToday: b.K = TodayKey, S8: s8, S15: s15, RowCount: Max(1, CountRows(s8), CountRows(s15)),
+                 Label: If(Abs(DateDiff(TodayDate, d, TimeUnit.Days)) > 400, Text(d, "m/d/yyyy", "en-US"), Text(d, "ddd mmm d", "en-US"))}
+            ))))},
+        With({starts: ForAll(Sequence(CountRows(bands)) As s,
+            {FromRow: Coalesce(Sum(FirstN(bands, s.Value - 1), RowCount), 0) + 1, Band: Index(bands, s.Value)}
+        )},
+        With({allRows: ForAll(Sequence(Coalesce(Sum(bands, RowCount), 0)) As r,
+            With({x: Last(Filter(starts, FromRow <= r.Value))},
+            With({k: r.Value - x.FromRow + 1},
+                {RowNo: r.Value, PageTop: Mod(r.Value - 1, perPage) = 0,
+                 BandKey: x.Band.BandKey, Label: x.Band.Label, IsToday: x.Band.IsToday,
+                 Slot: k, C8: CountRows(x.Band.S8), C15: CountRows(x.Band.S15),
+                 J8: If(k <= CountRows(x.Band.S8), Index(x.Band.S8, k)),
+                 J15: If(k <= CountRows(x.Band.S15), Index(x.Band.S15, k))}
+            ))
+        )},
+        With({page: Mod(Coalesce(locTvPage, 0), Max(1, RoundUp(CountRows(allRows) / perPage, 0)))},
+            Filter(allRows, RowNo > page * perPage && RowNo <= (page + 1) * perPage)
+        )))))))
+      LoadingSpinner: =LoadingSpinner.None
+      ShowScrollbar: =false
+      TemplatePadding: =0
+      TemplateSize: =72
+      Width: =1350
+      X: =8
+      Y: =108
+    Children:
+      - recTvDayBg:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderThickness: =0
+            Fill: |-
+              =If(ThisItem.IsToday, RGBA(37, 99, 235, 0.45), ThisItem.BandKey < TodayKey, RGBA(239, 68, 68, 0.22), RGBA(51, 65, 85, 0.6))
+            Height: =Parent.TemplateHeight
+            Width: =140
+            X: =0
+            Y: =0
+      - recTvSep:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderThickness: =0
+            Fill: =clrGrey
+            Height: =2
+            Visible: =ThisItem.Slot = 1 && !ThisItem.PageTop
+            Width: =Parent.TemplateWidth
+            X: =0
+            Y: =0
+      - lblTvDayName:
+          Control: Label@2.5.1
+          Properties:
+            Color: =If(!ThisItem.IsToday && ThisItem.BandKey < TodayKey, RGBA(252, 165, 165, 1), clrText)
+            FontWeight: =FontWeight.Bold
+            Height: =28
+            PaddingBottom: =0
+            PaddingLeft: =10
+            PaddingTop: =0
+            Size: =16
+            Text: =ThisItem.Label
+            Visible: =ThisItem.Slot = 1 || ThisItem.PageTop
+            Width: =140
+            Wrap: =false
+            X: =0
+            Y: =8
+      - lblTvDayInfo:
+          Control: Label@2.5.1
+          Properties:
+            Color: =If(ThisItem.IsToday, clrText, clrMuted)
+            Height: =22
+            PaddingBottom: =0
+            PaddingLeft: =10
+            PaddingTop: =0
+            Size: =11
+            Text: |-
+              =With({n: ThisItem.C8 + ThisItem.C15},
+                  With({jobs: If(n = 1, "1 job", n & " jobs")},
+                      If(ThisItem.Slot > 1, "(continued)",
+                          ThisItem.IsToday, "Today · " & jobs,
+                          ThisItem.BandKey < TodayKey, "Overdue · " & jobs,
+                          n = 0, "No jobs",
+                          jobs
+                      )
+                  )
+              )
+            Visible: =ThisItem.Slot = 1 || ThisItem.PageTop
+            Width: =140
+            Wrap: =false
+            X: =0
+            Y: =38
+      - conTvCardS8:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            BorderColor: =If(IsBlank(ThisItem.J8.PairNo), clrBorder, ThisItem.J8.PairColor)
+            BorderThickness: =If(IsBlank(ThisItem.J8.PairNo), 1, 2)
+            DropShadow: =DropShadow.None
+            Fill: =clrCard
+            Height: =Parent.TemplateHeight - 8
+            RadiusBottomLeft: =8
+            RadiusBottomRight: =8
+            RadiusTopLeft: =8
+            RadiusTopRight: =8
+            Visible: =ThisItem.Slot <= ThisItem.C8
+            Width: =(Parent.TemplateWidth - 158) / 2
+            X: =148
+            Y: =4
+          Children:
+            - lblTvJobS8:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrText
+                  FontWeight: =FontWeight.Bold
+                  Height: =28
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingTop: =0
+                  Size: =18
+                  Text: =ThisItem.J8.JobLabel
+                  Width: =140
+                  Wrap: =false
+                  X: =12
+                  Y: =4
+            - lblTvSizeS8:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =If(IsBlank(ThisItem.J8.JobSize), clrRed, clrText)
+                  FontWeight: =FontWeight.Semibold
+                  Height: =28
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingTop: =0
+                  Size: =15
+                  Text: =ThisItem.J8.SizeText
+                  Width: =96
+                  Wrap: =false
+                  X: =156
+                  Y: =4
+            - lblTvShipS8:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =If(IsBlank(ThisItem.J8.ShipDate), clrRed, clrMuted)
+                  Height: =28
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =15
+                  Text: |-
+                    ="📅 " & ThisItem.J8.ShipText
+                  Width: =If(IsBlank(ThisItem.J8.ShipDate), 184, 104)
+                  Wrap: =false
+                  X: =256
+                  Y: =4
+            - lblTvNotesS8:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrMuted
+                  Height: =28
+                  Italic: =true
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =14
+                  Text: =Substitute(Substitute(ThisItem.J8.Notes & "", Char(13), ""), Char(10), "  ")
+                  Visible: =!IsBlank(ThisItem.J8.Notes)
+                  Width: =Max(0, Parent.Width - Self.X - 42)
+                  Wrap: =false
+                  X: =If(IsBlank(ThisItem.J8.ShipDate), 448, 368)
+                  Y: =4
+            - lblTvCustS8:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrMuted
+                  Height: =26
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =14
+                  Text: =ThisItem.J8.CustShort
+                  Width: =Parent.Width - 428
+                  Wrap: =false
+                  X: =422
+                  Y: =35
+            - btnTvPairS8:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =clrPage
+                  Fill: =ThisItem.J8.PairColor
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Bold
+                  Height: =28
+                  HoverColor: =Self.Color
+                  HoverFill: =Self.Fill
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  PressedColor: =Self.Color
+                  PressedFill: =Self.Fill
+                  RadiusBottomLeft: =14
+                  RadiusBottomRight: =14
+                  RadiusTopLeft: =14
+                  RadiusTopRight: =14
+                  Size: =13
+                  Text: =Text(ThisItem.J8.PairRank)
+                  Visible: =!IsBlank(ThisItem.J8.PairNo)
+                  Width: =28
+                  X: =Parent.Width - Self.Width - 10
+                  Y: =4
+            - btnTvG12S8:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =If(ThisItem.J8.Need12, clrPage, clrText)
+                  Fill: =If(ThisItem.J8.Need12 && ThisItem.J8.Done12, clrGreen, ThisItem.J8.Need12, clrYellow, clrGrey)
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Bold
+                  Height: =26
+                  HoverColor: =Self.Color
+                  HoverFill: =Self.Fill
+                  PaddingBottom: =0
+                  PaddingTop: =0
+                  PressedColor: =Self.Color
+                  PressedFill: =Self.Fill
+                  RadiusBottomLeft: =13
+                  RadiusBottomRight: =13
+                  RadiusTopLeft: =13
+                  RadiusTopRight: =13
+                  Size: =13
+                  Text: ="12"
+                  Width: =44
+                  X: =12 + 0 * 48
+                  Y: =35
+            - btnTvG14S8:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =If(ThisItem.J8.Need14, clrPage, clrText)
+                  Fill: =If(ThisItem.J8.Need14 && ThisItem.J8.Done14, clrGreen, ThisItem.J8.Need14, clrYellow, clrGrey)
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Bold
+                  Height: =26
+                  HoverColor: =Self.Color
+                  HoverFill: =Self.Fill
+                  PaddingBottom: =0
+                  PaddingTop: =0
+                  PressedColor: =Self.Color
+                  PressedFill: =Self.Fill
+                  RadiusBottomLeft: =13
+                  RadiusBottomRight: =13
+                  RadiusTopLeft: =13
+                  RadiusTopRight: =13
+                  Size: =13
+                  Text: ="14"
+                  Width: =44
+                  X: =12 + 1 * 48
+                  Y: =35
+            - btnTvG16S8:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =If(ThisItem.J8.Need16, clrPage, clrText)
+                  Fill: =If(ThisItem.J8.Need16 && ThisItem.J8.Done16, clrGreen, ThisItem.J8.Need16, clrYellow, clrGrey)
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Bold
+                  Height: =26
+                  HoverColor: =Self.Color
+                  HoverFill: =Self.Fill
+                  PaddingBottom: =0
+                  PaddingTop: =0
+                  PressedColor: =Self.Color
+                  PressedFill: =Self.Fill
+                  RadiusBottomLeft: =13
+                  RadiusBottomRight: =13
+                  RadiusTopLeft: =13
+                  RadiusTopRight: =13
+                  Size: =13
+                  Text: ="16"
+                  Width: =44
+                  X: =12 + 2 * 48
+                  Y: =35
+            - btnTvG18S8:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =If(ThisItem.J8.Need18, clrPage, clrText)
+                  Fill: =If(ThisItem.J8.Need18 && ThisItem.J8.Done18, clrGreen, ThisItem.J8.Need18, clrYellow, clrGrey)
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Bold
+                  Height: =26
+                  HoverColor: =Self.Color
+                  HoverFill: =Self.Fill
+                  PaddingBottom: =0
+                  PaddingTop: =0
+                  PressedColor: =Self.Color
+                  PressedFill: =Self.Fill
+                  RadiusBottomLeft: =13
+                  RadiusBottomRight: =13
+                  RadiusTopLeft: =13
+                  RadiusTopRight: =13
+                  Size: =13
+                  Text: ="18"
+                  Width: =44
+                  X: =12 + 3 * 48
+                  Y: =35
+            - btnTvG20S8:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =If(ThisItem.J8.Need20, clrPage, clrText)
+                  Fill: =If(ThisItem.J8.Need20 && ThisItem.J8.Done20, clrGreen, ThisItem.J8.Need20, clrYellow, clrGrey)
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Bold
+                  Height: =26
+                  HoverColor: =Self.Color
+                  HoverFill: =Self.Fill
+                  PaddingBottom: =0
+                  PaddingTop: =0
+                  PressedColor: =Self.Color
+                  PressedFill: =Self.Fill
+                  RadiusBottomLeft: =13
+                  RadiusBottomRight: =13
+                  RadiusTopLeft: =13
+                  RadiusTopRight: =13
+                  Size: =13
+                  Text: ="20"
+                  Width: =44
+                  X: =12 + 4 * 48
+                  Y: =35
+            - btnTvG24S8:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =If(ThisItem.J8.Need24, clrPage, clrText)
+                  Fill: =If(ThisItem.J8.Need24 && ThisItem.J8.Done24, clrGreen, ThisItem.J8.Need24, clrYellow, clrGrey)
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Bold
+                  Height: =26
+                  HoverColor: =Self.Color
+                  HoverFill: =Self.Fill
+                  PaddingBottom: =0
+                  PaddingTop: =0
+                  PressedColor: =Self.Color
+                  PressedFill: =Self.Fill
+                  RadiusBottomLeft: =13
+                  RadiusBottomRight: =13
+                  RadiusTopLeft: =13
+                  RadiusTopRight: =13
+                  Size: =13
+                  Text: ="24"
+                  Width: =44
+                  X: =12 + 5 * 48
+                  Y: =35
+            - btnTvNestedS8:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =If(ThisItem.J8.Nested, clrPage, clrText)
+                  Fill: =If(ThisItem.J8.Nested, clrGreen, clrGrey)
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Bold
+                  Height: =26
+                  HoverColor: =Self.Color
+                  HoverFill: =Self.Fill
+                  PaddingBottom: =0
+                  PaddingTop: =0
+                  PressedColor: =Self.Color
+                  PressedFill: =Self.Fill
+                  RadiusBottomLeft: =13
+                  RadiusBottomRight: =13
+                  RadiusTopLeft: =13
+                  RadiusTopRight: =13
+                  Size: =13
+                  Text: |-
+                    =If(ThisItem.J8.Nested, "✓ Nested", "Not nested")
+                  Width: =110
+                  X: =304
+                  Y: =35
+      - lblTvEmptyS8:
+          Control: Label@2.5.1
+          Properties:
+            Color: =clrMuted
+            Height: =28
+            Italic: =true
+            PaddingBottom: =0
+            PaddingLeft: =12
+            PaddingTop: =0
+            Size: =14
+            Text: ="No jobs"
+            Visible: =(ThisItem.Slot = 1 || ThisItem.PageTop) && ThisItem.C8 = 0
+            Width: =(Parent.TemplateWidth - 158) / 2
+            Wrap: =false
+            X: =148
+            Y: =8
+      - conTvCardS15:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            BorderColor: =If(IsBlank(ThisItem.J15.PairNo), clrBorder, ThisItem.J15.PairColor)
+            BorderThickness: =If(IsBlank(ThisItem.J15.PairNo), 1, 2)
+            DropShadow: =DropShadow.None
+            Fill: =clrCard
+            Height: =Parent.TemplateHeight - 8
+            RadiusBottomLeft: =8
+            RadiusBottomRight: =8
+            RadiusTopLeft: =8
+            RadiusTopRight: =8
+            Visible: =ThisItem.Slot <= ThisItem.C15
+            Width: =(Parent.TemplateWidth - 158) / 2
+            X: =(Parent.TemplateWidth - 158) / 2 + 158
+            Y: =4
+          Children:
+            - lblTvJobS15:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrText
+                  FontWeight: =FontWeight.Bold
+                  Height: =28
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingTop: =0
+                  Size: =18
+                  Text: =ThisItem.J15.JobLabel
+                  Width: =140
+                  Wrap: =false
+                  X: =12
+                  Y: =4
+            - lblTvSizeS15:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =If(IsBlank(ThisItem.J15.JobSize), clrRed, clrText)
+                  FontWeight: =FontWeight.Semibold
+                  Height: =28
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingTop: =0
+                  Size: =15
+                  Text: =ThisItem.J15.SizeText
+                  Width: =96
+                  Wrap: =false
+                  X: =156
+                  Y: =4
+            - lblTvShipS15:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =If(IsBlank(ThisItem.J15.ShipDate), clrRed, clrMuted)
+                  Height: =28
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =15
+                  Text: |-
+                    ="📅 " & ThisItem.J15.ShipText
+                  Width: =If(IsBlank(ThisItem.J15.ShipDate), 184, 104)
+                  Wrap: =false
+                  X: =256
+                  Y: =4
+            - lblTvNotesS15:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrMuted
+                  Height: =28
+                  Italic: =true
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =14
+                  Text: =Substitute(Substitute(ThisItem.J15.Notes & "", Char(13), ""), Char(10), "  ")
+                  Visible: =!IsBlank(ThisItem.J15.Notes)
+                  Width: =Max(0, Parent.Width - Self.X - 42)
+                  Wrap: =false
+                  X: =If(IsBlank(ThisItem.J15.ShipDate), 448, 368)
+                  Y: =4
+            - lblTvCustS15:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrMuted
+                  Height: =26
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =14
+                  Text: =ThisItem.J15.CustShort
+                  Width: =Parent.Width - 428
+                  Wrap: =false
+                  X: =422
+                  Y: =35
+            - btnTvPairS15:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =clrPage
+                  Fill: =ThisItem.J15.PairColor
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Bold
+                  Height: =28
+                  HoverColor: =Self.Color
+                  HoverFill: =Self.Fill
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  PressedColor: =Self.Color
+                  PressedFill: =Self.Fill
+                  RadiusBottomLeft: =14
+                  RadiusBottomRight: =14
+                  RadiusTopLeft: =14
+                  RadiusTopRight: =14
+                  Size: =13
+                  Text: =Text(ThisItem.J15.PairRank)
+                  Visible: =!IsBlank(ThisItem.J15.PairNo)
+                  Width: =28
+                  X: =Parent.Width - Self.Width - 10
+                  Y: =4
+            - btnTvG12S15:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =If(ThisItem.J15.Need12, clrPage, clrText)
+                  Fill: =If(ThisItem.J15.Need12 && ThisItem.J15.Done12, clrGreen, ThisItem.J15.Need12, clrYellow, clrGrey)
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Bold
+                  Height: =26
+                  HoverColor: =Self.Color
+                  HoverFill: =Self.Fill
+                  PaddingBottom: =0
+                  PaddingTop: =0
+                  PressedColor: =Self.Color
+                  PressedFill: =Self.Fill
+                  RadiusBottomLeft: =13
+                  RadiusBottomRight: =13
+                  RadiusTopLeft: =13
+                  RadiusTopRight: =13
+                  Size: =13
+                  Text: ="12"
+                  Width: =44
+                  X: =12 + 0 * 48
+                  Y: =35
+            - btnTvG14S15:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =If(ThisItem.J15.Need14, clrPage, clrText)
+                  Fill: =If(ThisItem.J15.Need14 && ThisItem.J15.Done14, clrGreen, ThisItem.J15.Need14, clrYellow, clrGrey)
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Bold
+                  Height: =26
+                  HoverColor: =Self.Color
+                  HoverFill: =Self.Fill
+                  PaddingBottom: =0
+                  PaddingTop: =0
+                  PressedColor: =Self.Color
+                  PressedFill: =Self.Fill
+                  RadiusBottomLeft: =13
+                  RadiusBottomRight: =13
+                  RadiusTopLeft: =13
+                  RadiusTopRight: =13
+                  Size: =13
+                  Text: ="14"
+                  Width: =44
+                  X: =12 + 1 * 48
+                  Y: =35
+            - btnTvG16S15:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =If(ThisItem.J15.Need16, clrPage, clrText)
+                  Fill: =If(ThisItem.J15.Need16 && ThisItem.J15.Done16, clrGreen, ThisItem.J15.Need16, clrYellow, clrGrey)
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Bold
+                  Height: =26
+                  HoverColor: =Self.Color
+                  HoverFill: =Self.Fill
+                  PaddingBottom: =0
+                  PaddingTop: =0
+                  PressedColor: =Self.Color
+                  PressedFill: =Self.Fill
+                  RadiusBottomLeft: =13
+                  RadiusBottomRight: =13
+                  RadiusTopLeft: =13
+                  RadiusTopRight: =13
+                  Size: =13
+                  Text: ="16"
+                  Width: =44
+                  X: =12 + 2 * 48
+                  Y: =35
+            - btnTvG18S15:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =If(ThisItem.J15.Need18, clrPage, clrText)
+                  Fill: =If(ThisItem.J15.Need18 && ThisItem.J15.Done18, clrGreen, ThisItem.J15.Need18, clrYellow, clrGrey)
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Bold
+                  Height: =26
+                  HoverColor: =Self.Color
+                  HoverFill: =Self.Fill
+                  PaddingBottom: =0
+                  PaddingTop: =0
+                  PressedColor: =Self.Color
+                  PressedFill: =Self.Fill
+                  RadiusBottomLeft: =13
+                  RadiusBottomRight: =13
+                  RadiusTopLeft: =13
+                  RadiusTopRight: =13
+                  Size: =13
+                  Text: ="18"
+                  Width: =44
+                  X: =12 + 3 * 48
+                  Y: =35
+            - btnTvG20S15:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =If(ThisItem.J15.Need20, clrPage, clrText)
+                  Fill: =If(ThisItem.J15.Need20 && ThisItem.J15.Done20, clrGreen, ThisItem.J15.Need20, clrYellow, clrGrey)
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Bold
+                  Height: =26
+                  HoverColor: =Self.Color
+                  HoverFill: =Self.Fill
+                  PaddingBottom: =0
+                  PaddingTop: =0
+                  PressedColor: =Self.Color
+                  PressedFill: =Self.Fill
+                  RadiusBottomLeft: =13
+                  RadiusBottomRight: =13
+                  RadiusTopLeft: =13
+                  RadiusTopRight: =13
+                  Size: =13
+                  Text: ="20"
+                  Width: =44
+                  X: =12 + 4 * 48
+                  Y: =35
+            - btnTvG24S15:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =If(ThisItem.J15.Need24, clrPage, clrText)
+                  Fill: =If(ThisItem.J15.Need24 && ThisItem.J15.Done24, clrGreen, ThisItem.J15.Need24, clrYellow, clrGrey)
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Bold
+                  Height: =26
+                  HoverColor: =Self.Color
+                  HoverFill: =Self.Fill
+                  PaddingBottom: =0
+                  PaddingTop: =0
+                  PressedColor: =Self.Color
+                  PressedFill: =Self.Fill
+                  RadiusBottomLeft: =13
+                  RadiusBottomRight: =13
+                  RadiusTopLeft: =13
+                  RadiusTopRight: =13
+                  Size: =13
+                  Text: ="24"
+                  Width: =44
+                  X: =12 + 5 * 48
+                  Y: =35
+            - btnTvNestedS15:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =If(ThisItem.J15.Nested, clrPage, clrText)
+                  Fill: =If(ThisItem.J15.Nested, clrGreen, clrGrey)
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Bold
+                  Height: =26
+                  HoverColor: =Self.Color
+                  HoverFill: =Self.Fill
+                  PaddingBottom: =0
+                  PaddingTop: =0
+                  PressedColor: =Self.Color
+                  PressedFill: =Self.Fill
+                  RadiusBottomLeft: =13
+                  RadiusBottomRight: =13
+                  RadiusTopLeft: =13
+                  RadiusTopRight: =13
+                  Size: =13
+                  Text: |-
+                    =If(ThisItem.J15.Nested, "✓ Nested", "Not nested")
+                  Width: =110
+                  X: =304
+                  Y: =35
+      - lblTvEmptyS15:
+          Control: Label@2.5.1
+          Properties:
+            Color: =clrMuted
+            Height: =28
+            Italic: =true
+            PaddingBottom: =0
+            PaddingLeft: =12
+            PaddingTop: =0
+            Size: =14
+            Text: ="No jobs"
+            Visible: =(ThisItem.Slot = 1 || ThisItem.PageTop) && ThisItem.C15 = 0
+            Width: =(Parent.TemplateWidth - 158) / 2
+            Wrap: =false
+            X: =(Parent.TemplateWidth - 158) / 2 + 158
+            Y: =8
+- tmrTvRefresh:
+    Control: Timer@2.1.0
+    Properties:
+      AutoPause: =true
+      AutoStart: =true
+      Duration: =60000
+      OnTimerEnd: |-
+        =Refresh(RunListJobs);
+        Set(gblRefreshTick, gblRefreshTick + 1)
+      Repeat: =true
+      Visible: =false
+- tmrTvPage:
+    Control: Timer@2.1.0
+    Properties:
+      AutoPause: =true
+      AutoStart: =true
+      Duration: =30000
+      OnTimerEnd: |-
+        =UpdateContext({locTvPage: locTvPage + 1})
+      Repeat: =true
+      Visible: =false

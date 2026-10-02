@@ -1,0 +1,318 @@
+// =====================================================================
+// White Board - App.Formulas
+// Paste ALL of this into: Tree view > App > property list "Formulas"
+// (no leading "="). Paste App.OnStart FIRST: it creates gblRefreshTick.
+// (No OnStart in the property list? Use the Screen1 fallback in
+// app/CONTRACT.md section 1, Paste 1.)
+// Contract for every name below: app/CONTRACT.md section 3.
+// - No behaviour functions in here (Set, Patch, Refresh, Notify...).
+// - Text columns that can be empty are built with If(IsBlank(x), "", x) or
+//   x & "", never Coalesce(x, ""): Coalesce returns BLANK when every argument
+//   is blank or "" (Learn), and Blank() <> "" is true.
+// - RunListJobs is touched only by the two indexed, delegable filters
+//   JobStatus.Value = "Active" / "Incoming" (list-design pitfall 1).
+// - Every working table is wrapped in With(): Learn says With creates
+//   collections internally, so screens filter and sort it locally with no
+//   delegation warnings and no extra server calls.
+// =====================================================================
+
+// ---------- Colours (yaml-authoring-guide 8.2) ----------
+clrPage = RGBA(15, 23, 42, 1);
+clrCard = RGBA(30, 41, 59, 1);
+clrBorder = RGBA(51, 65, 85, 1);
+clrText = RGBA(229, 231, 235, 1);
+clrMuted = RGBA(148, 163, 184, 1);
+clrGrey = RGBA(71, 85, 105, 1);
+clrGreen = RGBA(34, 197, 94, 1);
+clrYellow = RGBA(234, 179, 8, 1);
+clrAmber = RGBA(245, 158, 11, 1);
+clrRed = RGBA(239, 68, 68, 1);
+clrBlue = RGBA(37, 99, 235, 1);
+clrSB8 = RGBA(56, 189, 248, 1);
+clrSB15 = RGBA(167, 139, 250, 1);
+clrBending = RGBA(20, 184, 166, 1);
+clrPairs = [RGBA(245, 158, 11, 1), RGBA(34, 211, 238, 1), RGBA(244, 114, 182, 1), RGBA(74, 222, 128, 1), RGBA(167, 139, 250, 1), RGBA(250, 204, 21, 1), RGBA(251, 113, 133, 1), RGBA(96, 165, 250, 1)];
+clrWhite = RGBA(255, 255, 255, 1);
+clrOverlay = RGBA(0, 0, 0, 0.55);
+clrNone = RGBA(0, 0, 0, 0);
+
+// ---------- Today ----------
+// Today() in a named formula is only re-read when the formula recalculates.
+// Multiplying by gblRefreshTick ties it to the refresh timers, so a tablet or
+// the TV left running past midnight moves to the new day on its next refresh.
+TodayDate = DateAdd(Today(), 0 * Coalesce(gblRefreshTick, 0), TimeUnit.Days);
+TodayYmd = Text(TodayDate, "yyyy-mm-dd");
+TodayKey = Year(TodayDate) * 10000 + Month(TodayDate) * 100 + Day(TodayDate);
+
+// ---------- Fixed lists ----------
+GaugeList = [12, 14, 16, 18, 20, 24];
+MachineList = ["SB8", "SB15"];
+LineList = ["Line 1", "Line 2", "Line 3"];
+
+// Today and the next 5 days (the punch board's fixed window).
+PunchWindow = ForAll(
+    Sequence(6, 0) As s,
+    With({d: DateAdd(TodayDate, s.Value, TimeUnit.Days)},
+        {BandYmd: Text(d, "yyyy-mm-dd"), BandDate: d, BandKey: Year(d) * 10000 + Month(d) * 100 + Day(d), Label: Text(d, "ddd mmm d", "en-US"), IsToday: Text(d, "yyyy-mm-dd") = TodayYmd}
+    )
+);
+
+// ---------- Working set ----------
+// IncomingJobs: one indexed query (JobStatus = Incoming) + per-row display columns.
+IncomingJobs =
+    With({rows:
+    AddColumns(
+        AddColumns(
+            ShowColumns(
+                Filter(RunListJobs, JobStatus.Value = "Incoming"),
+                ID, Title, JobNumber, UnitNumber, FanNumber, JobName, ProductModel, NestLabel, CasmfgId, Notes,
+                JobSize, PairNo, PunchOrder, AssemblyOrder,
+                ShipDate, PrevShipDate, PunchDay, AssemblyDate, StartedOn, Created,
+                JobStatus, Machine, AssemblyLine,
+                Nested, Need12, Need14, Need16, Need18, Need20, Need24,
+                Done12, Done14, Done16, Done18, Done20, Done24,
+                PBDone, P4Done, Started
+            ),
+            MachineText, If(IsBlank(Machine.Value), "", Machine.Value),
+            LineText, If(IsBlank(AssemblyLine.Value), "", AssemblyLine.Value),
+            MachineOrder, Switch(Machine.Value & "", "SB8", 1, "SB15", 2, 3),
+            ShipYmd, If(IsBlank(ShipDate), "", Text(ShipDate, "yyyy-mm-dd")),
+            PunchYmd, If(IsBlank(PunchDay), "", Text(PunchDay, "yyyy-mm-dd")),
+            AsmYmd, If(IsBlank(AssemblyDate), "", Text(AssemblyDate, "yyyy-mm-dd")),
+            ShipKey, If(IsBlank(ShipDate), 99999999, Year(ShipDate) * 10000 + Month(ShipDate) * 100 + Day(ShipDate)),
+            PunchDayKey, If(IsBlank(PunchDay), 0, Year(PunchDay) * 10000 + Month(PunchDay) * 100 + Day(PunchDay)),
+            AsmKey, If(IsBlank(AssemblyDate), 99999999, Year(AssemblyDate) * 10000 + Month(AssemblyDate) * 100 + Day(AssemblyDate)),
+            PunchSort, Coalesce(PunchOrder, 0),
+            AsmSort, Coalesce(AssemblyOrder, 0),
+            PairKey, Coalesce(PairNo, 999999999),
+            TurretDone,
+                (Need12 || Need14 || Need16 || Need18 || Need20 || Need24) &&
+                (!Need12 || Done12) && (!Need14 || Done14) && (!Need16 || Done16) &&
+                (!Need18 || Done18) && (!Need20 || Done20) && (!Need24 || Done24),
+            NeedCount, If(Need12, 1, 0) + If(Need14, 1, 0) + If(Need16, 1, 0) + If(Need18, 1, 0) + If(Need20, 1, 0) + If(Need24, 1, 0),
+            Gauges, Table(
+                {G: 12, Need: Need12, Done: Done12, JobID: ID},
+                {G: 14, Need: Need14, Done: Done14, JobID: ID},
+                {G: 16, Need: Need16, Done: Done16, JobID: ID},
+                {G: 18, Need: Need18, Done: Done18, JobID: ID},
+                {G: 20, Need: Need20, Done: Done20, JobID: ID},
+                {G: 24, Need: Need24, Done: Done24, JobID: ID}
+            ),
+            JobLabel, JobNumber & If(!IsBlank(FanNumber), "-" & FanNumber),
+            SizeText, If(IsBlank(JobSize), "SET SIZE", "Size " & JobSize),
+            CustShort, Left(JobName, 12),
+            ShipText, If(IsBlank(ShipDate), "NO SHIP DATE", Text(ShipDate, "m/d")),
+            PrevShipText, If(IsBlank(PrevShipDate), "", Text(PrevShipDate, "m/d")),
+            IsNew, !IsBlank(CasmfgId) && Text(Created, "yyyy-mm-dd") = TodayYmd,
+            TonToken, With({tm: Match(NestLabel, "(?<t>\d+(?:\.\d+)?)TON", MatchOptions.IgnoreCase)}, If(IsBlank(tm.t), "", tm.t))
+        ),
+        PunchDone, TurretDone && PBDone && P4Done,
+        HeavyTon, TonToken in ["25", "30", "2530"],
+        PunchBand, MachineText & "|" & PunchYmd,
+        AsmBand, LineText & "|" & AsmYmd
+    )},
+    rows)
+;
+
+// ActiveBase: one indexed query (JobStatus = Active) + the same per-row columns,
+// plus AsmShown (Assembly default visibility, list-design Q3: unstarted, or
+// started and the ship date not yet passed; a started job still shows on its
+// ship day). Screens use ActiveJobs, not ActiveBase.
+ActiveBase =
+    With({rows:
+    AddColumns(
+        AddColumns(
+            ShowColumns(
+                Filter(RunListJobs, JobStatus.Value = "Active"),
+                ID, Title, JobNumber, UnitNumber, FanNumber, JobName, ProductModel, NestLabel, CasmfgId, Notes,
+                JobSize, PairNo, PunchOrder, AssemblyOrder,
+                ShipDate, PrevShipDate, PunchDay, AssemblyDate, StartedOn, Created,
+                JobStatus, Machine, AssemblyLine,
+                Nested, Need12, Need14, Need16, Need18, Need20, Need24,
+                Done12, Done14, Done16, Done18, Done20, Done24,
+                PBDone, P4Done, Started
+            ),
+            MachineText, If(IsBlank(Machine.Value), "", Machine.Value),
+            LineText, If(IsBlank(AssemblyLine.Value), "", AssemblyLine.Value),
+            MachineOrder, Switch(Machine.Value & "", "SB8", 1, "SB15", 2, 3),
+            ShipYmd, If(IsBlank(ShipDate), "", Text(ShipDate, "yyyy-mm-dd")),
+            PunchYmd, If(IsBlank(PunchDay), "", Text(PunchDay, "yyyy-mm-dd")),
+            AsmYmd, If(IsBlank(AssemblyDate), "", Text(AssemblyDate, "yyyy-mm-dd")),
+            ShipKey, If(IsBlank(ShipDate), 99999999, Year(ShipDate) * 10000 + Month(ShipDate) * 100 + Day(ShipDate)),
+            PunchDayKey, If(IsBlank(PunchDay), 0, Year(PunchDay) * 10000 + Month(PunchDay) * 100 + Day(PunchDay)),
+            AsmKey, If(IsBlank(AssemblyDate), 99999999, Year(AssemblyDate) * 10000 + Month(AssemblyDate) * 100 + Day(AssemblyDate)),
+            PunchSort, Coalesce(PunchOrder, 0),
+            AsmSort, Coalesce(AssemblyOrder, 0),
+            PairKey, Coalesce(PairNo, 999999999),
+            TurretDone,
+                (Need12 || Need14 || Need16 || Need18 || Need20 || Need24) &&
+                (!Need12 || Done12) && (!Need14 || Done14) && (!Need16 || Done16) &&
+                (!Need18 || Done18) && (!Need20 || Done20) && (!Need24 || Done24),
+            NeedCount, If(Need12, 1, 0) + If(Need14, 1, 0) + If(Need16, 1, 0) + If(Need18, 1, 0) + If(Need20, 1, 0) + If(Need24, 1, 0),
+            Gauges, Table(
+                {G: 12, Need: Need12, Done: Done12, JobID: ID},
+                {G: 14, Need: Need14, Done: Done14, JobID: ID},
+                {G: 16, Need: Need16, Done: Done16, JobID: ID},
+                {G: 18, Need: Need18, Done: Done18, JobID: ID},
+                {G: 20, Need: Need20, Done: Done20, JobID: ID},
+                {G: 24, Need: Need24, Done: Done24, JobID: ID}
+            ),
+            JobLabel, JobNumber & If(!IsBlank(FanNumber), "-" & FanNumber),
+            SizeText, If(IsBlank(JobSize), "SET SIZE", "Size " & JobSize),
+            CustShort, Left(JobName, 12),
+            ShipText, If(IsBlank(ShipDate), "NO SHIP DATE", Text(ShipDate, "m/d")),
+            PrevShipText, If(IsBlank(PrevShipDate), "", Text(PrevShipDate, "m/d")),
+            IsNew, !IsBlank(CasmfgId) && Text(Created, "yyyy-mm-dd") = TodayYmd,
+            TonToken, With({tm: Match(NestLabel, "(?<t>\d+(?:\.\d+)?)TON", MatchOptions.IgnoreCase)}, If(IsBlank(tm.t), "", tm.t))
+        ),
+        PunchDone, TurretDone && PBDone && P4Done,
+        HeavyTon, TonToken in ["25", "30", "2530"],
+        PunchBand, MachineText & "|" & PunchYmd,
+        AsmBand, LineText & "|" & AsmYmd,
+        AsmShown, !Started || ShipKey = 99999999 || ShipKey >= TodayKey
+    )},
+    rows)
+;
+
+// ActiveJobs = ActiveBase + pair/group keys. GroupShipMaxKey (latest ship
+// date in the pair) is the Turret tie-break after GroupShipKey, as machine.js:
+// a clean 7/7 single sorts above a 7/7 + 7/8 pair.
+// The With() record turns ActiveBase into an in-memory table ONCE per
+// recalculation ("With ... create[s] collections internally", Learn delegation
+// overview), so every per-row Filter/Min below runs locally, never as one
+// server query per row. Only paired rows (small) are scanned per row.
+ActiveJobs =
+    With({base: ActiveBase},
+    With({paired: Filter(base, !IsBlank(PairNo))},
+    With({pairOrder: SortByColumns(paired, "MachineOrder", SortOrder.Ascending, "PunchDayKey", SortOrder.Ascending, "PunchSort", SortOrder.Ascending, "ID", SortOrder.Ascending)},
+    With({ranked: ForAll(Sequence(CountRows(pairOrder)) As s, {PairNo: Index(pairOrder, s.Value).PairNo, Pos: s.Value})},
+    With({firsts: Filter(ranked As r, r.Pos = Min(Filter(ranked, PairNo = r.PairNo), Pos))},
+        AddColumns(
+            AddColumns(
+                base As j,
+                GroupShipKey, If(IsBlank(j.PairNo), j.ShipKey, Min(Filter(paired, PairNo = j.PairNo), ShipKey)),
+                GroupShipMaxKey, If(IsBlank(j.PairNo), j.ShipKey, Max(Filter(paired, PairNo = j.PairNo), If(ShipKey = 99999999, 0, ShipKey))),
+                PunchGroupOrder, If(IsBlank(j.PairNo), j.PunchSort, Min(Filter(paired, PairNo = j.PairNo && PunchBand = j.PunchBand), PunchSort)),
+                AsmGroupOrder, If(IsBlank(j.PairNo), j.AsmSort, Min(Filter(paired, PairNo = j.PairNo && AsmBand = j.AsmBand), AsmSort)),
+                PairRank, If(IsBlank(j.PairNo), 0, With({fp: LookUp(firsts, PairNo = j.PairNo).Pos}, CountRows(Filter(firsts, Pos <= fp))))
+            ),
+            GroupShip, If(GroupShipKey = 99999999, Blank(), Date(RoundDown(GroupShipKey / 10000, 0), Mod(RoundDown(GroupShipKey / 100, 0), 100), Mod(GroupShipKey, 100))),
+            PairColor, If(PairRank = 0, clrGrey, Index(clrPairs, Mod(PairRank - 1, 8) + 1).Value)
+        )
+    )))))
+;
+
+// ---------- Board helpers ----------
+// Punch board day bands (Punch and TV). One row per band, in display order:
+// the Unscheduled band (BandYmd = "") first when a shown job has no punch day,
+// then today..today+5 (PunchWindow), plus every other day that holds a shown
+// job, past or future (past days only while they hold one). Open = jobs not
+// TurretDone; All = every active job ("Show completed" on).
+// Built from the window plus the punch days in use (no continuous run of
+// dates), so a job on a far-away punch day (for example a mistyped year)
+// still gets its band; such a band's Label carries the year ("12/1/2027").
+// Days are compared as yyyymmdd keys, so a date-only value that arrives with
+// a time part can't drop a band.
+PunchBandsOpen =
+    With({src: Filter(ActiveJobs, !TurretDone && MachineText <> "")},
+    With({
+        hasUnscheduled: !IsEmpty(Filter(src, PunchDayKey = 0)),
+        extra: Filter(Distinct(Filter(src, PunchDayKey > 0), PunchDayKey) As u, IsBlank(LookUp(PunchWindow, BandKey = u.Value)))
+    },
+        SortByColumns(
+            Filter(
+                ForAll(
+                    Sequence(CountRows(PunchWindow) + CountRows(extra) + 1, 0) As s,
+                    If(s.Value = 0,
+                        {BandYmd: "", BandDate: Blank(), BandKey: 0, Label: "Unscheduled", IsToday: false},
+                        With({k: If(s.Value <= CountRows(PunchWindow), Index(PunchWindow, s.Value).BandKey, Index(extra, s.Value - CountRows(PunchWindow)).Value)},
+                        With({d: Date(RoundDown(k / 10000, 0), Mod(RoundDown(k / 100, 0), 100), Mod(k, 100))},
+                            {BandYmd: Text(d, "yyyy-mm-dd"), BandDate: d, BandKey: k, Label: If(Abs(DateDiff(TodayDate, d, TimeUnit.Days)) > 400, Text(d, "m/d/yyyy", "en-US"), Text(d, "ddd mmm d", "en-US")), IsToday: k = TodayKey}
+                        ))
+                    )
+                ),
+                BandKey > 0 || hasUnscheduled
+            ),
+            "BandKey", SortOrder.Ascending
+        )
+    ))
+;
+
+PunchBandsAll =
+    With({src: Filter(ActiveJobs, MachineText <> "")},
+    With({
+        hasUnscheduled: !IsEmpty(Filter(src, PunchDayKey = 0)),
+        extra: Filter(Distinct(Filter(src, PunchDayKey > 0), PunchDayKey) As u, IsBlank(LookUp(PunchWindow, BandKey = u.Value)))
+    },
+        SortByColumns(
+            Filter(
+                ForAll(
+                    Sequence(CountRows(PunchWindow) + CountRows(extra) + 1, 0) As s,
+                    If(s.Value = 0,
+                        {BandYmd: "", BandDate: Blank(), BandKey: 0, Label: "Unscheduled", IsToday: false},
+                        With({k: If(s.Value <= CountRows(PunchWindow), Index(PunchWindow, s.Value).BandKey, Index(extra, s.Value - CountRows(PunchWindow)).Value)},
+                        With({d: Date(RoundDown(k / 10000, 0), Mod(RoundDown(k / 100, 0), 100), Mod(k, 100))},
+                            {BandYmd: Text(d, "yyyy-mm-dd"), BandDate: d, BandKey: k, Label: If(Abs(DateDiff(TodayDate, d, TimeUnit.Days)) > 400, Text(d, "m/d/yyyy", "en-US"), Text(d, "ddd mmm d", "en-US")), IsToday: k = TodayKey}
+                        ))
+                    )
+                ),
+                BandKey > 0 || hasUnscheduled
+            ),
+            "BandKey", SortOrder.Ascending
+        )
+    ))
+;
+
+// Assembly grid rows: Mon-Fri from the earlier of today and the earliest
+// AssemblyDate of a SHOWN assigned job (AsmShown: unstarted, or started and
+// not yet shipped), to the later of the latest AssemblyDate and the 10th
+// workday from today. A Sat/Sun row appears only if a shown job is assigned to
+// that day (so no shown job is ever without a row).
+// AsmDaysAll: same over every assigned job ("Show started" on).
+AsmDays =
+    With({src: Filter(ActiveJobs, LineText <> "" && AsmYmd <> "" && AsmShown)},
+    With({
+        firstDay: First(SortByColumns(src, "AsmKey", SortOrder.Ascending)).AssemblyDate,
+        lastDay: First(SortByColumns(src, "AsmKey", SortOrder.Descending)).AssemblyDate,
+        usedKeys: Distinct(src, AsmKey),
+        tenthWorkday: Last(FirstN(Filter(ForAll(Sequence(21, 0) As s, {D: DateAdd(TodayDate, s.Value, TimeUnit.Days)}), Weekday(D, StartOfWeek.Monday) <= 5), 10)).D
+    },
+    With({
+        lo: If(IsBlank(firstDay) || firstDay >= TodayDate, TodayDate, firstDay < DateAdd(TodayDate, -400, TimeUnit.Days), DateAdd(TodayDate, -400, TimeUnit.Days), firstDay),
+        hi: If(IsBlank(lastDay) || lastDay <= tenthWorkday, tenthWorkday, lastDay > DateAdd(TodayDate, 400, TimeUnit.Days), DateAdd(TodayDate, 400, TimeUnit.Days), lastDay)
+    },
+        Filter(
+            ForAll(
+                Sequence(DateDiff(lo, hi, TimeUnit.Days) + 1, 0) As s,
+                With({d: DateAdd(lo, s.Value, TimeUnit.Days)},
+                    {BandYmd: Text(d, "yyyy-mm-dd"), BandDate: d, BandKey: Year(d) * 10000 + Month(d) * 100 + Day(d), Label: Text(d, "ddd mmm d", "en-US"), IsToday: Text(d, "yyyy-mm-dd") = TodayYmd, IsWeekend: Weekday(d, StartOfWeek.Monday) > 5}
+                )
+            ),
+            !IsWeekend || BandKey in usedKeys
+        )
+    )))
+;
+
+AsmDaysAll =
+    With({src: Filter(ActiveJobs, LineText <> "" && AsmYmd <> "")},
+    With({
+        firstDay: First(SortByColumns(src, "AsmKey", SortOrder.Ascending)).AssemblyDate,
+        lastDay: First(SortByColumns(src, "AsmKey", SortOrder.Descending)).AssemblyDate,
+        usedKeys: Distinct(src, AsmKey),
+        tenthWorkday: Last(FirstN(Filter(ForAll(Sequence(21, 0) As s, {D: DateAdd(TodayDate, s.Value, TimeUnit.Days)}), Weekday(D, StartOfWeek.Monday) <= 5), 10)).D
+    },
+    With({
+        lo: If(IsBlank(firstDay) || firstDay >= TodayDate, TodayDate, firstDay < DateAdd(TodayDate, -400, TimeUnit.Days), DateAdd(TodayDate, -400, TimeUnit.Days), firstDay),
+        hi: If(IsBlank(lastDay) || lastDay <= tenthWorkday, tenthWorkday, lastDay > DateAdd(TodayDate, 400, TimeUnit.Days), DateAdd(TodayDate, 400, TimeUnit.Days), lastDay)
+    },
+        Filter(
+            ForAll(
+                Sequence(DateDiff(lo, hi, TimeUnit.Days) + 1, 0) As s,
+                With({d: DateAdd(lo, s.Value, TimeUnit.Days)},
+                    {BandYmd: Text(d, "yyyy-mm-dd"), BandDate: d, BandKey: Year(d) * 10000 + Month(d) * 100 + Day(d), Label: Text(d, "ddd mmm d", "en-US"), IsToday: Text(d, "yyyy-mm-dd") = TodayYmd, IsWeekend: Weekday(d, StartOfWeek.Monday) > 5}
+                )
+            ),
+            !IsWeekend || BandKey in usedKeys
+        )
+    )))
+;

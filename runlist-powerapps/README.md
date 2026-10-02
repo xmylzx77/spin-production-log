@@ -13,7 +13,7 @@ Left out: the auto-planner and capacities, approvals and locks, Utility Sets, QC
 
 ## Steps, in order
 1. `01-sharepoint-list-setup.md`: create the **RunListJobs** list (about 30 minutes, in the browser).
-2. The app build guide and screen code are coming next in this folder.
+2. `02-build-the-app.md`: build the app in Power Apps Studio, paste by paste (22 pastes from the `app` folder), then publish, share, set up each device's link, and run the go-live tests.
 
 ## Reference
 - `design/list-design.md`: the full list design, the rules the app follows, and the reviewers' notes.

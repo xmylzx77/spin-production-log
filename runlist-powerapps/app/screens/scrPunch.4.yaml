@@ -1,0 +1,417 @@
+- lblPunPlTitle:
+    Control: Label@2.5.1
+    Properties:
+      Color: =clrText
+      FontWeight: =FontWeight.Bold
+      Height: =40
+      PaddingBottom: =0
+      PaddingLeft: =0
+      PaddingRight: =0
+      PaddingTop: =0
+      Size: =20
+      Text: ="Place " & LookUp(IncomingJobs, ID = locId).JobLabel
+      Width: =572
+      Wrap: =false
+      X: =24
+      Y: =16
+- lblPunPlInfo:
+    Control: Label@2.5.1
+    Properties:
+      Color: =clrMuted
+      Height: =28
+      PaddingBottom: =0
+      PaddingLeft: =0
+      PaddingRight: =0
+      PaddingTop: =0
+      Size: =14
+      Text: |-
+        =With({j: LookUp(IncomingJobs, ID = locId)}, j.CustShort & "   ·   " & j.SizeText & "   ·   📅 " & j.ShipText)
+      Width: =572
+      Wrap: =false
+      X: =24
+      Y: =56
+- lblPunPlMachL:
+    Control: Label@2.5.1
+    Properties:
+      Color: =clrMuted
+      FontWeight: =FontWeight.Semibold
+      Height: =24
+      PaddingBottom: =0
+      PaddingLeft: =0
+      PaddingRight: =0
+      PaddingTop: =0
+      Size: =13
+      Text: ="Machine"
+      Width: =200
+      Wrap: =false
+      X: =24
+      Y: =96
+- btnPunPlSB8:
+    Control: Classic/Button@2.2.0
+    Properties:
+      BorderThickness: =0
+      Color: =If(locPunPlaceMachine = "SB8", clrPage, clrText)
+      Fill: =If(locPunPlaceMachine = "SB8", clrSB8, clrGrey)
+      FocusedBorderThickness: =0
+      FontWeight: =FontWeight.Bold
+      Height: =48
+      HoverColor: =Self.Color
+      HoverFill: =ColorFade(Self.Fill, -10%)
+      OnSelect: |-
+        =UpdateContext({locPunPlaceMachine: "SB8"})
+      PressedColor: =Self.Color
+      PressedFill: =ColorFade(Self.Fill, -25%)
+      RadiusBottomLeft: =8
+      RadiusBottomRight: =8
+      RadiusTopLeft: =8
+      RadiusTopRight: =8
+      Size: =17
+      Text: ="SB8"
+      Width: =130
+      X: =24
+      Y: =122
+- btnPunPlSB15:
+    Control: Classic/Button@2.2.0
+    Properties:
+      BorderThickness: =0
+      Color: =If(locPunPlaceMachine = "SB15", clrPage, clrText)
+      Fill: =If(locPunPlaceMachine = "SB15", clrSB15, clrGrey)
+      FocusedBorderThickness: =0
+      FontWeight: =FontWeight.Bold
+      Height: =48
+      HoverColor: =Self.Color
+      HoverFill: =ColorFade(Self.Fill, -10%)
+      OnSelect: |-
+        =UpdateContext({locPunPlaceMachine: "SB15"})
+      PressedColor: =Self.Color
+      PressedFill: =ColorFade(Self.Fill, -25%)
+      RadiusBottomLeft: =8
+      RadiusBottomRight: =8
+      RadiusTopLeft: =8
+      RadiusTopRight: =8
+      Size: =17
+      Text: ="SB15"
+      Width: =130
+      X: =166
+      Y: =122
+- lblPunPlWarn:
+    Control: Label@2.5.1
+    Properties:
+      Color: =clrAmber
+      Height: =48
+      PaddingBottom: =0
+      PaddingLeft: =0
+      PaddingRight: =0
+      PaddingTop: =0
+      Size: =13
+      Text: |-
+        ="⚠ Size " & LookUp(IncomingJobs, ID = locId).JobSize & " normally punches on SB8. SB15 is still allowed."
+      Visible: |-
+        =With({j: LookUp(IncomingJobs, ID = locId)}, locPunPlaceMachine = "SB15" && (j.JobSize = 1 || j.JobSize = 4))
+      Width: =284
+      Wrap: =true
+      X: =312
+      Y: =122
+- lblPunPlDayL:
+    Control: Label@2.5.1
+    Properties:
+      Color: =clrMuted
+      FontWeight: =FontWeight.Semibold
+      Height: =24
+      PaddingBottom: =0
+      PaddingLeft: =0
+      PaddingRight: =0
+      PaddingTop: =0
+      Size: =13
+      Text: ="Punch day (leave it empty for the Unscheduled band)"
+      Width: =572
+      Wrap: =false
+      X: =24
+      Y: =184
+- dpPunPlDay:
+    Control: Classic/DatePicker@2.6.0
+    Properties:
+      BorderColor: =clrBorder
+      Color: =clrText
+      DefaultDate: =Blank()
+      Fill: =clrPage
+      Format: =DateTimeFormat.ShortDate
+      Height: =44
+      IconBackground: =clrGrey
+      IconFill: =clrText
+      Size: =15
+      StartOfWeek: =StartOfWeek.Monday
+      Width: =260
+      X: =24
+      Y: =210
+- btnPunPlClear:
+    Control: Classic/Button@2.2.0
+    Properties:
+      BorderThickness: =0
+      Color: =clrText
+      Fill: =clrGrey
+      FocusedBorderThickness: =0
+      FontWeight: =FontWeight.Semibold
+      Height: =44
+      HoverColor: =Self.Color
+      HoverFill: =ColorFade(Self.Fill, -10%)
+      OnSelect: =Reset(dpPunPlDay)
+      PressedColor: =Self.Color
+      PressedFill: =ColorFade(Self.Fill, -25%)
+      RadiusBottomLeft: =8
+      RadiusBottomRight: =8
+      RadiusTopLeft: =8
+      RadiusTopRight: =8
+      Size: =14
+      Text: ="Unscheduled"
+      Tooltip: ="Clear the punch day"
+      Width: =160
+      X: =296
+      Y: =210
+- lblPunPlGaugeL:
+    Control: Label@2.5.1
+    Properties:
+      Color: =clrMuted
+      FontWeight: =FontWeight.Semibold
+      Height: =24
+      PaddingBottom: =0
+      PaddingLeft: =0
+      PaddingRight: =0
+      PaddingTop: =0
+      Size: =13
+      Text: ="Gauges needed (tap to select; the card pills can change them later)"
+      Width: =572
+      Wrap: =false
+      X: =24
+      Y: =268
+- btnPunPlG12:
+    Control: Classic/Button@2.2.0
+    Properties:
+      BorderThickness: =0
+      Color: =If(locPunP12, clrPage, clrText)
+      Fill: =If(locPunP12, clrYellow, clrGrey)
+      FocusedBorderThickness: =0
+      FontWeight: =FontWeight.Bold
+      Height: =48
+      HoverColor: =Self.Color
+      HoverFill: =ColorFade(Self.Fill, -10%)
+      OnSelect: |-
+        =UpdateContext({locPunP12: !locPunP12})
+      PaddingLeft: =0
+      PaddingRight: =0
+      PressedColor: =Self.Color
+      PressedFill: =ColorFade(Self.Fill, -25%)
+      RadiusBottomLeft: =24
+      RadiusBottomRight: =24
+      RadiusTopLeft: =24
+      RadiusTopRight: =24
+      Size: =16
+      Text: ="12"
+      Width: =60
+      X: =24
+      Y: =294
+- btnPunPlG14:
+    Control: Classic/Button@2.2.0
+    Properties:
+      BorderThickness: =0
+      Color: =If(locPunP14, clrPage, clrText)
+      Fill: =If(locPunP14, clrYellow, clrGrey)
+      FocusedBorderThickness: =0
+      FontWeight: =FontWeight.Bold
+      Height: =48
+      HoverColor: =Self.Color
+      HoverFill: =ColorFade(Self.Fill, -10%)
+      OnSelect: |-
+        =UpdateContext({locPunP14: !locPunP14})
+      PaddingLeft: =0
+      PaddingRight: =0
+      PressedColor: =Self.Color
+      PressedFill: =ColorFade(Self.Fill, -25%)
+      RadiusBottomLeft: =24
+      RadiusBottomRight: =24
+      RadiusTopLeft: =24
+      RadiusTopRight: =24
+      Size: =16
+      Text: ="14"
+      Width: =60
+      X: =92
+      Y: =294
+- btnPunPlG16:
+    Control: Classic/Button@2.2.0
+    Properties:
+      BorderThickness: =0
+      Color: =If(locPunP16, clrPage, clrText)
+      Fill: =If(locPunP16, clrYellow, clrGrey)
+      FocusedBorderThickness: =0
+      FontWeight: =FontWeight.Bold
+      Height: =48
+      HoverColor: =Self.Color
+      HoverFill: =ColorFade(Self.Fill, -10%)
+      OnSelect: |-
+        =UpdateContext({locPunP16: !locPunP16})
+      PaddingLeft: =0
+      PaddingRight: =0
+      PressedColor: =Self.Color
+      PressedFill: =ColorFade(Self.Fill, -25%)
+      RadiusBottomLeft: =24
+      RadiusBottomRight: =24
+      RadiusTopLeft: =24
+      RadiusTopRight: =24
+      Size: =16
+      Text: ="16"
+      Width: =60
+      X: =160
+      Y: =294
+- btnPunPlG18:
+    Control: Classic/Button@2.2.0
+    Properties:
+      BorderThickness: =0
+      Color: =If(locPunP18, clrPage, clrText)
+      Fill: =If(locPunP18, clrYellow, clrGrey)
+      FocusedBorderThickness: =0
+      FontWeight: =FontWeight.Bold
+      Height: =48
+      HoverColor: =Self.Color
+      HoverFill: =ColorFade(Self.Fill, -10%)
+      OnSelect: |-
+        =UpdateContext({locPunP18: !locPunP18})
+      PaddingLeft: =0
+      PaddingRight: =0
+      PressedColor: =Self.Color
+      PressedFill: =ColorFade(Self.Fill, -25%)
+      RadiusBottomLeft: =24
+      RadiusBottomRight: =24
+      RadiusTopLeft: =24
+      RadiusTopRight: =24
+      Size: =16
+      Text: ="18"
+      Width: =60
+      X: =228
+      Y: =294
+- btnPunPlG20:
+    Control: Classic/Button@2.2.0
+    Properties:
+      BorderThickness: =0
+      Color: =If(locPunP20, clrPage, clrText)
+      Fill: =If(locPunP20, clrYellow, clrGrey)
+      FocusedBorderThickness: =0
+      FontWeight: =FontWeight.Bold
+      Height: =48
+      HoverColor: =Self.Color
+      HoverFill: =ColorFade(Self.Fill, -10%)
+      OnSelect: |-
+        =UpdateContext({locPunP20: !locPunP20})
+      PaddingLeft: =0
+      PaddingRight: =0
+      PressedColor: =Self.Color
+      PressedFill: =ColorFade(Self.Fill, -25%)
+      RadiusBottomLeft: =24
+      RadiusBottomRight: =24
+      RadiusTopLeft: =24
+      RadiusTopRight: =24
+      Size: =16
+      Text: ="20"
+      Width: =60
+      X: =296
+      Y: =294
+- btnPunPlG24:
+    Control: Classic/Button@2.2.0
+    Properties:
+      BorderThickness: =0
+      Color: =If(locPunP24, clrPage, clrText)
+      Fill: =If(locPunP24, clrYellow, clrGrey)
+      FocusedBorderThickness: =0
+      FontWeight: =FontWeight.Bold
+      Height: =48
+      HoverColor: =Self.Color
+      HoverFill: =ColorFade(Self.Fill, -10%)
+      OnSelect: |-
+        =UpdateContext({locPunP24: !locPunP24})
+      PaddingLeft: =0
+      PaddingRight: =0
+      PressedColor: =Self.Color
+      PressedFill: =ColorFade(Self.Fill, -25%)
+      RadiusBottomLeft: =24
+      RadiusBottomRight: =24
+      RadiusTopLeft: =24
+      RadiusTopRight: =24
+      Size: =16
+      Text: ="24"
+      Width: =60
+      X: =364
+      Y: =294
+- btnPunPlCancel:
+    Control: Classic/Button@2.2.0
+    Properties:
+      BorderThickness: =0
+      Color: =clrWhite
+      Fill: =clrGrey
+      FocusedBorderThickness: =0
+      FontWeight: =FontWeight.Semibold
+      Height: =48
+      HoverColor: =Self.Color
+      HoverFill: =ColorFade(Self.Fill, -10%)
+      OnSelect: |-
+        =UpdateContext({locPanel: "", locId: 0});
+        Reset(dpPunPlDay)
+      PressedColor: =Self.Color
+      PressedFill: =ColorFade(Self.Fill, -25%)
+      RadiusBottomLeft: =8
+      RadiusBottomRight: =8
+      RadiusTopLeft: =8
+      RadiusTopRight: =8
+      Size: =15
+      Text: ="Cancel"
+      Width: =140
+      X: =300
+      Y: =408
+- btnPunPlConfirm:
+    Control: Classic/Button@2.2.0
+    Properties:
+      BorderThickness: =0
+      Color: =clrWhite
+      DisabledColor: =Self.Color
+      DisabledFill: =ColorFade(Self.Fill, -30%)
+      Fill: =clrBlue
+      FocusedBorderThickness: =0
+      FontWeight: =FontWeight.Semibold
+      Height: =48
+      HoverColor: =Self.Color
+      HoverFill: =ColorFade(Self.Fill, -10%)
+      OnSelect: |-
+        =With({j: LookUp(IncomingJobs, ID = locId), m: locPunPlaceMachine, d: dpPunPlDay.SelectedDate, cur: LookUp(RunListJobs, ID = locId)},
+            // cur is the row as it is on the server now: another device may have placed or dismissed it.
+            If(IsBlank(j) || cur.JobStatus.Value <> "Incoming",
+                Notify("This job is no longer in the Incoming tray (it was placed or dismissed on another device). Nothing was changed.", NotificationType.Warning);
+                Refresh(RunListJobs);
+                Set(gblRefreshTick, gblRefreshTick + 1);
+                Select(btnPunPlCancel),
+                // Place: Active, machine, optional punch day, gauges, end of its band (band max + 1).
+                With({id: j.ID,
+                      ch: {JobStatus: {Value: "Active"}, Machine: {Value: m}, PunchDay: d,
+                           PunchOrder: Coalesce(Max(Filter(ActiveJobs, PunchBand = m & "|" & If(IsBlank(d), "", Text(d, "yyyy-mm-dd"))), PunchSort), 0) + 1,
+                           Need12: locPunP12, Need14: locPunP14, Need16: locPunP16, Need18: locPunP18, Need20: locPunP20, Need24: locPunP24}},
+                    IfError(
+                        Patch(RunListJobs, LookUp(RunListJobs, ID = id), ch),
+                        Refresh(RunListJobs);
+                        IfError(
+                            Patch(RunListJobs, LookUp(RunListJobs, ID = id), ch),
+                            Notify("Place failed: " & FirstError.Message, NotificationType.Error, 0),
+                            Select(btnPunPlCancel)
+                        ),
+                        Select(btnPunPlCancel)
+                    )
+                )
+            )
+        )
+      PressedColor: =Self.Color
+      PressedFill: =ColorFade(Self.Fill, -25%)
+      RadiusBottomLeft: =8
+      RadiusBottomRight: =8
+      RadiusTopLeft: =8
+      RadiusTopRight: =8
+      Size: =15
+      Text: ="Place on " & locPunPlaceMachine
+      Width: =140
+      X: =456
+      Y: =408

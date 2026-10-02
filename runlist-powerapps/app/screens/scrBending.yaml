@@ -1,0 +1,661 @@
+Screens:
+  scrBending:
+    Properties:
+      Fill: =clrPage
+      OnVisible: |-
+        =Refresh(RunListJobs);
+        Set(gblRefreshTick, gblRefreshTick + 1)
+    Children:
+      - conBenHeader:
+          Control: GroupContainer@1.5.0
+          Variant: AutoLayout
+          Properties:
+            BorderThickness: =0
+            DropShadow: =DropShadow.None
+            Fill: =clrCard
+            Height: =64
+            LayoutAlignItems: =LayoutAlignItems.Center
+            LayoutDirection: =LayoutDirection.Horizontal
+            LayoutGap: =12
+            LayoutJustifyContent: =LayoutJustifyContent.Start
+            PaddingLeft: =16
+            PaddingRight: =16
+            Width: =1366
+            X: =0
+            Y: =0
+          Children:
+            - lblBenTitle:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrBending
+                  FillPortions: =0
+                  FontWeight: =FontWeight.Bold
+                  Height: =44
+                  LayoutMinWidth: =130
+                  PaddingLeft: =0
+                  Size: =22
+                  Text: ="Bending"
+                  Width: =130
+                  Wrap: =false
+            - lblBenSub:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrMuted
+                  FillPortions: =1
+                  Height: =44
+                  LayoutMinWidth: =200
+                  PaddingLeft: =0
+                  Size: =14
+                  Text: |-
+                    ="Brake & P4: punch status shown, mark bending done"
+                  Wrap: =false
+            - tglBenReady:
+                Control: Classic/Toggle@2.1.0
+                Properties:
+                  AccessibleLabel: ="Ready only"
+                  Default: =false
+                  FalseFill: =clrGrey
+                  FalseHoverFill: =clrGrey
+                  FillPortions: =0
+                  FocusedBorderThickness: =0
+                  HandleFill: =clrText
+                  Height: =36
+                  LayoutMinWidth: =64
+                  ShowLabel: =false
+                  TrueFill: =clrGreen
+                  TrueHoverFill: =clrGreen
+                  Width: =64
+            - lblBenReady:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrText
+                  FillPortions: =0
+                  Height: =44
+                  LayoutMinWidth: =110
+                  PaddingLeft: =0
+                  Size: =14
+                  Text: ="Ready only"
+                  Width: =110
+                  Wrap: =false
+            - tglBenShowDone:
+                Control: Classic/Toggle@2.1.0
+                Properties:
+                  AccessibleLabel: ="Show complete"
+                  Default: =false
+                  FalseFill: =clrGrey
+                  FalseHoverFill: =clrGrey
+                  FillPortions: =0
+                  FocusedBorderThickness: =0
+                  HandleFill: =clrText
+                  Height: =36
+                  LayoutMinWidth: =64
+                  ShowLabel: =false
+                  TrueFill: =clrGreen
+                  TrueHoverFill: =clrGreen
+                  Width: =64
+            - lblBenShowDone:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrText
+                  FillPortions: =0
+                  Height: =44
+                  LayoutMinWidth: =150
+                  PaddingLeft: =0
+                  Size: =14
+                  Text: ="Show complete"
+                  Width: =150
+                  Wrap: =false
+            - btnBenRefresh:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =clrWhite
+                  Fill: =clrBlue
+                  FillPortions: =0
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Semibold
+                  Height: =44
+                  HoverColor: =Self.Color
+                  HoverFill: =ColorFade(Self.Fill, -15%)
+                  LayoutMinWidth: =110
+                  OnSelect: |-
+                    =Refresh(RunListJobs);
+                    Set(gblRefreshTick, gblRefreshTick + 1)
+                  PressedColor: =Self.Color
+                  PressedFill: =ColorFade(Self.Fill, -30%)
+                  RadiusBottomLeft: =8
+                  RadiusBottomRight: =8
+                  RadiusTopLeft: =8
+                  RadiusTopRight: =8
+                  Size: =15
+                  Text: ="Refresh"
+                  Width: =110
+            - btnBenHome:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =clrWhite
+                  Fill: =clrGrey
+                  FillPortions: =0
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Semibold
+                  Height: =44
+                  HoverColor: =Self.Color
+                  HoverFill: =ColorFade(Self.Fill, -15%)
+                  LayoutMinWidth: =100
+                  OnSelect: =Navigate(scrHome, ScreenTransition.None)
+                  PressedColor: =Self.Color
+                  PressedFill: =ColorFade(Self.Fill, -30%)
+                  RadiusBottomLeft: =8
+                  RadiusBottomRight: =8
+                  RadiusTopLeft: =8
+                  RadiusTopRight: =8
+                  Size: =15
+                  Text: ="Home"
+                  Width: =100
+      - lblBenCaption:
+          Control: Label@2.5.1
+          Properties:
+            Color: =clrMuted
+            FontWeight: =FontWeight.Semibold
+            Height: =26
+            PaddingLeft: =0
+            Size: =13
+            Text: ="Nested jobs in ship order (a pair stays together)"
+            Width: =600
+            Wrap: =false
+            X: =18
+            Y: =68
+      - lblBenCounts:
+          Control: Label@2.5.1
+          Properties:
+            Align: =Align.Right
+            Color: =clrMuted
+            Height: =26
+            PaddingLeft: =0
+            PaddingRight: =0
+            Size: =13
+            Text: |-
+              =With(
+                  {open: Filter(ActiveJobs, Nested && !(PBDone && P4Done))},
+                  "Ready to bend: " & CountRows(Filter(open, TurretDone)) &
+                  "      Waiting on punch: " & CountRows(Filter(open, !TurretDone))
+              )
+            Width: =600
+            Wrap: =false
+            X: =742
+            Y: =68
+      - galBenJobs:
+          Control: Gallery@2.15.0
+          Variant: Vertical
+          Properties:
+            BorderThickness: =0
+            DelayItemLoading: =false
+            Fill: =clrNone
+            FocusedBorderThickness: =0
+            Height: =668
+            Items: |-
+              =SortByColumns(
+                  Filter(
+                      ActiveJobs,
+                      Nested &&
+                      (tglBenShowDone.Value || !(PBDone && P4Done)) &&
+                      (!tglBenReady.Value || TurretDone)
+                  ),
+                  "GroupShipKey", SortOrder.Ascending,
+                  "PairKey", SortOrder.Ascending,
+                  "ShipKey", SortOrder.Ascending,
+                  "ID", SortOrder.Ascending
+              )
+            LoadingSpinner: =LoadingSpinner.None
+            ShowScrollbar: =true
+            TemplatePadding: =0
+            TemplateSize: =112
+            Width: =1350
+            X: =8
+            Y: =96
+          Children:
+            - conBenCard:
+                Control: GroupContainer@1.5.0
+                Variant: ManualLayout
+                Properties:
+                  BorderColor: =clrBorder
+                  BorderThickness: =1
+                  DropShadow: =DropShadow.None
+                  Fill: =If(ThisItem.TurretDone, clrCard, ColorFade(clrCard, -40%))
+                  Height: =Parent.TemplateHeight - 8
+                  RadiusBottomLeft: =8
+                  RadiusBottomRight: =8
+                  RadiusTopLeft: =8
+                  RadiusTopRight: =8
+                  Width: =Parent.TemplateWidth - 12
+                  X: =0
+                  Y: =4
+                Children:
+                  - recBenPairBar:
+                      Control: Rectangle@2.3.0
+                      Properties:
+                        BorderThickness: =0
+                        Fill: =ColorFade(ThisItem.PairColor, If(ThisItem.TurretDone, 0%, -50%))
+                        Height: =Parent.Height - 16
+                        Visible: =!IsBlank(ThisItem.PairNo)
+                        Width: =6
+                        X: =0
+                        Y: =8
+                  - lblBenModel:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =If(ThisItem.TurretDone, clrText, clrMuted)
+                        FontWeight: =FontWeight.Bold
+                        Height: =36
+                        PaddingLeft: =0
+                        Size: =22
+                        Text: |-
+                          =If(
+                              !IsBlank(ThisItem.ProductModel), ThisItem.ProductModel,
+                              !IsBlank(ThisItem.JobName), ThisItem.JobName,
+                              "(untitled)"
+                          )
+                        Width: =410
+                        Wrap: =false
+                        X: =18
+                        Y: =8
+                  - lblBenCust:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =If(ThisItem.TurretDone, clrMuted, ColorFade(clrMuted, -40%))
+                        Height: =36
+                        PaddingLeft: =0
+                        Size: =15
+                        Text: =ThisItem.CustShort
+                        Tooltip: =ThisItem.JobName
+                        Width: =165
+                        Wrap: =false
+                        X: =436
+                        Y: =8
+                  - lblBenShip:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: |-
+                          =If(
+                              IsBlank(ThisItem.ShipDate), If(ThisItem.TurretDone, clrRed, ColorFade(clrRed, -40%)),
+                              If(ThisItem.TurretDone, clrMuted, ColorFade(clrMuted, -40%))
+                          )
+                        Height: =36
+                        PaddingLeft: =0
+                        Size: =15
+                        Text: |-
+                          ="📅 " & ThisItem.ShipText
+                        Width: =175
+                        Wrap: =false
+                        X: =606
+                        Y: =8
+                  - lblBenJob:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =If(ThisItem.TurretDone, clrText, clrMuted)
+                        FontWeight: =FontWeight.Bold
+                        Height: =36
+                        PaddingLeft: =0
+                        Size: =16
+                        Text: |-
+                          =If(IsBlank(ThisItem.JobLabel), "", "#" & ThisItem.JobLabel)
+                        Width: =160
+                        Wrap: =false
+                        X: =786
+                        Y: =8
+                  - btnBenPair:
+                      Control: Classic/Button@2.2.0
+                      Properties:
+                        BorderThickness: =0
+                        Color: =If(ThisItem.TurretDone, clrPage, clrText)
+                        Fill: =ColorFade(ThisItem.PairColor, If(ThisItem.TurretDone, 0%, -50%))
+                        FocusedBorderThickness: =0
+                        FontWeight: =FontWeight.Bold
+                        Height: =28
+                        HoverColor: =Self.Color
+                        HoverFill: =Self.Fill
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        PressedColor: =Self.Color
+                        PressedFill: =Self.Fill
+                        RadiusBottomLeft: =14
+                        RadiusBottomRight: =14
+                        RadiusTopLeft: =14
+                        RadiusTopRight: =14
+                        Size: =12
+                        Text: =Text(ThisItem.PairRank)
+                        Tooltip: ="Paired job, bend it together with its mate"
+                        Visible: =!IsBlank(ThisItem.PairNo)
+                        Width: =28
+                        X: =956
+                        Y: =12
+                  - btnBenG12:
+                      Control: Classic/Button@2.2.0
+                      Properties:
+                        BorderThickness: =0
+                        Color: =If(ThisItem.TurretDone, clrPage, clrText)
+                        Fill: =ColorFade(If(ThisItem.Done12, clrGreen, clrYellow), If(ThisItem.TurretDone, 0%, -50%))
+                        FocusedBorderThickness: =0
+                        FontWeight: =FontWeight.Bold
+                        Height: =32
+                        HoverColor: =Self.Color
+                        HoverFill: =Self.Fill
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        PressedColor: =Self.Color
+                        PressedFill: =Self.Fill
+                        RadiusBottomLeft: =16
+                        RadiusBottomRight: =16
+                        RadiusTopLeft: =16
+                        RadiusTopRight: =16
+                        Size: =13
+                        Text: ="12"
+                        Tooltip: =If(ThisItem.Done12, "12 ga punched", "12 ga still to punch")
+                        Visible: =ThisItem.Need12
+                        Width: =40
+                        X: =18
+                        Y: =60
+                  - btnBenG14:
+                      Control: Classic/Button@2.2.0
+                      Properties:
+                        BorderThickness: =0
+                        Color: =If(ThisItem.TurretDone, clrPage, clrText)
+                        Fill: =ColorFade(If(ThisItem.Done14, clrGreen, clrYellow), If(ThisItem.TurretDone, 0%, -50%))
+                        FocusedBorderThickness: =0
+                        FontWeight: =FontWeight.Bold
+                        Height: =32
+                        HoverColor: =Self.Color
+                        HoverFill: =Self.Fill
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        PressedColor: =Self.Color
+                        PressedFill: =Self.Fill
+                        RadiusBottomLeft: =16
+                        RadiusBottomRight: =16
+                        RadiusTopLeft: =16
+                        RadiusTopRight: =16
+                        Size: =13
+                        Text: ="14"
+                        Tooltip: =If(ThisItem.Done14, "14 ga punched", "14 ga still to punch")
+                        Visible: =ThisItem.Need14
+                        Width: =40
+                        X: =18 + If(ThisItem.Need12, 1, 0) * 46
+                        Y: =60
+                  - btnBenG16:
+                      Control: Classic/Button@2.2.0
+                      Properties:
+                        BorderThickness: =0
+                        Color: =If(ThisItem.TurretDone, clrPage, clrText)
+                        Fill: =ColorFade(If(ThisItem.Done16, clrGreen, clrYellow), If(ThisItem.TurretDone, 0%, -50%))
+                        FocusedBorderThickness: =0
+                        FontWeight: =FontWeight.Bold
+                        Height: =32
+                        HoverColor: =Self.Color
+                        HoverFill: =Self.Fill
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        PressedColor: =Self.Color
+                        PressedFill: =Self.Fill
+                        RadiusBottomLeft: =16
+                        RadiusBottomRight: =16
+                        RadiusTopLeft: =16
+                        RadiusTopRight: =16
+                        Size: =13
+                        Text: ="16"
+                        Tooltip: =If(ThisItem.Done16, "16 ga punched", "16 ga still to punch")
+                        Visible: =ThisItem.Need16
+                        Width: =40
+                        X: =18 + (If(ThisItem.Need12, 1, 0) + If(ThisItem.Need14, 1, 0)) * 46
+                        Y: =60
+                  - btnBenG18:
+                      Control: Classic/Button@2.2.0
+                      Properties:
+                        BorderThickness: =0
+                        Color: =If(ThisItem.TurretDone, clrPage, clrText)
+                        Fill: =ColorFade(If(ThisItem.Done18, clrGreen, clrYellow), If(ThisItem.TurretDone, 0%, -50%))
+                        FocusedBorderThickness: =0
+                        FontWeight: =FontWeight.Bold
+                        Height: =32
+                        HoverColor: =Self.Color
+                        HoverFill: =Self.Fill
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        PressedColor: =Self.Color
+                        PressedFill: =Self.Fill
+                        RadiusBottomLeft: =16
+                        RadiusBottomRight: =16
+                        RadiusTopLeft: =16
+                        RadiusTopRight: =16
+                        Size: =13
+                        Text: ="18"
+                        Tooltip: =If(ThisItem.Done18, "18 ga punched", "18 ga still to punch")
+                        Visible: =ThisItem.Need18
+                        Width: =40
+                        X: |-
+                          =18 + (If(ThisItem.Need12, 1, 0) + If(ThisItem.Need14, 1, 0) + If(ThisItem.Need16, 1, 0)) * 46
+                        Y: =60
+                  - btnBenG20:
+                      Control: Classic/Button@2.2.0
+                      Properties:
+                        BorderThickness: =0
+                        Color: =If(ThisItem.TurretDone, clrPage, clrText)
+                        Fill: =ColorFade(If(ThisItem.Done20, clrGreen, clrYellow), If(ThisItem.TurretDone, 0%, -50%))
+                        FocusedBorderThickness: =0
+                        FontWeight: =FontWeight.Bold
+                        Height: =32
+                        HoverColor: =Self.Color
+                        HoverFill: =Self.Fill
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        PressedColor: =Self.Color
+                        PressedFill: =Self.Fill
+                        RadiusBottomLeft: =16
+                        RadiusBottomRight: =16
+                        RadiusTopLeft: =16
+                        RadiusTopRight: =16
+                        Size: =13
+                        Text: ="20"
+                        Tooltip: =If(ThisItem.Done20, "20 ga punched", "20 ga still to punch")
+                        Visible: =ThisItem.Need20
+                        Width: =40
+                        X: |-
+                          =18 + (If(ThisItem.Need12, 1, 0) + If(ThisItem.Need14, 1, 0) + If(ThisItem.Need16, 1, 0) +
+                              If(ThisItem.Need18, 1, 0)) * 46
+                        Y: =60
+                  - btnBenG24:
+                      Control: Classic/Button@2.2.0
+                      Properties:
+                        BorderThickness: =0
+                        Color: =If(ThisItem.TurretDone, clrPage, clrText)
+                        Fill: =ColorFade(If(ThisItem.Done24, clrGreen, clrYellow), If(ThisItem.TurretDone, 0%, -50%))
+                        FocusedBorderThickness: =0
+                        FontWeight: =FontWeight.Bold
+                        Height: =32
+                        HoverColor: =Self.Color
+                        HoverFill: =Self.Fill
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        PressedColor: =Self.Color
+                        PressedFill: =Self.Fill
+                        RadiusBottomLeft: =16
+                        RadiusBottomRight: =16
+                        RadiusTopLeft: =16
+                        RadiusTopRight: =16
+                        Size: =13
+                        Text: ="24"
+                        Tooltip: =If(ThisItem.Done24, "24 ga punched", "24 ga still to punch")
+                        Visible: =ThisItem.Need24
+                        Width: =40
+                        X: |-
+                          =18 + (If(ThisItem.Need12, 1, 0) + If(ThisItem.Need14, 1, 0) + If(ThisItem.Need16, 1, 0) +
+                              If(ThisItem.Need18, 1, 0) + If(ThisItem.Need20, 1, 0)) * 46
+                        Y: =60
+                  - lblBenNoGauge:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =ColorFade(clrMuted, -40%)
+                        Height: =32
+                        Italic: =true
+                        PaddingLeft: =0
+                        Size: =14
+                        Text: ="No gauges selected"
+                        Visible: =ThisItem.NeedCount = 0
+                        Width: =240
+                        Wrap: =false
+                        X: =18
+                        Y: =60
+                  - lblBenNest:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: |-
+                          =If(
+                              IsBlank(ThisItem.NestLabel), ColorFade(clrMuted, -40%),
+                              ThisItem.TurretDone, clrText,
+                              clrMuted
+                          )
+                        FontWeight: =If(IsBlank(ThisItem.NestLabel), FontWeight.Normal, FontWeight.Semibold)
+                        Height: =32
+                        Italic: =IsBlank(ThisItem.NestLabel)
+                        PaddingLeft: =0
+                        Size: =15
+                        Text: =If(IsBlank(ThisItem.NestLabel), "no nest label", ThisItem.NestLabel)
+                        Width: =600
+                        Wrap: =false
+                        X: =310
+                        Y: =60
+                  - btnBenPB:
+                      Control: Classic/Button@2.2.0
+                      Properties:
+                        BorderThickness: =0
+                        Color: |-
+                          =If(
+                              ThisItem.TurretDone, If(ThisItem.PBDone, clrPage, clrText),
+                              If(ThisItem.PBDone, clrText, clrMuted)
+                          )
+                        DisabledColor: =Self.Color
+                        DisabledFill: =ColorFade(Self.Fill, -30%)
+                        Fill: =ColorFade(If(ThisItem.PBDone, clrGreen, clrGrey), If(ThisItem.TurretDone, 0%, -45%))
+                        FocusedBorderThickness: =0
+                        FontWeight: =FontWeight.Bold
+                        Height: =72
+                        HoverColor: =Self.Color
+                        HoverFill: =ColorFade(Self.Fill, -10%)
+                        OnSelect: |-
+                          =With(
+                              {id: ThisItem.ID, v: !ThisItem.PBDone, lbl: ThisItem.JobLabel},
+                              IfError(
+                                  With(
+                                      {saved: Patch(RunListJobs, LookUp(RunListJobs, ID = id), {PBDone: v})},
+                                      If(saved.PBDone && saved.P4Done && !tglBenShowDone.Value, Notify(lbl & " finished on PB and P4. Turn on Show complete to see it again.", NotificationType.Success, 4000))
+                                  ),
+                                  Refresh(RunListJobs);
+                                  IfError(
+                                      With(
+                                          {saved: Patch(RunListJobs, LookUp(RunListJobs, ID = id), {PBDone: v})},
+                                          If(saved.PBDone && saved.P4Done && !tglBenShowDone.Value, Notify(lbl & " finished on PB and P4. Turn on Show complete to see it again.", NotificationType.Success, 4000))
+                                      ),
+                                      Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
+                                  )
+                              )
+                          )
+                        PressedColor: =Self.Color
+                        PressedFill: =ColorFade(Self.Fill, -25%)
+                        RadiusBottomLeft: =10
+                        RadiusBottomRight: =10
+                        RadiusTopLeft: =10
+                        RadiusTopRight: =10
+                        Size: =20
+                        Text: |-
+                          ="✓ PB"
+                        Tooltip: ="Press brake. Tap to mark done, tap again to undo"
+                        Width: =150
+                        X: =Parent.Width - 328
+                        Y: =(Parent.Height - Self.Height) / 2
+                  - btnBenP4:
+                      Control: Classic/Button@2.2.0
+                      Properties:
+                        BorderThickness: =0
+                        Color: |-
+                          =If(
+                              ThisItem.TurretDone, If(ThisItem.P4Done, clrPage, clrText),
+                              If(ThisItem.P4Done, clrText, clrMuted)
+                          )
+                        DisabledColor: =Self.Color
+                        DisabledFill: =ColorFade(Self.Fill, -30%)
+                        Fill: =ColorFade(If(ThisItem.P4Done, clrGreen, clrGrey), If(ThisItem.TurretDone, 0%, -45%))
+                        FocusedBorderThickness: =0
+                        FontWeight: =FontWeight.Bold
+                        Height: =72
+                        HoverColor: =Self.Color
+                        HoverFill: =ColorFade(Self.Fill, -10%)
+                        OnSelect: |-
+                          =With(
+                              {id: ThisItem.ID, v: !ThisItem.P4Done, lbl: ThisItem.JobLabel},
+                              IfError(
+                                  With(
+                                      {saved: Patch(RunListJobs, LookUp(RunListJobs, ID = id), {P4Done: v})},
+                                      If(saved.PBDone && saved.P4Done && !tglBenShowDone.Value, Notify(lbl & " finished on PB and P4. Turn on Show complete to see it again.", NotificationType.Success, 4000))
+                                  ),
+                                  Refresh(RunListJobs);
+                                  IfError(
+                                      With(
+                                          {saved: Patch(RunListJobs, LookUp(RunListJobs, ID = id), {P4Done: v})},
+                                          If(saved.PBDone && saved.P4Done && !tglBenShowDone.Value, Notify(lbl & " finished on PB and P4. Turn on Show complete to see it again.", NotificationType.Success, 4000))
+                                      ),
+                                      Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
+                                  )
+                              )
+                          )
+                        PressedColor: =Self.Color
+                        PressedFill: =ColorFade(Self.Fill, -25%)
+                        RadiusBottomLeft: =10
+                        RadiusBottomRight: =10
+                        RadiusTopLeft: =10
+                        RadiusTopRight: =10
+                        Size: =20
+                        Text: |-
+                          ="✓ P4"
+                        Tooltip: ="P4. Tap to mark done, tap again to undo"
+                        Width: =150
+                        X: =Parent.Width - 166
+                        Y: =(Parent.Height - Self.Height) / 2
+      - lblBenEmpty:
+          Control: Label@2.5.1
+          Properties:
+            Align: =Align.Center
+            Color: =clrMuted
+            Height: =60
+            PaddingLeft: =0
+            PaddingRight: =0
+            Size: =18
+            Text: |-
+              =If(
+                  tglBenReady.Value,
+                  "Nothing is ready to bend right now (Ready only is on).",
+                  "No nested jobs to bend right now."
+              )
+            Visible: |-
+              =IsEmpty(
+                  Filter(
+                      ActiveJobs,
+                      Nested &&
+                      (tglBenShowDone.Value || !(PBDone && P4Done)) &&
+                      (!tglBenReady.Value || TurretDone)
+                  )
+              )
+            Width: =1350
+            Wrap: =false
+            X: =8
+            Y: =160
+      - tmrBenRefresh:
+          Control: Timer@2.1.0
+          Properties:
+            AutoPause: =true
+            AutoStart: =true
+            Duration: =30000
+            OnTimerEnd: |-
+              =Refresh(RunListJobs);
+              Set(gblRefreshTick, gblRefreshTick + 1)
+            Repeat: =true
+            Visible: =false

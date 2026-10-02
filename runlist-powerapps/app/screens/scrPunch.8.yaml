@@ -1,0 +1,144 @@
+- galPunTray:
+    Control: Gallery@2.15.0
+    Variant: Vertical
+    Properties:
+      BorderThickness: =0
+      DelayItemLoading: =false
+      Fill: =clrNone
+      Height: =646
+      Items: =SortByColumns(IncomingJobs, "ShipKey", SortOrder.Ascending, "ID", SortOrder.Ascending)
+      LoadingSpinner: =LoadingSpinner.None
+      ShowScrollbar: =true
+      TemplatePadding: =0
+      TemplateSize: =100
+      Width: =288
+      X: =6
+      Y: =52
+    Children:
+      - conPunTrayCard:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            BorderColor: =clrBorder
+            BorderThickness: =1
+            DropShadow: =DropShadow.None
+            Fill: =clrCard
+            Height: =Parent.TemplateHeight - 6
+            RadiusBottomLeft: =8
+            RadiusBottomRight: =8
+            RadiusTopLeft: =8
+            RadiusTopRight: =8
+            Width: =Parent.TemplateWidth
+            X: =0
+            Y: =0
+          Children:
+            - lblPunTrJob:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrText
+                  FontWeight: =FontWeight.Bold
+                  Height: =26
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =15
+                  Text: =ThisItem.JobLabel
+                  Width: =Parent.Width - 110
+                  Wrap: =false
+                  X: =10
+                  Y: =6
+            - lblPunTrSize:
+                Control: Label@2.5.1
+                Properties:
+                  Align: =Align.Right
+                  Color: =If(IsBlank(ThisItem.JobSize), clrRed, clrText)
+                  FontWeight: =FontWeight.Semibold
+                  Height: =26
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =12
+                  Text: =ThisItem.SizeText
+                  Width: =86
+                  Wrap: =false
+                  X: =Parent.Width - 96
+                  Y: =6
+            - lblPunTrShip:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =If(IsBlank(ThisItem.ShipDate), clrRed, clrMuted)
+                  Height: =22
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =12
+                  Text: |-
+                    ="📅 " & ThisItem.ShipText
+                  Width: =If(IsBlank(ThisItem.ShipDate), 138, 120)
+                  Wrap: =false
+                  X: =10
+                  Y: =34
+            - lblPunTrCust:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrMuted
+                  Height: =22
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =12
+                  Text: =ThisItem.CustShort
+                  Tooltip: =ThisItem.JobName & ""
+                  Width: =Parent.Width - Self.X - 10
+                  Wrap: =false
+                  X: =If(IsBlank(ThisItem.ShipDate), 152, 132)
+                  Y: =34
+            - lblPunTrNew:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrGreen
+                  FontWeight: =FontWeight.Bold
+                  Height: =24
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =12
+                  Text: |-
+                    ="✨ NEW"
+                  Tooltip: ="Arrived from CASMFG today"
+                  Visible: =ThisItem.IsNew
+                  Width: =70
+                  Wrap: =false
+                  X: =10
+                  Y: =62
+            - btnPunTrPlace:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =clrWhite
+                  DisabledColor: =Self.Color
+                  DisabledFill: =ColorFade(Self.Fill, -30%)
+                  Fill: =clrBlue
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Semibold
+                  Height: =32
+                  HoverColor: =Self.Color
+                  HoverFill: =ColorFade(Self.Fill, -10%)
+                  OnSelect: |-
+                    =UpdateContext({locPanel: "place", locId: ThisItem.ID, locPunPlaceMachine: "SB8", locPunP12: ThisItem.Need12, locPunP14: ThisItem.Need14, locPunP16: ThisItem.Need16, locPunP18: ThisItem.Need18, locPunP20: ThisItem.Need20, locPunP24: ThisItem.Need24})
+                  PressedColor: =Self.Color
+                  PressedFill: =ColorFade(Self.Fill, -25%)
+                  RadiusBottomLeft: =8
+                  RadiusBottomRight: =8
+                  RadiusTopLeft: =8
+                  RadiusTopRight: =8
+                  Size: =14
+                  Text: ="Place"
+                  Width: =86
+                  X: =Parent.Width - 96
+                  Y: =58

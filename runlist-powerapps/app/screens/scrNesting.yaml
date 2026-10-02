@@ -1,0 +1,763 @@
+Screens:
+  scrNesting:
+    Properties:
+      Fill: =clrPage
+      OnVisible: |-
+        =UpdateContext({locNesHold: 0, locNesSaveKey: ""});
+        Refresh(RunListJobs);
+        Set(gblRefreshTick, gblRefreshTick + 1)
+    Children:
+      - conNesHeader:
+          Control: GroupContainer@1.5.0
+          Variant: AutoLayout
+          Properties:
+            BorderThickness: =0
+            DropShadow: =DropShadow.None
+            Fill: =clrCard
+            Height: =64
+            LayoutAlignItems: =LayoutAlignItems.Center
+            LayoutDirection: =LayoutDirection.Horizontal
+            LayoutGap: =12
+            LayoutJustifyContent: =LayoutJustifyContent.Start
+            PaddingLeft: =16
+            PaddingRight: =16
+            Width: =1366
+            X: =0
+            Y: =0
+          Children:
+            - lblNesTitle:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrText
+                  FillPortions: =1
+                  FontWeight: =FontWeight.Bold
+                  Height: =44
+                  LayoutMinWidth: =160
+                  PaddingLeft: =0
+                  Size: =22
+                  Text: ="Nesting"
+                  Wrap: =false
+            - lblNesCounts:
+                Control: Label@2.5.1
+                Properties:
+                  Align: =Align.Right
+                  Color: =clrMuted
+                  FillPortions: =0
+                  Height: =44
+                  LayoutMinWidth: =300
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  Size: =14
+                  Text: |-
+                    =With(
+                        {open: Filter(ActiveJobs, !TurretDone)},
+                        "To nest: " & CountRows(Filter(open, !Nested)) &
+                        "      Nested: " & CountRows(Filter(open, Nested))
+                    )
+                  Width: =300
+                  Wrap: =false
+            - tglNesNotNested:
+                Control: Classic/Toggle@2.1.0
+                Properties:
+                  Default: =true
+                  FalseFill: =clrGrey
+                  FalseHoverFill: =clrGrey
+                  FillPortions: =0
+                  FocusedBorderThickness: =0
+                  HandleFill: =clrText
+                  Height: =36
+                  LayoutMinWidth: =64
+                  ShowLabel: =false
+                  TrueFill: =clrGreen
+                  TrueHoverFill: =clrGreen
+                  Width: =64
+            - lblNesNotNested:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrText
+                  FillPortions: =0
+                  Height: =44
+                  LayoutMinWidth: =150
+                  PaddingLeft: =0
+                  Size: =14
+                  Text: ="Not nested only"
+                  Width: =150
+                  Wrap: =false
+            - btnNesRefresh:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =clrWhite
+                  DisabledColor: =Self.Color
+                  DisabledFill: =ColorFade(Self.Fill, -30%)
+                  Fill: =clrBlue
+                  FillPortions: =0
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Semibold
+                  Height: =44
+                  HoverColor: =Self.Color
+                  HoverFill: =ColorFade(Self.Fill, -15%)
+                  LayoutMinWidth: =110
+                  OnSelect: |-
+                    =Refresh(RunListJobs);
+                    Set(gblRefreshTick, gblRefreshTick + 1)
+                  PressedColor: =Self.Color
+                  PressedFill: =ColorFade(Self.Fill, -30%)
+                  RadiusBottomLeft: =8
+                  RadiusBottomRight: =8
+                  RadiusTopLeft: =8
+                  RadiusTopRight: =8
+                  Size: =15
+                  Text: ="Refresh"
+                  Width: =110
+            - btnNesHome:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =clrWhite
+                  Fill: =clrGrey
+                  FillPortions: =0
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Semibold
+                  Height: =44
+                  HoverColor: =Self.Color
+                  HoverFill: =ColorFade(Self.Fill, -15%)
+                  LayoutMinWidth: =100
+                  OnSelect: =Navigate(scrHome, ScreenTransition.None)
+                  PressedColor: =Self.Color
+                  PressedFill: =ColorFade(Self.Fill, -30%)
+                  RadiusBottomLeft: =8
+                  RadiusBottomRight: =8
+                  RadiusTopLeft: =8
+                  RadiusTopRight: =8
+                  Size: =15
+                  Text: ="Home"
+                  Width: =100
+      - lblNesColJob:
+          Control: Label@2.5.1
+          Properties:
+            Color: =clrMuted
+            FontWeight: =FontWeight.Semibold
+            Height: =24
+            PaddingLeft: =0
+            Size: =12
+            Text: ="Job / customer"
+            Width: =190
+            Wrap: =false
+            X: =24
+            Y: =66
+      - lblNesColWhere:
+          Control: Label@2.5.1
+          Properties:
+            Color: =clrMuted
+            FontWeight: =FontWeight.Semibold
+            Height: =24
+            PaddingLeft: =0
+            Size: =12
+            Text: ="Machine / day"
+            Width: =136
+            Wrap: =false
+            X: =226
+            Y: =66
+      - lblNesColSize:
+          Control: Label@2.5.1
+          Properties:
+            Color: =clrMuted
+            FontWeight: =FontWeight.Semibold
+            Height: =24
+            PaddingLeft: =0
+            Size: =12
+            Text: ="Size / ship"
+            Width: =124
+            Wrap: =false
+            X: =364
+            Y: =66
+      - lblNesColGauges:
+          Control: Label@2.5.1
+          Properties:
+            Color: =clrMuted
+            FontWeight: =FontWeight.Semibold
+            Height: =24
+            PaddingLeft: =0
+            Size: =12
+            Text: |-
+              ="Gauges: tap to select"
+            Width: =296
+            Wrap: =false
+            X: =492
+            Y: =66
+      - lblNesColLabel:
+          Control: Label@2.5.1
+          Properties:
+            Color: =clrMuted
+            FontWeight: =FontWeight.Semibold
+            Height: =24
+            PaddingLeft: =0
+            Size: =12
+            Text: ="Nest label"
+            Width: =300
+            Wrap: =false
+            X: =802
+            Y: =66
+      - galNesJobs:
+          Control: Gallery@2.15.0
+          Variant: Vertical
+          Properties:
+            BorderThickness: =0
+            DelayItemLoading: =false
+            Fill: =clrNone
+            Height: =668
+            Items: |-
+              =SortByColumns(
+                  Filter(ActiveJobs, !TurretDone && (!tglNesNotNested.Value || !Nested)),
+                  "MachineOrder", SortOrder.Ascending,
+                  "PunchDayKey", SortOrder.Ascending,
+                  "PunchGroupOrder", SortOrder.Ascending,
+                  "PairKey", SortOrder.Ascending,
+                  "PunchSort", SortOrder.Ascending,
+                  "ID", SortOrder.Ascending
+              )
+            LoadingSpinner: =LoadingSpinner.None
+            ShowScrollbar: =true
+            TemplatePadding: =0
+            TemplateSize: =76
+            Width: =1350
+            X: =8
+            Y: =92
+          Children:
+            - conNesCard:
+                Control: GroupContainer@1.5.0
+                Variant: ManualLayout
+                Properties:
+                  BorderColor: =clrBorder
+                  BorderThickness: =1
+                  DropShadow: =DropShadow.None
+                  Fill: =clrCard
+                  Height: =Parent.TemplateHeight - 8
+                  RadiusBottomLeft: =8
+                  RadiusBottomRight: =8
+                  RadiusTopLeft: =8
+                  RadiusTopRight: =8
+                  Width: =Parent.TemplateWidth - 12
+                  X: =0
+                  Y: =4
+                Children:
+                  - lblNesJob:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =clrText
+                        FontWeight: =FontWeight.Bold
+                        Height: =30
+                        PaddingLeft: =0
+                        Size: =17
+                        Text: =ThisItem.JobLabel
+                        Width: =160
+                        Wrap: =false
+                        X: =16
+                        Y: =6
+                  - lblNesCust:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =clrMuted
+                        Height: =24
+                        PaddingLeft: =0
+                        Size: =12
+                        Text: =ThisItem.CustShort
+                        Width: =160
+                        Wrap: =false
+                        X: =16
+                        Y: =36
+                  - btnNesPair:
+                      Control: Classic/Button@2.2.0
+                      Properties:
+                        BorderThickness: =0
+                        Color: =clrPage
+                        Fill: =ThisItem.PairColor
+                        FocusedBorderThickness: =0
+                        FontWeight: =FontWeight.Bold
+                        Height: =28
+                        HoverColor: =Self.Color
+                        HoverFill: =Self.Fill
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        PressedColor: =Self.Color
+                        PressedFill: =Self.Fill
+                        RadiusBottomLeft: =14
+                        RadiusBottomRight: =14
+                        RadiusTopLeft: =14
+                        RadiusTopRight: =14
+                        Size: =12
+                        Text: =Text(ThisItem.PairRank)
+                        Tooltip: ="Paired job, same number and colour as its mate"
+                        Visible: =!IsBlank(ThisItem.PairNo)
+                        Width: =28
+                        X: =180
+                        Y: =(Parent.Height - Self.Height) / 2
+                  - lblNesMachine:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =If(ThisItem.MachineText = "SB15", clrSB15, ThisItem.MachineText = "SB8", clrSB8, clrMuted)
+                        FontWeight: =FontWeight.Bold
+                        Height: =30
+                        PaddingLeft: =0
+                        Size: =15
+                        Text: =If(ThisItem.MachineText = "", "No machine", ThisItem.MachineText)
+                        Width: =130
+                        Wrap: =false
+                        X: =218
+                        Y: =6
+                  - lblNesDay:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: |-
+                          =If(
+                              ThisItem.PunchDayKey = 0, clrMuted,
+                              ThisItem.PunchDayKey < TodayKey, clrAmber,
+                              ThisItem.PunchDayKey = TodayKey, clrText,
+                              clrMuted
+                          )
+                        FontWeight: =If(ThisItem.PunchDayKey = TodayKey, FontWeight.Semibold, FontWeight.Normal)
+                        Height: =24
+                        PaddingLeft: =0
+                        Size: =12
+                        Text: |-
+                          =If(
+                              ThisItem.PunchDayKey = 0, "Unscheduled",
+                              ThisItem.PunchDayKey = TodayKey, "Today " & Text(ThisItem.PunchDay, "mmm d", "en-US"),
+                              Text(ThisItem.PunchDay, "ddd mmm d", "en-US")
+                          )
+                        Width: =130
+                        Wrap: =false
+                        X: =218
+                        Y: =36
+                  - lblNesSize:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =If(IsBlank(ThisItem.JobSize), clrRed, clrText)
+                        FontWeight: =FontWeight.Semibold
+                        Height: =30
+                        PaddingLeft: =0
+                        Size: =15
+                        Text: =ThisItem.SizeText
+                        Width: =120
+                        Wrap: =false
+                        X: =356
+                        Y: =6
+                  - lblNesShip:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =If(IsBlank(ThisItem.ShipDate), clrRed, clrMuted)
+                        Height: =24
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        Size: =12
+                        Text: |-
+                          =If(IsBlank(ThisItem.ShipDate), "NO SHIP DATE", "📅 " & ThisItem.ShipText)
+                        Width: =126
+                        Wrap: =false
+                        X: =356
+                        Y: =36
+                  - btnNesG12:
+                      Control: Classic/Button@2.2.0
+                      Properties:
+                        BorderThickness: =0
+                        Color: =If(ThisItem.Need12, clrPage, clrText)
+                        DisabledColor: =Self.Color
+                        DisabledFill: =ColorFade(Self.Fill, -30%)
+                        Fill: =If(ThisItem.Need12 && ThisItem.Done12, clrGreen, ThisItem.Need12, clrYellow, clrGrey)
+                        FocusedBorderThickness: =0
+                        FontWeight: =FontWeight.Bold
+                        Height: =40
+                        HoverColor: =Self.Color
+                        HoverFill: =ColorFade(Self.Fill, -10%)
+                        OnSelect: |-
+                          =With({id: ThisItem.ID, v: !ThisItem.Need12},
+                              If(
+                                  ThisItem.Need12 && (ThisItem.Done12 || LookUp(RunListJobs, ID = id).Done12),
+                                  Notify("12 ga is already punched, so it stays selected", NotificationType.Warning);
+                                  If(!ThisItem.Done12, Refresh(RunListJobs); Set(gblRefreshTick, gblRefreshTick + 1)),
+                                  IfError(
+                                      Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need12: v}),
+                                      Refresh(RunListJobs);
+                                      IfError(
+                                          Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need12: v}),
+                                          Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
+                                      )
+                                  )
+                              )
+                          )
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        PressedColor: =Self.Color
+                        PressedFill: =ColorFade(Self.Fill, -25%)
+                        RadiusBottomLeft: =20
+                        RadiusBottomRight: =20
+                        RadiusTopLeft: =20
+                        RadiusTopRight: =20
+                        Size: =14
+                        Text: ="12"
+                        Width: =44
+                        X: =484
+                        Y: =(Parent.Height - Self.Height) / 2
+                  - btnNesG14:
+                      Control: Classic/Button@2.2.0
+                      Properties:
+                        BorderThickness: =0
+                        Color: =If(ThisItem.Need14, clrPage, clrText)
+                        DisabledColor: =Self.Color
+                        DisabledFill: =ColorFade(Self.Fill, -30%)
+                        Fill: =If(ThisItem.Need14 && ThisItem.Done14, clrGreen, ThisItem.Need14, clrYellow, clrGrey)
+                        FocusedBorderThickness: =0
+                        FontWeight: =FontWeight.Bold
+                        Height: =40
+                        HoverColor: =Self.Color
+                        HoverFill: =ColorFade(Self.Fill, -10%)
+                        OnSelect: |-
+                          =With({id: ThisItem.ID, v: !ThisItem.Need14},
+                              If(
+                                  ThisItem.Need14 && (ThisItem.Done14 || LookUp(RunListJobs, ID = id).Done14),
+                                  Notify("14 ga is already punched, so it stays selected", NotificationType.Warning);
+                                  If(!ThisItem.Done14, Refresh(RunListJobs); Set(gblRefreshTick, gblRefreshTick + 1)),
+                                  IfError(
+                                      Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need14: v}),
+                                      Refresh(RunListJobs);
+                                      IfError(
+                                          Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need14: v}),
+                                          Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
+                                      )
+                                  )
+                              )
+                          )
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        PressedColor: =Self.Color
+                        PressedFill: =ColorFade(Self.Fill, -25%)
+                        RadiusBottomLeft: =20
+                        RadiusBottomRight: =20
+                        RadiusTopLeft: =20
+                        RadiusTopRight: =20
+                        Size: =14
+                        Text: ="14"
+                        Width: =44
+                        X: =484 + 1 * 50
+                        Y: =(Parent.Height - Self.Height) / 2
+                  - btnNesG16:
+                      Control: Classic/Button@2.2.0
+                      Properties:
+                        BorderThickness: =0
+                        Color: =If(ThisItem.Need16, clrPage, clrText)
+                        DisabledColor: =Self.Color
+                        DisabledFill: =ColorFade(Self.Fill, -30%)
+                        Fill: =If(ThisItem.Need16 && ThisItem.Done16, clrGreen, ThisItem.Need16, clrYellow, clrGrey)
+                        FocusedBorderThickness: =0
+                        FontWeight: =FontWeight.Bold
+                        Height: =40
+                        HoverColor: =Self.Color
+                        HoverFill: =ColorFade(Self.Fill, -10%)
+                        OnSelect: |-
+                          =With({id: ThisItem.ID, v: !ThisItem.Need16},
+                              If(
+                                  ThisItem.Need16 && (ThisItem.Done16 || LookUp(RunListJobs, ID = id).Done16),
+                                  Notify("16 ga is already punched, so it stays selected", NotificationType.Warning);
+                                  If(!ThisItem.Done16, Refresh(RunListJobs); Set(gblRefreshTick, gblRefreshTick + 1)),
+                                  IfError(
+                                      Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need16: v}),
+                                      Refresh(RunListJobs);
+                                      IfError(
+                                          Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need16: v}),
+                                          Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
+                                      )
+                                  )
+                              )
+                          )
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        PressedColor: =Self.Color
+                        PressedFill: =ColorFade(Self.Fill, -25%)
+                        RadiusBottomLeft: =20
+                        RadiusBottomRight: =20
+                        RadiusTopLeft: =20
+                        RadiusTopRight: =20
+                        Size: =14
+                        Text: ="16"
+                        Width: =44
+                        X: =484 + 2 * 50
+                        Y: =(Parent.Height - Self.Height) / 2
+                  - btnNesG18:
+                      Control: Classic/Button@2.2.0
+                      Properties:
+                        BorderThickness: =0
+                        Color: =If(ThisItem.Need18, clrPage, clrText)
+                        DisabledColor: =Self.Color
+                        DisabledFill: =ColorFade(Self.Fill, -30%)
+                        Fill: =If(ThisItem.Need18 && ThisItem.Done18, clrGreen, ThisItem.Need18, clrYellow, clrGrey)
+                        FocusedBorderThickness: =0
+                        FontWeight: =FontWeight.Bold
+                        Height: =40
+                        HoverColor: =Self.Color
+                        HoverFill: =ColorFade(Self.Fill, -10%)
+                        OnSelect: |-
+                          =With({id: ThisItem.ID, v: !ThisItem.Need18},
+                              If(
+                                  ThisItem.Need18 && (ThisItem.Done18 || LookUp(RunListJobs, ID = id).Done18),
+                                  Notify("18 ga is already punched, so it stays selected", NotificationType.Warning);
+                                  If(!ThisItem.Done18, Refresh(RunListJobs); Set(gblRefreshTick, gblRefreshTick + 1)),
+                                  IfError(
+                                      Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need18: v}),
+                                      Refresh(RunListJobs);
+                                      IfError(
+                                          Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need18: v}),
+                                          Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
+                                      )
+                                  )
+                              )
+                          )
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        PressedColor: =Self.Color
+                        PressedFill: =ColorFade(Self.Fill, -25%)
+                        RadiusBottomLeft: =20
+                        RadiusBottomRight: =20
+                        RadiusTopLeft: =20
+                        RadiusTopRight: =20
+                        Size: =14
+                        Text: ="18"
+                        Width: =44
+                        X: =484 + 3 * 50
+                        Y: =(Parent.Height - Self.Height) / 2
+                  - btnNesG20:
+                      Control: Classic/Button@2.2.0
+                      Properties:
+                        BorderThickness: =0
+                        Color: =If(ThisItem.Need20, clrPage, clrText)
+                        DisabledColor: =Self.Color
+                        DisabledFill: =ColorFade(Self.Fill, -30%)
+                        Fill: =If(ThisItem.Need20 && ThisItem.Done20, clrGreen, ThisItem.Need20, clrYellow, clrGrey)
+                        FocusedBorderThickness: =0
+                        FontWeight: =FontWeight.Bold
+                        Height: =40
+                        HoverColor: =Self.Color
+                        HoverFill: =ColorFade(Self.Fill, -10%)
+                        OnSelect: |-
+                          =With({id: ThisItem.ID, v: !ThisItem.Need20},
+                              If(
+                                  ThisItem.Need20 && (ThisItem.Done20 || LookUp(RunListJobs, ID = id).Done20),
+                                  Notify("20 ga is already punched, so it stays selected", NotificationType.Warning);
+                                  If(!ThisItem.Done20, Refresh(RunListJobs); Set(gblRefreshTick, gblRefreshTick + 1)),
+                                  IfError(
+                                      Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need20: v}),
+                                      Refresh(RunListJobs);
+                                      IfError(
+                                          Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need20: v}),
+                                          Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
+                                      )
+                                  )
+                              )
+                          )
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        PressedColor: =Self.Color
+                        PressedFill: =ColorFade(Self.Fill, -25%)
+                        RadiusBottomLeft: =20
+                        RadiusBottomRight: =20
+                        RadiusTopLeft: =20
+                        RadiusTopRight: =20
+                        Size: =14
+                        Text: ="20"
+                        Width: =44
+                        X: =484 + 4 * 50
+                        Y: =(Parent.Height - Self.Height) / 2
+                  - btnNesG24:
+                      Control: Classic/Button@2.2.0
+                      Properties:
+                        BorderThickness: =0
+                        Color: =If(ThisItem.Need24, clrPage, clrText)
+                        DisabledColor: =Self.Color
+                        DisabledFill: =ColorFade(Self.Fill, -30%)
+                        Fill: =If(ThisItem.Need24 && ThisItem.Done24, clrGreen, ThisItem.Need24, clrYellow, clrGrey)
+                        FocusedBorderThickness: =0
+                        FontWeight: =FontWeight.Bold
+                        Height: =40
+                        HoverColor: =Self.Color
+                        HoverFill: =ColorFade(Self.Fill, -10%)
+                        OnSelect: |-
+                          =With({id: ThisItem.ID, v: !ThisItem.Need24},
+                              If(
+                                  ThisItem.Need24 && (ThisItem.Done24 || LookUp(RunListJobs, ID = id).Done24),
+                                  Notify("24 ga is already punched, so it stays selected", NotificationType.Warning);
+                                  If(!ThisItem.Done24, Refresh(RunListJobs); Set(gblRefreshTick, gblRefreshTick + 1)),
+                                  IfError(
+                                      Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need24: v}),
+                                      Refresh(RunListJobs);
+                                      IfError(
+                                          Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need24: v}),
+                                          Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
+                                      )
+                                  )
+                              )
+                          )
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        PressedColor: =Self.Color
+                        PressedFill: =ColorFade(Self.Fill, -25%)
+                        RadiusBottomLeft: =20
+                        RadiusBottomRight: =20
+                        RadiusTopLeft: =20
+                        RadiusTopRight: =20
+                        Size: =14
+                        Text: ="24"
+                        Width: =44
+                        X: =484 + 5 * 50
+                        Y: =(Parent.Height - Self.Height) / 2
+                  - txtNesLabel:
+                      Control: Classic/TextInput@2.3.2
+                      Properties:
+                        BorderColor: =clrBorder
+                        BorderThickness: =1
+                        Color: =clrText
+                        Default: =ThisItem.NestLabel & ""
+                        DisabledColor: =clrMuted
+                        DisabledFill: =clrCard
+                        Fill: =clrPage
+                        FocusedBorderColor: =clrBlue
+                        FocusedBorderThickness: =2
+                        Height: =44
+                        HintText: ="+ add label"
+                        HoverColor: =clrText
+                        HoverFill: =clrPage
+                        MaxLength: =255
+                        OnChange: |-
+                          =With({id: ThisItem.ID, v: Trim(Self.Text), was: Trim(ThisItem.NestLabel & "")},
+                          With({k: id & "|" & was & "|" & v},
+                              If(v <> was && locNesSaveKey <> k,
+                                  UpdateContext({locNesSaveKey: k, locNesHold: 0});
+                                  IfError(
+                                      Patch(RunListJobs, LookUp(RunListJobs, ID = id), {NestLabel: v}),
+                                      Refresh(RunListJobs);
+                                      IfError(
+                                          Patch(RunListJobs, LookUp(RunListJobs, ID = id), {NestLabel: v}),
+                                          Notify("Nest label not saved: " & FirstError.Message, NotificationType.Error, 0);
+                                          UpdateContext({locNesSaveKey: ""})
+                                      )
+                                  )
+                              )
+                          ))
+                        OnSelect: |-
+                          =UpdateContext({locNesHold: 2, locNesSaveKey: ""})
+                        PressedColor: =clrText
+                        PressedFill: =clrPage
+                        Size: =15
+                        Tooltip: ="Type the nest label, then tap Save (or tap anywhere else)"
+                        Width: =Parent.Width - 1050
+                        X: =794
+                        Y: =(Parent.Height - Self.Height) / 2
+                  - btnNesSave:
+                      Control: Classic/Button@2.2.0
+                      Properties:
+                        BorderThickness: =0
+                        Color: =clrWhite
+                        DisabledColor: =Self.Color
+                        DisabledFill: =ColorFade(Self.Fill, -30%)
+                        Fill: =clrBlue
+                        FocusedBorderThickness: =0
+                        FontWeight: =FontWeight.Bold
+                        Height: =44
+                        HoverColor: =Self.Color
+                        HoverFill: =ColorFade(Self.Fill, -15%)
+                        OnSelect: |-
+                          =With({id: ThisItem.ID, v: Trim(txtNesLabel.Text), was: Trim(ThisItem.NestLabel & "")},
+                          With({k: id & "|" & was & "|" & v},
+                              If(v <> was && locNesSaveKey <> k,
+                                  UpdateContext({locNesSaveKey: k, locNesHold: 0});
+                                  IfError(
+                                      Patch(RunListJobs, LookUp(RunListJobs, ID = id), {NestLabel: v}),
+                                      Refresh(RunListJobs);
+                                      IfError(
+                                          Patch(RunListJobs, LookUp(RunListJobs, ID = id), {NestLabel: v}),
+                                          Notify("Nest label not saved: " & FirstError.Message, NotificationType.Error, 0);
+                                          UpdateContext({locNesSaveKey: ""})
+                                      )
+                                  )
+                              )
+                          ))
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        PressedColor: =Self.Color
+                        PressedFill: =ColorFade(Self.Fill, -30%)
+                        RadiusBottomLeft: =8
+                        RadiusBottomRight: =8
+                        RadiusTopLeft: =8
+                        RadiusTopRight: =8
+                        Size: =15
+                        Text: ="Save"
+                        Tooltip: ="Save the nest label"
+                        Visible: =Trim(txtNesLabel.Text) <> Trim(ThisItem.NestLabel & "")
+                        Width: =76
+                        X: =Parent.Width - 248
+                        Y: =(Parent.Height - Self.Height) / 2
+                  - btnNesNested:
+                      Control: Classic/Button@2.2.0
+                      Properties:
+                        BorderThickness: =0
+                        Color: =If(ThisItem.Nested, clrPage, clrText)
+                        DisabledColor: =Self.Color
+                        DisabledFill: =ColorFade(Self.Fill, -30%)
+                        Fill: =If(ThisItem.Nested, clrGreen, clrGrey)
+                        FocusedBorderThickness: =0
+                        FontWeight: =FontWeight.Bold
+                        Height: =56
+                        HoverColor: =Self.Color
+                        HoverFill: =ColorFade(Self.Fill, -10%)
+                        OnSelect: |-
+                          =With({id: ThisItem.ID, v: !ThisItem.Nested, lbl: ThisItem.JobLabel, nc: ThisItem.NeedCount},
+                              IfError(
+                                  Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Nested: v}),
+                                  Refresh(RunListJobs);
+                                  IfError(
+                                      Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Nested: v}),
+                                      Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0),
+                                      If(v, Notify(lbl & " marked Nested" & If(nc = 0, ", but it has no gauges selected yet. Switch off Not nested only to see it and pick its gauges.", "."), If(nc = 0, NotificationType.Warning, NotificationType.Success), If(nc = 0, 8000, 3000)))
+                                  ),
+                                  If(v, Notify(lbl & " marked Nested" & If(nc = 0, ", but it has no gauges selected yet. Switch off Not nested only to see it and pick its gauges.", "."), If(nc = 0, NotificationType.Warning, NotificationType.Success), If(nc = 0, 8000, 3000)))
+                              )
+                          )
+                        PressedColor: =Self.Color
+                        PressedFill: =ColorFade(Self.Fill, -25%)
+                        RadiusBottomLeft: =10
+                        RadiusBottomRight: =10
+                        RadiusTopLeft: =10
+                        RadiusTopRight: =10
+                        Size: =18
+                        Text: |-
+                          =If(ThisItem.Nested, "✓ Nested", "Nested")
+                        Tooltip: ="Tap to mark this job nested (tap again to undo)"
+                        Width: =150
+                        X: =Parent.Width - Self.Width - 12
+                        Y: =(Parent.Height - Self.Height) / 2
+      - lblNesEmpty:
+          Control: Label@2.5.1
+          Properties:
+            Align: =Align.Center
+            Color: =clrMuted
+            Height: =60
+            Size: =18
+            Text: |-
+              =If(IsEmpty(Filter(ActiveJobs, !TurretDone)), "No open jobs.", "Nothing to nest: every open job is marked Nested.")
+            Visible: =IsEmpty(Filter(ActiveJobs, !TurretDone && (!tglNesNotNested.Value || !Nested)))
+            Width: =1366
+            X: =0
+            Y: =200
+      - tmrNesRefresh:
+          Control: Timer@2.1.0
+          Properties:
+            AutoPause: =true
+            AutoStart: =true
+            Duration: =30000
+            OnTimerEnd: |-
+              =If(locNesHold > 0,
+                  UpdateContext({locNesHold: locNesHold - 1}),
+                  Refresh(RunListJobs);
+                  Set(gblRefreshTick, gblRefreshTick + 1)
+              )
+            Repeat: =true
+            Visible: =false

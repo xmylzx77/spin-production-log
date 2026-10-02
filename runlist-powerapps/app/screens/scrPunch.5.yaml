@@ -1,0 +1,275 @@
+- lblPunFiTitle:
+    Control: Label@2.5.1
+    Properties:
+      Color: =clrText
+      FontWeight: =FontWeight.Bold
+      Height: =40
+      PaddingBottom: =0
+      PaddingLeft: =0
+      PaddingRight: =0
+      PaddingTop: =0
+      Size: =20
+      Text: |-
+        ="Find job # " & locPunFindText
+      Width: =772
+      Wrap: =false
+      X: =24
+      Y: =16
+- lblPunFiHint:
+    Control: Label@2.5.1
+    Properties:
+      Color: =clrMuted
+      Height: =48
+      PaddingBottom: =0
+      PaddingLeft: =0
+      PaddingRight: =0
+      PaddingTop: =0
+      Size: =13
+      Text: |-
+        ="Every status shows here. Reopen puts a Done job back on the boards. Restore puts a dismissed job back in the Incoming tray. Open shows and edits the job."
+      Width: =772
+      Wrap: =true
+      X: =24
+      Y: =56
+- galPunFind:
+    Control: Gallery@2.15.0
+    Variant: Vertical
+    Properties:
+      BorderThickness: =0
+      DelayItemLoading: =false
+      Fill: =clrNone
+      Height: =376
+      Items: =Filter(RunListJobs, JobNumber = locPunFindText)
+      LoadingSpinner: =LoadingSpinner.None
+      ShowScrollbar: =true
+      TemplatePadding: =0
+      TemplateSize: =76
+      Width: =788
+      X: =16
+      Y: =104
+    Children:
+      - conPunFiCard:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            BorderColor: =clrBorder
+            BorderThickness: =1
+            DropShadow: =DropShadow.None
+            Fill: =clrCard
+            Height: =Parent.TemplateHeight - 6
+            RadiusBottomLeft: =8
+            RadiusBottomRight: =8
+            RadiusTopLeft: =8
+            RadiusTopRight: =8
+            Width: =Parent.TemplateWidth
+            X: =0
+            Y: =0
+          Children:
+            - lblPunFiJob:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrText
+                  FontWeight: =FontWeight.Bold
+                  Height: =28
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =16
+                  Text: =ThisItem.JobNumber & If(!IsBlank(ThisItem.FanNumber), "-" & ThisItem.FanNumber)
+                  Width: =200
+                  Wrap: =false
+                  X: =12
+                  Y: =6
+            - lblPunFiStatus:
+                Control: Label@2.5.1
+                Properties:
+                  Align: =Align.Center
+                  Color: =clrPage
+                  Fill: |-
+                    =Switch(ThisItem.JobStatus.Value, "Active", clrGreen, "Incoming", clrSB8, "Dismissed", clrRed, clrMuted)
+                  FontWeight: =FontWeight.Bold
+                  Height: =24
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =12
+                  Text: =ThisItem.JobStatus.Value
+                  Width: =100
+                  Wrap: =false
+                  X: =216
+                  Y: =9
+            - lblPunFiInfo:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrMuted
+                  Height: =24
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =12
+                  Text: |-
+                    =Left(ThisItem.JobName & "", 22) & "   ·   📅 " & If(IsBlank(ThisItem.ShipDate), "no ship date", Text(ThisItem.ShipDate, "m/d"))
+                    & If(IsBlank(ThisItem.Machine.Value), "", "   ·   " & ThisItem.Machine.Value & " " & If(IsBlank(ThisItem.PunchDay), "unscheduled", Text(ThisItem.PunchDay, "ddd m/d")))
+                  Width: =Parent.Width - 330
+                  Wrap: =false
+                  X: =12
+                  Y: =38
+            - btnPunFiOpen:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =clrWhite
+                  DisabledColor: =Self.Color
+                  DisabledFill: =ColorFade(Self.Fill, -30%)
+                  Fill: =clrBlue
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Semibold
+                  Height: =40
+                  HoverColor: =Self.Color
+                  HoverFill: =ColorFade(Self.Fill, -10%)
+                  OnSelect: |-
+                    =UpdateContext({locPanel: "edit", locId: ThisItem.ID, locPunEdMode: "edit", locPunEdFrom: "find", locPunJob: LookUp(RunListJobs, ID = ThisItem.ID), locPunEdClrPunch: false, locPunEdClrAsm: false, locPunDismissArm: false})
+                  PressedColor: =Self.Color
+                  PressedFill: =ColorFade(Self.Fill, -25%)
+                  RadiusBottomLeft: =8
+                  RadiusBottomRight: =8
+                  RadiusTopLeft: =8
+                  RadiusTopRight: =8
+                  Size: =14
+                  Text: ="Open"
+                  Width: =88
+                  X: =Parent.Width - 300
+                  Y: =14
+            - btnPunFiReopen:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =clrPage
+                  DisabledColor: =Self.Color
+                  DisabledFill: =ColorFade(Self.Fill, -30%)
+                  Fill: =clrGreen
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Semibold
+                  Height: =40
+                  HoverColor: =Self.Color
+                  HoverFill: =ColorFade(Self.Fill, -10%)
+                  OnSelect: |-
+                    =With({id: ThisItem.ID},
+                        // Re-read the row: another device may already have reopened it (and ticked Started since).
+                        If(LookUp(RunListJobs, ID = id).JobStatus.Value <> "Done",
+                            Notify("This job is no longer Done (it changed on another device). Nothing was changed; the list is refreshed.", NotificationType.Warning);
+                            Refresh(RunListJobs);
+                            Set(gblRefreshTick, gblRefreshTick + 1),
+                            IfError(
+                                Patch(RunListJobs, LookUp(RunListJobs, ID = id), {JobStatus: {Value: "Active"}, Started: false, StartedOn: Blank()}),
+                                Refresh(RunListJobs);
+                                IfError(
+                                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {JobStatus: {Value: "Active"}, Started: false, StartedOn: Blank()}),
+                                    Notify("Reopen failed: " & FirstError.Message, NotificationType.Error, 0),
+                                    Notify("Reopened. The job is back on the boards.", NotificationType.Success)
+                                ),
+                                Notify("Reopened. The job is back on the boards.", NotificationType.Success)
+                            )
+                        )
+                    )
+                  PressedColor: =Self.Color
+                  PressedFill: =ColorFade(Self.Fill, -25%)
+                  RadiusBottomLeft: =8
+                  RadiusBottomRight: =8
+                  RadiusTopLeft: =8
+                  RadiusTopRight: =8
+                  Size: =14
+                  Text: ="Reopen"
+                  Tooltip: ="Back to Active; Started is cleared so housekeeping cannot close it again at once"
+                  Visible: =ThisItem.JobStatus.Value = "Done"
+                  Width: =110
+                  X: =Parent.Width - 202
+                  Y: =14
+            - btnPunFiRestore:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =clrPage
+                  DisabledColor: =Self.Color
+                  DisabledFill: =ColorFade(Self.Fill, -30%)
+                  Fill: =clrAmber
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Semibold
+                  Height: =40
+                  HoverColor: =Self.Color
+                  HoverFill: =ColorFade(Self.Fill, -10%)
+                  OnSelect: |-
+                    =With({id: ThisItem.ID},
+                        // Re-read the row: another device may already have restored (and placed) it.
+                        If(LookUp(RunListJobs, ID = id).JobStatus.Value <> "Dismissed",
+                            Notify("This job is no longer dismissed (it changed on another device). Nothing was changed; the list is refreshed.", NotificationType.Warning);
+                            Refresh(RunListJobs);
+                            Set(gblRefreshTick, gblRefreshTick + 1),
+                            IfError(
+                                Patch(RunListJobs, LookUp(RunListJobs, ID = id), {JobStatus: {Value: "Incoming"}}),
+                                Refresh(RunListJobs);
+                                IfError(
+                                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {JobStatus: {Value: "Incoming"}}),
+                                    Notify("Restore failed: " & FirstError.Message, NotificationType.Error, 0),
+                                    Notify("Restored to the Incoming tray.", NotificationType.Success)
+                                ),
+                                Notify("Restored to the Incoming tray.", NotificationType.Success)
+                            )
+                        )
+                    )
+                  PressedColor: =Self.Color
+                  PressedFill: =ColorFade(Self.Fill, -25%)
+                  RadiusBottomLeft: =8
+                  RadiusBottomRight: =8
+                  RadiusTopLeft: =8
+                  RadiusTopRight: =8
+                  Size: =14
+                  Text: ="Restore"
+                  Tooltip: ="Back to the Incoming tray"
+                  Visible: =ThisItem.JobStatus.Value = "Dismissed"
+                  Width: =110
+                  X: =Parent.Width - 202
+                  Y: =14
+- lblPunFiNone:
+    Control: Label@2.5.1
+    Properties:
+      Color: =clrAmber
+      Height: =56
+      PaddingBottom: =0
+      PaddingLeft: =0
+      PaddingRight: =0
+      PaddingTop: =0
+      Size: =14
+      Text: ="No job has that number. Check it and try again (type the job number without the fan number)."
+      Visible: =!locPunFindHit
+      Width: =772
+      Wrap: =true
+      X: =24
+      Y: =110
+- btnPunFiClose:
+    Control: Classic/Button@2.2.0
+    Properties:
+      BorderThickness: =0
+      Color: =clrWhite
+      Fill: =clrGrey
+      FocusedBorderThickness: =0
+      FontWeight: =FontWeight.Semibold
+      Height: =44
+      HoverColor: =Self.Color
+      HoverFill: =ColorFade(Self.Fill, -10%)
+      OnSelect: |-
+        =UpdateContext({locPanel: ""})
+      PressedColor: =Self.Color
+      PressedFill: =ColorFade(Self.Fill, -25%)
+      RadiusBottomLeft: =8
+      RadiusBottomRight: =8
+      RadiusTopLeft: =8
+      RadiusTopRight: =8
+      Size: =15
+      Text: ="Close"
+      Width: =130
+      X: =666
+      Y: =496

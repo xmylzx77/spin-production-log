@@ -1,0 +1,12 @@
+Switch(
+    Lower(Trim(Param("screen"))),
+    "punch", scrPunch,
+    "assembly", scrAssembly,
+    "nesting", scrNesting,
+    "sb8", scrTurret,
+    "sb15", scrTurret,
+    "bending", scrBending,
+    "tv", scrTV,
+    "import", scrImport,
+    scrHome
+)

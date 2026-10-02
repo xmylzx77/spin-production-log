@@ -1,0 +1,686 @@
+- lblPunJobS8:
+    Control: Label@2.5.1
+    Properties:
+      Color: =clrText
+      FontWeight: =FontWeight.Bold
+      Height: =26
+      PaddingBottom: =0
+      PaddingLeft: =0
+      PaddingRight: =0
+      PaddingTop: =0
+      Size: =15
+      Text: =ThisItem.JobLabel
+      Width: =116
+      Wrap: =false
+      X: =12
+      Y: =6
+- lblPunSizeS8:
+    Control: Label@2.5.1
+    Properties:
+      Color: =If(IsBlank(ThisItem.JobSize), clrRed, clrText)
+      FontWeight: =FontWeight.Semibold
+      Height: =26
+      PaddingBottom: =0
+      PaddingLeft: =0
+      PaddingRight: =0
+      PaddingTop: =0
+      Size: =12
+      Text: =ThisItem.SizeText
+      Width: =70
+      Wrap: =false
+      X: =130
+      Y: =6
+- lblPunShipS8:
+    Control: Label@2.5.1
+    Properties:
+      Color: =If(IsBlank(ThisItem.ShipDate), clrRed, clrMuted)
+      Height: =26
+      PaddingBottom: =0
+      PaddingLeft: =0
+      PaddingRight: =0
+      PaddingTop: =0
+      Size: =12
+      Text: |-
+        ="📅 " & ThisItem.ShipText
+      Width: =If(IsBlank(ThisItem.ShipDate), 138, 112)
+      Wrap: =false
+      X: =202
+      Y: =6
+- lblPunCustS8:
+    Control: Label@2.5.1
+    Properties:
+      Color: =clrMuted
+      Height: =26
+      PaddingBottom: =0
+      PaddingLeft: =0
+      PaddingRight: =0
+      PaddingTop: =0
+      Size: =12
+      Text: =ThisItem.CustShort
+      Tooltip: =ThisItem.JobName & ""
+      Width: =Max(30, Parent.Width - Self.X - 88)
+      Wrap: =false
+      X: =If(IsBlank(ThisItem.ShipDate), 342, 316)
+      Y: =6
+- icoPunEditS8:
+    Control: Classic/Icon@2.5.0
+    Properties:
+      AccessibleLabel: ="Edit job"
+      Color: =clrText
+      DisabledColor: =Self.Color
+      Fill: =clrNone
+      FocusedBorderThickness: =0
+      Height: =32
+      HoverColor: =clrWhite
+      HoverFill: =clrNone
+      Icon: =Icon.Edit
+      OnSelect: |-
+        =UpdateContext({locPanel: "edit", locId: ThisItem.ID, locPunEdMode: "edit", locPunEdFrom: "", locPunJob: LookUp(RunListJobs, ID = ThisItem.ID), locPunEdClrPunch: false, locPunEdClrAsm: false, locPunDismissArm: false})
+      PaddingBottom: =5
+      PaddingLeft: =13
+      PaddingRight: =13
+      PaddingTop: =5
+      PressedColor: =clrBlue
+      PressedFill: =clrNone
+      Tooltip: ="Edit this job"
+      Width: =48
+      X: =Parent.Width - 86
+      Y: =3
+- btnPunPairS8:
+    Control: Classic/Button@2.2.0
+    Properties:
+      BorderThickness: =0
+      Color: =clrPage
+      Fill: =ThisItem.PairColor
+      FocusedBorderThickness: =0
+      FontWeight: =FontWeight.Bold
+      Height: =28
+      HoverColor: =Self.Color
+      HoverFill: =Self.Fill
+      PaddingLeft: =0
+      PaddingRight: =0
+      PressedColor: =Self.Color
+      PressedFill: =Self.Fill
+      RadiusBottomLeft: =14
+      RadiusBottomRight: =14
+      RadiusTopLeft: =14
+      RadiusTopRight: =14
+      Size: =12
+      Text: =Text(ThisItem.PairRank)
+      Tooltip: |-
+        ="Paired: same colour and number = punch together"
+      Visible: =!IsBlank(ThisItem.PairNo)
+      Width: =28
+      X: =Parent.Width - Self.Width - 10
+      Y: =6
+- btnPunG12S8:
+    Control: Classic/Button@2.2.0
+    Properties:
+      BorderThickness: =0
+      Color: =If(ThisItem.Need12, clrPage, clrText)
+      DisabledColor: =Self.Color
+      DisabledFill: =ColorFade(Self.Fill, -30%)
+      Fill: =If(ThisItem.Need12 && ThisItem.Done12, clrGreen, ThisItem.Need12, clrYellow, clrGrey)
+      FocusedBorderThickness: =0
+      FontWeight: =FontWeight.Bold
+      Height: =32
+      HoverColor: =Self.Color
+      HoverFill: =ColorFade(Self.Fill, -10%)
+      OnSelect: |-
+        =With({id: ThisItem.ID, v: !ThisItem.Need12},
+            // A punched gauge can't be un-needed (app-spec). ThisItem can be up to 60 s old, so a
+            // yellow pill re-reads the row before un-needing; grey and green pills skip that read.
+            If(ThisItem.Need12 && (ThisItem.Done12 || LookUp(RunListJobs, ID = id).Done12),
+                Notify("12 ga is already punched, so it stays selected.", NotificationType.Warning);
+                If(!ThisItem.Done12, Refresh(RunListJobs); Set(gblRefreshTick, gblRefreshTick + 1)),
+                IfError(
+                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need12: v}),
+                    Refresh(RunListJobs);
+                    IfError(
+                        Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need12: v}),
+                        Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
+                    )
+                )
+            )
+        )
+      PaddingLeft: =0
+      PaddingRight: =0
+      PressedColor: =Self.Color
+      PressedFill: =ColorFade(Self.Fill, -25%)
+      RadiusBottomLeft: =16
+      RadiusBottomRight: =16
+      RadiusTopLeft: =16
+      RadiusTopRight: =16
+      Size: =12
+      Text: ="12"
+      Width: =40
+      X: =12 + 0 * 44
+      Y: =36
+- btnPunG14S8:
+    Control: Classic/Button@2.2.0
+    Properties:
+      BorderThickness: =0
+      Color: =If(ThisItem.Need14, clrPage, clrText)
+      DisabledColor: =Self.Color
+      DisabledFill: =ColorFade(Self.Fill, -30%)
+      Fill: =If(ThisItem.Need14 && ThisItem.Done14, clrGreen, ThisItem.Need14, clrYellow, clrGrey)
+      FocusedBorderThickness: =0
+      FontWeight: =FontWeight.Bold
+      Height: =32
+      HoverColor: =Self.Color
+      HoverFill: =ColorFade(Self.Fill, -10%)
+      OnSelect: |-
+        =With({id: ThisItem.ID, v: !ThisItem.Need14},
+            // A punched gauge can't be un-needed (app-spec). ThisItem can be up to 60 s old, so a
+            // yellow pill re-reads the row before un-needing; grey and green pills skip that read.
+            If(ThisItem.Need14 && (ThisItem.Done14 || LookUp(RunListJobs, ID = id).Done14),
+                Notify("14 ga is already punched, so it stays selected.", NotificationType.Warning);
+                If(!ThisItem.Done14, Refresh(RunListJobs); Set(gblRefreshTick, gblRefreshTick + 1)),
+                IfError(
+                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need14: v}),
+                    Refresh(RunListJobs);
+                    IfError(
+                        Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need14: v}),
+                        Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
+                    )
+                )
+            )
+        )
+      PaddingLeft: =0
+      PaddingRight: =0
+      PressedColor: =Self.Color
+      PressedFill: =ColorFade(Self.Fill, -25%)
+      RadiusBottomLeft: =16
+      RadiusBottomRight: =16
+      RadiusTopLeft: =16
+      RadiusTopRight: =16
+      Size: =12
+      Text: ="14"
+      Width: =40
+      X: =12 + 1 * 44
+      Y: =36
+- btnPunG16S8:
+    Control: Classic/Button@2.2.0
+    Properties:
+      BorderThickness: =0
+      Color: =If(ThisItem.Need16, clrPage, clrText)
+      DisabledColor: =Self.Color
+      DisabledFill: =ColorFade(Self.Fill, -30%)
+      Fill: =If(ThisItem.Need16 && ThisItem.Done16, clrGreen, ThisItem.Need16, clrYellow, clrGrey)
+      FocusedBorderThickness: =0
+      FontWeight: =FontWeight.Bold
+      Height: =32
+      HoverColor: =Self.Color
+      HoverFill: =ColorFade(Self.Fill, -10%)
+      OnSelect: |-
+        =With({id: ThisItem.ID, v: !ThisItem.Need16},
+            // A punched gauge can't be un-needed (app-spec). ThisItem can be up to 60 s old, so a
+            // yellow pill re-reads the row before un-needing; grey and green pills skip that read.
+            If(ThisItem.Need16 && (ThisItem.Done16 || LookUp(RunListJobs, ID = id).Done16),
+                Notify("16 ga is already punched, so it stays selected.", NotificationType.Warning);
+                If(!ThisItem.Done16, Refresh(RunListJobs); Set(gblRefreshTick, gblRefreshTick + 1)),
+                IfError(
+                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need16: v}),
+                    Refresh(RunListJobs);
+                    IfError(
+                        Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need16: v}),
+                        Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
+                    )
+                )
+            )
+        )
+      PaddingLeft: =0
+      PaddingRight: =0
+      PressedColor: =Self.Color
+      PressedFill: =ColorFade(Self.Fill, -25%)
+      RadiusBottomLeft: =16
+      RadiusBottomRight: =16
+      RadiusTopLeft: =16
+      RadiusTopRight: =16
+      Size: =12
+      Text: ="16"
+      Width: =40
+      X: =12 + 2 * 44
+      Y: =36
+- btnPunG18S8:
+    Control: Classic/Button@2.2.0
+    Properties:
+      BorderThickness: =0
+      Color: =If(ThisItem.Need18, clrPage, clrText)
+      DisabledColor: =Self.Color
+      DisabledFill: =ColorFade(Self.Fill, -30%)
+      Fill: =If(ThisItem.Need18 && ThisItem.Done18, clrGreen, ThisItem.Need18, clrYellow, clrGrey)
+      FocusedBorderThickness: =0
+      FontWeight: =FontWeight.Bold
+      Height: =32
+      HoverColor: =Self.Color
+      HoverFill: =ColorFade(Self.Fill, -10%)
+      OnSelect: |-
+        =With({id: ThisItem.ID, v: !ThisItem.Need18},
+            // A punched gauge can't be un-needed (app-spec). ThisItem can be up to 60 s old, so a
+            // yellow pill re-reads the row before un-needing; grey and green pills skip that read.
+            If(ThisItem.Need18 && (ThisItem.Done18 || LookUp(RunListJobs, ID = id).Done18),
+                Notify("18 ga is already punched, so it stays selected.", NotificationType.Warning);
+                If(!ThisItem.Done18, Refresh(RunListJobs); Set(gblRefreshTick, gblRefreshTick + 1)),
+                IfError(
+                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need18: v}),
+                    Refresh(RunListJobs);
+                    IfError(
+                        Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need18: v}),
+                        Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
+                    )
+                )
+            )
+        )
+      PaddingLeft: =0
+      PaddingRight: =0
+      PressedColor: =Self.Color
+      PressedFill: =ColorFade(Self.Fill, -25%)
+      RadiusBottomLeft: =16
+      RadiusBottomRight: =16
+      RadiusTopLeft: =16
+      RadiusTopRight: =16
+      Size: =12
+      Text: ="18"
+      Width: =40
+      X: =12 + 3 * 44
+      Y: =36
+- btnPunG20S8:
+    Control: Classic/Button@2.2.0
+    Properties:
+      BorderThickness: =0
+      Color: =If(ThisItem.Need20, clrPage, clrText)
+      DisabledColor: =Self.Color
+      DisabledFill: =ColorFade(Self.Fill, -30%)
+      Fill: =If(ThisItem.Need20 && ThisItem.Done20, clrGreen, ThisItem.Need20, clrYellow, clrGrey)
+      FocusedBorderThickness: =0
+      FontWeight: =FontWeight.Bold
+      Height: =32
+      HoverColor: =Self.Color
+      HoverFill: =ColorFade(Self.Fill, -10%)
+      OnSelect: |-
+        =With({id: ThisItem.ID, v: !ThisItem.Need20},
+            // A punched gauge can't be un-needed (app-spec). ThisItem can be up to 60 s old, so a
+            // yellow pill re-reads the row before un-needing; grey and green pills skip that read.
+            If(ThisItem.Need20 && (ThisItem.Done20 || LookUp(RunListJobs, ID = id).Done20),
+                Notify("20 ga is already punched, so it stays selected.", NotificationType.Warning);
+                If(!ThisItem.Done20, Refresh(RunListJobs); Set(gblRefreshTick, gblRefreshTick + 1)),
+                IfError(
+                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need20: v}),
+                    Refresh(RunListJobs);
+                    IfError(
+                        Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need20: v}),
+                        Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
+                    )
+                )
+            )
+        )
+      PaddingLeft: =0
+      PaddingRight: =0
+      PressedColor: =Self.Color
+      PressedFill: =ColorFade(Self.Fill, -25%)
+      RadiusBottomLeft: =16
+      RadiusBottomRight: =16
+      RadiusTopLeft: =16
+      RadiusTopRight: =16
+      Size: =12
+      Text: ="20"
+      Width: =40
+      X: =12 + 4 * 44
+      Y: =36
+- btnPunG24S8:
+    Control: Classic/Button@2.2.0
+    Properties:
+      BorderThickness: =0
+      Color: =If(ThisItem.Need24, clrPage, clrText)
+      DisabledColor: =Self.Color
+      DisabledFill: =ColorFade(Self.Fill, -30%)
+      Fill: =If(ThisItem.Need24 && ThisItem.Done24, clrGreen, ThisItem.Need24, clrYellow, clrGrey)
+      FocusedBorderThickness: =0
+      FontWeight: =FontWeight.Bold
+      Height: =32
+      HoverColor: =Self.Color
+      HoverFill: =ColorFade(Self.Fill, -10%)
+      OnSelect: |-
+        =With({id: ThisItem.ID, v: !ThisItem.Need24},
+            // A punched gauge can't be un-needed (app-spec). ThisItem can be up to 60 s old, so a
+            // yellow pill re-reads the row before un-needing; grey and green pills skip that read.
+            If(ThisItem.Need24 && (ThisItem.Done24 || LookUp(RunListJobs, ID = id).Done24),
+                Notify("24 ga is already punched, so it stays selected.", NotificationType.Warning);
+                If(!ThisItem.Done24, Refresh(RunListJobs); Set(gblRefreshTick, gblRefreshTick + 1)),
+                IfError(
+                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need24: v}),
+                    Refresh(RunListJobs);
+                    IfError(
+                        Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Need24: v}),
+                        Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
+                    )
+                )
+            )
+        )
+      PaddingLeft: =0
+      PaddingRight: =0
+      PressedColor: =Self.Color
+      PressedFill: =ColorFade(Self.Fill, -25%)
+      RadiusBottomLeft: =16
+      RadiusBottomRight: =16
+      RadiusTopLeft: =16
+      RadiusTopRight: =16
+      Size: =12
+      Text: ="24"
+      Width: =40
+      X: =12 + 5 * 44
+      Y: =36
+- btnPunNestedS8:
+    Control: Classic/Button@2.2.0
+    Properties:
+      BorderThickness: =0
+      Color: =If(ThisItem.Nested, clrPage, clrText)
+      DisabledColor: =Self.Color
+      DisabledFill: =ColorFade(Self.Fill, -30%)
+      Fill: =If(ThisItem.Nested, clrGreen, clrGrey)
+      FocusedBorderThickness: =0
+      FontWeight: =FontWeight.Bold
+      Height: =32
+      HoverColor: =Self.Color
+      HoverFill: =ColorFade(Self.Fill, -10%)
+      OnSelect: |-
+        =With({id: ThisItem.ID, v: !ThisItem.Nested},
+            IfError(
+                Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Nested: v}),
+                Refresh(RunListJobs);
+                IfError(
+                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Nested: v}),
+                    Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
+                )
+            )
+        )
+      PaddingLeft: =0
+      PaddingRight: =0
+      PressedColor: =Self.Color
+      PressedFill: =ColorFade(Self.Fill, -25%)
+      RadiusBottomLeft: =16
+      RadiusBottomRight: =16
+      RadiusTopLeft: =16
+      RadiusTopRight: =16
+      Size: =12
+      Text: |-
+        =If(ThisItem.Nested, "✓ Nested", "Nested")
+      Width: =80
+      X: =280
+      Y: =36
+- btnPunUpS8:
+    Control: Classic/Button@2.2.0
+    Properties:
+      BorderThickness: =0
+      Color: =clrText
+      DisabledColor: =Self.Color
+      DisabledFill: =ColorFade(Self.Fill, -30%)
+      Fill: =clrGrey
+      FocusedBorderThickness: =0
+      FontWeight: =FontWeight.Semibold
+      Height: =32
+      HoverColor: =Self.Color
+      HoverFill: =ColorFade(Self.Fill, -10%)
+      OnSelect: |-
+        =With({c: ThisItem, dir: "up"},
+        With({vis: SortByColumns(Filter(ActiveJobs, PunchBand = c.PunchBand && (tglPunShowDone.Value || !TurretDone)), "PunchGroupOrder", SortOrder.Ascending, "PairKey", SortOrder.Ascending, "PunchSort", SortOrder.Ascending, "ID", SortOrder.Ascending)},
+        With({units: Filter(vis As r, IsBlank(r.PairNo) || r.ID = First(Filter(vis, PairNo = r.PairNo)).ID)},
+        With({num: ForAll(Sequence(CountRows(units)) As s, {i: s.Value, pn: Index(units, s.Value).PairNo, uid: Index(units, s.Value).ID, go: Index(units, s.Value).PunchGroupOrder})},
+        With({my: LookUp(num, If(IsBlank(c.PairNo), uid = c.ID, pn = c.PairNo))},
+        With({mover: If(dir = "up", my, LookUp(num, i = my.i + 1)),
+              above: If(dir = "up", LookUp(num, i = my.i - 1), my),
+              above2: If(dir = "up", LookUp(num, i = my.i - 2), LookUp(num, i = my.i - 1))},
+        If(!IsBlank(mover) && !IsBlank(above),
+            With({id: First(SortByColumns(Filter(ActiveJobs, PunchBand = c.PunchBand && If(IsBlank(mover.pn), ID = mover.uid, PairNo = mover.pn)), "PunchSort", SortOrder.Ascending, "ID", SortOrder.Ascending)).ID,
+                  v: If(IsBlank(above2), above.go - 1, (above2.go + above.go) / 2)},
+                IfError(
+                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {PunchOrder: v}),
+                    Refresh(RunListJobs);
+                    IfError(
+                        Patch(RunListJobs, LookUp(RunListJobs, ID = id), {PunchOrder: v}),
+                        Notify("Move failed: " & FirstError.Message, NotificationType.Error, 0)
+                    )
+                )
+            )
+        )))))))
+      PaddingLeft: =0
+      PaddingRight: =0
+      PressedColor: =Self.Color
+      PressedFill: =ColorFade(Self.Fill, -25%)
+      RadiusBottomLeft: =6
+      RadiusBottomRight: =6
+      RadiusTopLeft: =6
+      RadiusTopRight: =6
+      Size: =13
+      Text: |-
+        ="▲"
+      Tooltip: ="Move up in this band"
+      Width: =40
+      X: =Parent.Width - 94
+      Y: =36
+- btnPunDownS8:
+    Control: Classic/Button@2.2.0
+    Properties:
+      BorderThickness: =0
+      Color: =clrText
+      DisabledColor: =Self.Color
+      DisabledFill: =ColorFade(Self.Fill, -30%)
+      Fill: =clrGrey
+      FocusedBorderThickness: =0
+      FontWeight: =FontWeight.Semibold
+      Height: =32
+      HoverColor: =Self.Color
+      HoverFill: =ColorFade(Self.Fill, -10%)
+      OnSelect: |-
+        =With({c: ThisItem, dir: "down"},
+        With({vis: SortByColumns(Filter(ActiveJobs, PunchBand = c.PunchBand && (tglPunShowDone.Value || !TurretDone)), "PunchGroupOrder", SortOrder.Ascending, "PairKey", SortOrder.Ascending, "PunchSort", SortOrder.Ascending, "ID", SortOrder.Ascending)},
+        With({units: Filter(vis As r, IsBlank(r.PairNo) || r.ID = First(Filter(vis, PairNo = r.PairNo)).ID)},
+        With({num: ForAll(Sequence(CountRows(units)) As s, {i: s.Value, pn: Index(units, s.Value).PairNo, uid: Index(units, s.Value).ID, go: Index(units, s.Value).PunchGroupOrder})},
+        With({my: LookUp(num, If(IsBlank(c.PairNo), uid = c.ID, pn = c.PairNo))},
+        With({mover: If(dir = "up", my, LookUp(num, i = my.i + 1)),
+              above: If(dir = "up", LookUp(num, i = my.i - 1), my),
+              above2: If(dir = "up", LookUp(num, i = my.i - 2), LookUp(num, i = my.i - 1))},
+        If(!IsBlank(mover) && !IsBlank(above),
+            With({id: First(SortByColumns(Filter(ActiveJobs, PunchBand = c.PunchBand && If(IsBlank(mover.pn), ID = mover.uid, PairNo = mover.pn)), "PunchSort", SortOrder.Ascending, "ID", SortOrder.Ascending)).ID,
+                  v: If(IsBlank(above2), above.go - 1, (above2.go + above.go) / 2)},
+                IfError(
+                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {PunchOrder: v}),
+                    Refresh(RunListJobs);
+                    IfError(
+                        Patch(RunListJobs, LookUp(RunListJobs, ID = id), {PunchOrder: v}),
+                        Notify("Move failed: " & FirstError.Message, NotificationType.Error, 0)
+                    )
+                )
+            )
+        )))))))
+      PaddingLeft: =0
+      PaddingRight: =0
+      PressedColor: =Self.Color
+      PressedFill: =ColorFade(Self.Fill, -25%)
+      RadiusBottomLeft: =6
+      RadiusBottomRight: =6
+      RadiusTopLeft: =6
+      RadiusTopRight: =6
+      Size: =13
+      Text: |-
+        ="▼"
+      Tooltip: ="Move down in this band"
+      Width: =40
+      X: =Parent.Width - 50
+      Y: =36
+- txtPunNestS8:
+    Control: Classic/TextInput@2.3.2
+    Properties:
+      BorderColor: =clrBorder
+      BorderThickness: =1
+      Color: =clrText
+      Default: =ThisItem.NestLabel & ""
+      DisabledColor: =clrMuted
+      DisabledFill: =clrCard
+      Fill: =clrPage
+      FocusedBorderColor: =clrBlue
+      FocusedBorderThickness: =2
+      Height: =30
+      HintText: ="+ add label"
+      HoverColor: =clrText
+      HoverFill: =clrPage
+      PaddingLeft: =6
+      PressedColor: =clrText
+      PressedFill: =clrPage
+      RadiusBottomLeft: =6
+      RadiusBottomRight: =6
+      RadiusTopLeft: =6
+      RadiusTopRight: =6
+      Size: =12
+      Tooltip: |-
+        ="Nest label: type it, then tap the tick to save"
+      Width: =150
+      X: =12
+      Y: =70
+- btnPunNestSaveS8:
+    Control: Classic/Button@2.2.0
+    Properties:
+      BorderThickness: =0
+      Color: =clrWhite
+      DisabledColor: =Self.Color
+      DisabledFill: =ColorFade(Self.Fill, -30%)
+      Fill: =clrBlue
+      FocusedBorderThickness: =0
+      FontWeight: =FontWeight.Bold
+      Height: =30
+      HoverColor: =Self.Color
+      HoverFill: =ColorFade(Self.Fill, -10%)
+      OnSelect: |-
+        =With({id: ThisItem.ID, v: Trim(txtPunNestS8.Text)},
+            IfError(
+                Patch(RunListJobs, LookUp(RunListJobs, ID = id), {NestLabel: v}),
+                Refresh(RunListJobs);
+                IfError(
+                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {NestLabel: v}),
+                    Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
+                )
+            )
+        )
+      PaddingLeft: =0
+      PaddingRight: =0
+      PressedColor: =Self.Color
+      PressedFill: =ColorFade(Self.Fill, -25%)
+      RadiusBottomLeft: =6
+      RadiusBottomRight: =6
+      RadiusTopLeft: =6
+      RadiusTopRight: =6
+      Size: =14
+      Text: |-
+        ="✓"
+      Tooltip: ="Save the nest label"
+      Visible: =Trim(txtPunNestS8.Text) <> ThisItem.NestLabel & ""
+      Width: =36
+      X: =166
+      Y: =70
+- lblPunNewS8:
+    Control: Label@2.5.1
+    Properties:
+      Color: =clrGreen
+      FontWeight: =FontWeight.Bold
+      Height: =26
+      PaddingBottom: =0
+      PaddingLeft: =0
+      PaddingRight: =0
+      PaddingTop: =0
+      Size: =12
+      Text: |-
+        ="✨ NEW"
+      Tooltip: ="Arrived from CASMFG today"
+      Visible: =ThisItem.IsNew
+      Width: =64
+      Wrap: =false
+      X: =206
+      Y: =72
+- btnPunMovedS8:
+    Control: Classic/Button@2.2.0
+    Properties:
+      BorderThickness: =0
+      Color: =clrPage
+      DisabledColor: =Self.Color
+      DisabledFill: =ColorFade(Self.Fill, -30%)
+      Fill: =clrAmber
+      FocusedBorderThickness: =0
+      FontWeight: =FontWeight.Bold
+      Height: =26
+      HoverColor: =Self.Color
+      HoverFill: =ColorFade(Self.Fill, -10%)
+      OnSelect: |-
+        =With({id: ThisItem.ID, seen: ThisItem.ShipYmd},
+        With({cur: LookUp(RunListJobs, ID = id)},
+            // An import can move the ship date again and keep the first PrevShipDate.
+            // Only clear the flag for the ship date this card is showing (as scrAssembly).
+            If(
+                If(IsBlank(cur.ShipDate), "", Text(cur.ShipDate, "yyyy-mm-dd")) <> seen,
+                Notify("CASMFG moved this ship date again. Check the new date on the card, then tap the tag again.", NotificationType.Warning);
+                Refresh(RunListJobs);
+                Set(gblRefreshTick, gblRefreshTick + 1),
+                IfError(
+                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {PrevShipDate: Blank()}),
+                    Refresh(RunListJobs);
+                    IfError(
+                        Patch(RunListJobs, LookUp(RunListJobs, ID = id), {PrevShipDate: Blank()}),
+                        Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
+                    )
+                )
+            )
+        ))
+      PaddingLeft: =0
+      PaddingRight: =0
+      PressedColor: =Self.Color
+      PressedFill: =ColorFade(Self.Fill, -25%)
+      RadiusBottomLeft: =13
+      RadiusBottomRight: =13
+      RadiusTopLeft: =13
+      RadiusTopRight: =13
+      Size: =11
+      Text: |-
+        ="📅 moved from " & ThisItem.PrevShipText
+      Tooltip: |-
+        ="CASMFG moved the ship date from " & ThisItem.PrevShipText & " to " & ThisItem.ShipText & ". Tap to acknowledge."
+      Visible: =ThisItem.PrevShipText <> ""
+      Width: =160
+      X: =206 + If(ThisItem.IsNew, 68, 0)
+      Y: =72
+- lblPunWarnS8:
+    Control: Label@2.5.1
+    Properties:
+      Color: =clrAmber
+      FontWeight: =FontWeight.Bold
+      Height: =26
+      PaddingBottom: =0
+      PaddingLeft: =0
+      PaddingRight: =0
+      PaddingTop: =0
+      Size: =12
+      Text: |-
+        ="⚠ SB15"
+      Tooltip: ="Size " & ThisItem.JobSize & " normally punches on SB8"
+      Visible: =ThisItem.MachineText = "SB15" && (ThisItem.JobSize = 1 || ThisItem.JobSize = 4)
+      Width: =70
+      Wrap: =false
+      X: =206 + If(ThisItem.IsNew, 68, 0) + If(ThisItem.PrevShipText <> "", 164, 0)
+      Y: =72
+- lblPunNotesS8:
+    Control: Label@2.5.1
+    Properties:
+      Color: =clrMuted
+      Height: =26
+      Italic: =true
+      PaddingBottom: =0
+      PaddingLeft: =0
+      PaddingRight: =0
+      PaddingTop: =0
+      Size: =12
+      Text: =Substitute(ThisItem.Notes & "", Char(10), "   ")
+      Tooltip: =ThisItem.Notes & ""
+      Width: =Max(0, Parent.Width - Self.X - 8)
+      Wrap: =false
+      X: |-
+        =206 + If(ThisItem.IsNew, 68, 0) + If(ThisItem.PrevShipText <> "", 164, 0) + If(ThisItem.MachineText = "SB15" && (ThisItem.JobSize = 1 || ThisItem.JobSize = 4), 74, 0)
+      Y: =72

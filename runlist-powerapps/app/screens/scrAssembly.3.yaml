@@ -1,0 +1,485 @@
+- lblAsmJob:
+    Control: Label@2.5.1
+    Properties:
+      Color: =clrText
+      FontWeight: =FontWeight.Bold
+      Height: =28
+      PaddingLeft: =0
+      PaddingRight: =0
+      Size: =If(Len(ThisItem.Job.JobLabel) > 10, 12, Len(ThisItem.Job.JobLabel) > 9, 14, 16)
+      Text: =ThisItem.Job.JobLabel
+      Width: =110
+      Wrap: =false
+      X: =12
+      Y: =5
+- lblAsmSize:
+    Control: Label@2.5.1
+    Properties:
+      Color: =If(IsBlank(ThisItem.Job.JobSize), clrRed, clrText)
+      FontWeight: =FontWeight.Semibold
+      Height: =28
+      PaddingLeft: =0
+      PaddingRight: =0
+      Size: =If(IsBlank(ThisItem.Job.JobSize), 11, 13)
+      Text: =ThisItem.Job.SizeText
+      Width: =66
+      Wrap: =false
+      X: =124
+      Y: =5
+- lblAsmShip:
+    Control: Label@2.5.1
+    Properties:
+      Color: =If(ThisItem.Job.ShipKey = 99999999, clrRed, clrMuted)
+      Height: =28
+      PaddingLeft: =0
+      PaddingRight: =0
+      Size: =If(ThisItem.Job.ShipKey = 99999999, 11, 13)
+      Text: |-
+        =If(ThisItem.Job.ShipKey = 99999999, ThisItem.Job.ShipText, "📅 " & ThisItem.Job.ShipText)
+      Width: =If(ThisItem.Job.ShipKey = 99999999, 120, 86)
+      Wrap: =false
+      X: =192
+      Y: =5
+- lblAsmSlack:
+    Control: Label@2.5.1
+    Properties:
+      Align: =Align.Center
+      Color: |-
+        =With({s: ThisItem.Job.AsmLocSlack}, If(s < 0, clrRed, s < 2, clrAmber, clrGreen))
+      FontWeight: =FontWeight.Bold
+      Height: =28
+      PaddingLeft: =0
+      PaddingRight: =0
+      Size: =14
+      Text: |-
+        =With({s: ThisItem.Job.AsmLocSlack}, If(IsBlank(s), "", s > 0, "+" & s, Text(s)))
+      Tooltip: ="Workdays between the assembly start and the ship date"
+      Width: =34
+      Wrap: =false
+      X: =280
+      Y: =5
+- btnAsmPair:
+    Control: Classic/Button@2.2.0
+    Properties:
+      BorderThickness: =0
+      Color: =clrPage
+      Fill: =ThisItem.Job.PairColor
+      FocusedBorderThickness: =0
+      FontWeight: =FontWeight.Bold
+      Height: =26
+      HoverColor: =Self.Color
+      HoverFill: =Self.Fill
+      PaddingLeft: =0
+      PaddingRight: =0
+      PressedColor: =Self.Color
+      PressedFill: =Self.Fill
+      RadiusBottomLeft: =13
+      RadiusBottomRight: =13
+      RadiusTopLeft: =13
+      RadiusTopRight: =13
+      Size: =11
+      Text: =Text(ThisItem.Job.PairRank)
+      Tooltip: ="Paired job"
+      Visible: =!IsBlank(ThisItem.Job.PairNo)
+      Width: =26
+      X: =Parent.Width - Self.Width - 6
+      Y: =6
+- lblAsmSq12:
+    Control: Label@2.5.1
+    Properties:
+      Align: =Align.Center
+      Color: =clrPage
+      Fill: =If(ThisItem.Job.Done12, clrGreen, clrYellow)
+      FontWeight: =FontWeight.Bold
+      Height: =26
+      PaddingBottom: =0
+      PaddingLeft: =0
+      PaddingRight: =0
+      PaddingTop: =0
+      Size: =11
+      Text: ="12"
+      Visible: =ThisItem.Job.Need12
+      Width: =27
+      Wrap: =false
+      X: =12
+      Y: =36
+- lblAsmSq14:
+    Control: Label@2.5.1
+    Properties:
+      Align: =Align.Center
+      Color: =clrPage
+      Fill: =If(ThisItem.Job.Done14, clrGreen, clrYellow)
+      FontWeight: =FontWeight.Bold
+      Height: =26
+      PaddingBottom: =0
+      PaddingLeft: =0
+      PaddingRight: =0
+      PaddingTop: =0
+      Size: =11
+      Text: ="14"
+      Visible: =ThisItem.Job.Need14
+      Width: =27
+      Wrap: =false
+      X: =12 + If(ThisItem.Job.Need12, 30, 0)
+      Y: =36
+- lblAsmSq16:
+    Control: Label@2.5.1
+    Properties:
+      Align: =Align.Center
+      Color: =clrPage
+      Fill: =If(ThisItem.Job.Done16, clrGreen, clrYellow)
+      FontWeight: =FontWeight.Bold
+      Height: =26
+      PaddingBottom: =0
+      PaddingLeft: =0
+      PaddingRight: =0
+      PaddingTop: =0
+      Size: =11
+      Text: ="16"
+      Visible: =ThisItem.Job.Need16
+      Width: =27
+      Wrap: =false
+      X: |-
+        =12 + If(ThisItem.Job.Need12, 30, 0) + If(ThisItem.Job.Need14, 30, 0)
+      Y: =36
+- lblAsmSq18:
+    Control: Label@2.5.1
+    Properties:
+      Align: =Align.Center
+      Color: =clrPage
+      Fill: =If(ThisItem.Job.Done18, clrGreen, clrYellow)
+      FontWeight: =FontWeight.Bold
+      Height: =26
+      PaddingBottom: =0
+      PaddingLeft: =0
+      PaddingRight: =0
+      PaddingTop: =0
+      Size: =11
+      Text: ="18"
+      Visible: =ThisItem.Job.Need18
+      Width: =27
+      Wrap: =false
+      X: |-
+        =12 + If(ThisItem.Job.Need12, 30, 0) + If(ThisItem.Job.Need14, 30, 0) + If(ThisItem.Job.Need16, 30, 0)
+      Y: =36
+- lblAsmSq20:
+    Control: Label@2.5.1
+    Properties:
+      Align: =Align.Center
+      Color: =clrPage
+      Fill: =If(ThisItem.Job.Done20, clrGreen, clrYellow)
+      FontWeight: =FontWeight.Bold
+      Height: =26
+      PaddingBottom: =0
+      PaddingLeft: =0
+      PaddingRight: =0
+      PaddingTop: =0
+      Size: =11
+      Text: ="20"
+      Visible: =ThisItem.Job.Need20
+      Width: =27
+      Wrap: =false
+      X: |-
+        =12 + If(ThisItem.Job.Need12, 30, 0) + If(ThisItem.Job.Need14, 30, 0) + If(ThisItem.Job.Need16, 30, 0) +
+            If(ThisItem.Job.Need18, 30, 0)
+      Y: =36
+- lblAsmSq24:
+    Control: Label@2.5.1
+    Properties:
+      Align: =Align.Center
+      Color: =clrPage
+      Fill: =If(ThisItem.Job.Done24, clrGreen, clrYellow)
+      FontWeight: =FontWeight.Bold
+      Height: =26
+      PaddingBottom: =0
+      PaddingLeft: =0
+      PaddingRight: =0
+      PaddingTop: =0
+      Size: =11
+      Text: ="24"
+      Visible: =ThisItem.Job.Need24
+      Width: =27
+      Wrap: =false
+      X: |-
+        =12 + If(ThisItem.Job.Need12, 30, 0) + If(ThisItem.Job.Need14, 30, 0) + If(ThisItem.Job.Need16, 30, 0) +
+            If(ThisItem.Job.Need18, 30, 0) + If(ThisItem.Job.Need20, 30, 0)
+      Y: =36
+- lblAsmSqBK:
+    Control: Label@2.5.1
+    Properties:
+      Align: =Align.Center
+      Color: =clrPage
+      Fill: =If(ThisItem.Job.PBDone, clrGreen, clrYellow)
+      FontWeight: =FontWeight.Bold
+      Height: =26
+      PaddingBottom: =0
+      PaddingLeft: =0
+      PaddingRight: =0
+      PaddingTop: =0
+      Size: =11
+      Text: ="BK"
+      Tooltip: ="Brake (PB)"
+      Width: =27
+      Wrap: =false
+      X: =12 + ThisItem.Job.NeedCount * 30
+      Y: =36
+- lblAsmSqP4:
+    Control: Label@2.5.1
+    Properties:
+      Align: =Align.Center
+      Color: =clrPage
+      Fill: =If(ThisItem.Job.P4Done, clrGreen, clrYellow)
+      FontWeight: =FontWeight.Bold
+      Height: =26
+      PaddingBottom: =0
+      PaddingLeft: =0
+      PaddingRight: =0
+      PaddingTop: =0
+      Size: =11
+      Text: ="P4"
+      Width: =27
+      Wrap: =false
+      X: =12 + (ThisItem.Job.NeedCount + 1) * 30
+      Y: =36
+- btnAsmMoved:
+    Control: Classic/Button@2.2.0
+    Properties:
+      BorderThickness: =0
+      Color: =clrPage
+      DisabledColor: =Self.Color
+      DisabledFill: =ColorFade(Self.Fill, -30%)
+      Fill: =clrAmber
+      FocusedBorderThickness: =0
+      FontWeight: =FontWeight.Bold
+      Height: =26
+      HoverColor: =Self.Color
+      HoverFill: =ColorFade(Self.Fill, -10%)
+      OnSelect: |-
+        =With({id: ThisItem.Job.ID, seen: ThisItem.Job.ShipYmd},
+        With({cur: LookUp(RunListJobs, ID = id)},
+            // An import can move the ship date again and keep the first PrevShipDate.
+            // Only clear the flag for the ship date this card is showing.
+            If(
+                If(IsBlank(cur.ShipDate), "", Text(cur.ShipDate, "yyyy-mm-dd")) <> seen,
+                Notify("CASMFG moved this ship date again. Check the new date on the card, then tap the chip again.", NotificationType.Warning);
+                Refresh(RunListJobs);
+                Set(gblRefreshTick, gblRefreshTick + 1),
+                IfError(
+                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {PrevShipDate: Blank()}),
+                    Refresh(RunListJobs);
+                    IfError(
+                        Patch(RunListJobs, LookUp(RunListJobs, ID = id), {PrevShipDate: Blank()}),
+                        Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
+                    )
+                )
+            )
+        ))
+      PaddingLeft: =0
+      PaddingRight: =0
+      PressedColor: =Self.Color
+      PressedFill: =ColorFade(Self.Fill, -25%)
+      RadiusBottomLeft: =13
+      RadiusBottomRight: =13
+      RadiusTopLeft: =13
+      RadiusTopRight: =13
+      Size: =10
+      Text: |-
+        ="📅 was " & ThisItem.Job.PrevShipText
+      Tooltip: ="CASMFG moved the ship date. Tap to acknowledge."
+      Visible: =ThisItem.Job.PrevShipText <> ""
+      Width: =92
+      X: =Parent.Width - Self.Width - 4
+      Y: =36
+- btnAsmStarted:
+    Control: Classic/Button@2.2.0
+    Properties:
+      BorderThickness: =0
+      Color: =If(ThisItem.Job.Started, clrPage, clrText)
+      DisabledColor: =Self.Color
+      DisabledFill: =ColorFade(Self.Fill, -30%)
+      Fill: =If(ThisItem.Job.Started, clrGreen, clrGrey)
+      FocusedBorderThickness: =0
+      FontWeight: =FontWeight.Bold
+      Height: =56
+      HoverColor: =Self.Color
+      HoverFill: =ColorFade(Self.Fill, -10%)
+      OnSelect: |-
+        =With({id: ThisItem.Job.ID, v: !ThisItem.Job.Started},
+        // If another tablet already started this job, keep its StartedOn, so the
+        // 30-day housekeeping clock is not restarted by a stale Start tap.
+        With({so: If(v, With({cur: LookUp(RunListJobs, ID = id)}, If(cur.Started && !IsBlank(cur.StartedOn), cur.StartedOn, Today())), Blank())},
+            IfError(
+                Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Started: v, StartedOn: so}),
+                Refresh(RunListJobs);
+                IfError(
+                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {Started: v, StartedOn: so}),
+                    Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0)
+                )
+            )
+        ))
+      PaddingLeft: =4
+      PaddingRight: =4
+      PressedColor: =Self.Color
+      PressedFill: =ColorFade(Self.Fill, -25%)
+      RadiusBottomLeft: =10
+      RadiusBottomRight: =10
+      RadiusTopLeft: =10
+      RadiusTopRight: =10
+      Size: =13
+      Text: |-
+        =If(ThisItem.Job.Started, "✓ Started " & Text(ThisItem.Job.StartedOn, "m/d"), "Start")
+      Width: =124
+      X: =12
+      Y: =66
+- btnAsmRule:
+    Control: Classic/Button@2.2.0
+    Properties:
+      BorderThickness: =0
+      Color: =clrPage
+      DisabledColor: =Self.Color
+      DisabledFill: =ColorFade(Self.Fill, -30%)
+      Fill: =clrAmber
+      FocusedBorderThickness: =0
+      FontWeight: =FontWeight.Bold
+      Height: =44
+      HoverColor: =Self.Color
+      HoverFill: =ColorFade(Self.Fill, -10%)
+      OnSelect: |-
+        =Notify(ThisItem.Job.JobLabel & " on " & ThisItem.Job.LineText & ". " & ThisItem.Job.AsmLocRule, NotificationType.Warning)
+      PaddingLeft: =0
+      PaddingRight: =0
+      PressedColor: =Self.Color
+      PressedFill: =ColorFade(Self.Fill, -25%)
+      RadiusBottomLeft: =10
+      RadiusBottomRight: =10
+      RadiusTopLeft: =10
+      RadiusTopRight: =10
+      Size: =18
+      Text: |-
+        ="⚠"
+      Tooltip: =ThisItem.Job.AsmLocRule
+      Visible: =ThisItem.Job.AsmLocRule <> ""
+      Width: =44
+      X: =Parent.Width - 204
+      Y: =72
+- btnAsmUp:
+    Control: Classic/Button@2.2.0
+    Properties:
+      BorderThickness: =0
+      Color: =clrText
+      DisabledColor: =Self.Color
+      DisabledFill: =ColorFade(Self.Fill, -30%)
+      Fill: =clrBorder
+      FocusedBorderThickness: =0
+      FontWeight: =FontWeight.Bold
+      Height: =48
+      HoverColor: =Self.Color
+      HoverFill: =ColorFade(Self.Fill, -15%)
+      OnSelect: |-
+        =With({c: ThisItem.Job, dir: "up"},
+        With({vis: SortByColumns(Filter(ActiveJobs, AsmBand = c.AsmBand && (tglAsmShowStarted.Value || AsmShown)), "AsmGroupOrder", SortOrder.Ascending, "PairKey", SortOrder.Ascending, "AsmSort", SortOrder.Ascending, "ID", SortOrder.Ascending)},
+        With({units: Filter(vis As r, IsBlank(r.PairNo) || r.ID = First(Filter(vis, PairNo = r.PairNo)).ID)},
+        With({num: ForAll(Sequence(CountRows(units)) As s, {i: s.Value, pn: Index(units, s.Value).PairNo, uid: Index(units, s.Value).ID, go: Index(units, s.Value).AsmGroupOrder})},
+        With({my: LookUp(num, If(IsBlank(c.PairNo), uid = c.ID, pn = c.PairNo))},
+        With({mover: If(dir = "up", my, LookUp(num, i = my.i + 1)),
+              above: If(dir = "up", LookUp(num, i = my.i - 1), my),
+              above2: If(dir = "up", LookUp(num, i = my.i - 2), LookUp(num, i = my.i - 1))},
+        If(!IsBlank(mover) && !IsBlank(above),
+            With({id: First(SortByColumns(Filter(ActiveJobs, AsmBand = c.AsmBand && If(IsBlank(mover.pn), ID = mover.uid, PairNo = mover.pn)), "AsmSort", SortOrder.Ascending, "ID", SortOrder.Ascending)).ID,
+                  v: If(IsBlank(above2), above.go - 1, (above2.go + above.go) / 2)},
+                IfError(
+                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {AssemblyOrder: v}),
+                    Refresh(RunListJobs);
+                    IfError(
+                        Patch(RunListJobs, LookUp(RunListJobs, ID = id), {AssemblyOrder: v}),
+                        Notify("Move failed: " & FirstError.Message, NotificationType.Error, 0)
+                    )
+                )
+            )
+        )))))))
+      PaddingLeft: =0
+      PaddingRight: =0
+      PressedColor: =Self.Color
+      PressedFill: =ColorFade(Self.Fill, -30%)
+      RadiusBottomLeft: =10
+      RadiusBottomRight: =10
+      RadiusTopLeft: =10
+      RadiusTopRight: =10
+      Size: =18
+      Text: =UniChar(9650)
+      Tooltip: ="Move up"
+      Width: =48
+      X: =Parent.Width - 156
+      Y: =70
+- btnAsmDown:
+    Control: Classic/Button@2.2.0
+    Properties:
+      BorderThickness: =0
+      Color: =clrText
+      DisabledColor: =Self.Color
+      DisabledFill: =ColorFade(Self.Fill, -30%)
+      Fill: =clrBorder
+      FocusedBorderThickness: =0
+      FontWeight: =FontWeight.Bold
+      Height: =48
+      HoverColor: =Self.Color
+      HoverFill: =ColorFade(Self.Fill, -15%)
+      OnSelect: |-
+        =With({c: ThisItem.Job, dir: "down"},
+        With({vis: SortByColumns(Filter(ActiveJobs, AsmBand = c.AsmBand && (tglAsmShowStarted.Value || AsmShown)), "AsmGroupOrder", SortOrder.Ascending, "PairKey", SortOrder.Ascending, "AsmSort", SortOrder.Ascending, "ID", SortOrder.Ascending)},
+        With({units: Filter(vis As r, IsBlank(r.PairNo) || r.ID = First(Filter(vis, PairNo = r.PairNo)).ID)},
+        With({num: ForAll(Sequence(CountRows(units)) As s, {i: s.Value, pn: Index(units, s.Value).PairNo, uid: Index(units, s.Value).ID, go: Index(units, s.Value).AsmGroupOrder})},
+        With({my: LookUp(num, If(IsBlank(c.PairNo), uid = c.ID, pn = c.PairNo))},
+        With({mover: If(dir = "up", my, LookUp(num, i = my.i + 1)),
+              above: If(dir = "up", LookUp(num, i = my.i - 1), my),
+              above2: If(dir = "up", LookUp(num, i = my.i - 2), LookUp(num, i = my.i - 1))},
+        If(!IsBlank(mover) && !IsBlank(above),
+            With({id: First(SortByColumns(Filter(ActiveJobs, AsmBand = c.AsmBand && If(IsBlank(mover.pn), ID = mover.uid, PairNo = mover.pn)), "AsmSort", SortOrder.Ascending, "ID", SortOrder.Ascending)).ID,
+                  v: If(IsBlank(above2), above.go - 1, (above2.go + above.go) / 2)},
+                IfError(
+                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), {AssemblyOrder: v}),
+                    Refresh(RunListJobs);
+                    IfError(
+                        Patch(RunListJobs, LookUp(RunListJobs, ID = id), {AssemblyOrder: v}),
+                        Notify("Move failed: " & FirstError.Message, NotificationType.Error, 0)
+                    )
+                )
+            )
+        )))))))
+      PaddingLeft: =0
+      PaddingRight: =0
+      PressedColor: =Self.Color
+      PressedFill: =ColorFade(Self.Fill, -30%)
+      RadiusBottomLeft: =10
+      RadiusBottomRight: =10
+      RadiusTopLeft: =10
+      RadiusTopRight: =10
+      Size: =18
+      Text: =UniChar(9660)
+      Tooltip: ="Move down"
+      Width: =48
+      X: =Parent.Width - 104
+      Y: =70
+- icoAsmEdit:
+    Control: Classic/Icon@2.5.0
+    Properties:
+      AccessibleLabel: ="Change line or date"
+      Color: =clrText
+      Fill: =clrBorder
+      FocusedBorderThickness: =0
+      Height: =48
+      HoverColor: =Self.Color
+      HoverFill: =ColorFade(Self.Fill, -15%)
+      Icon: =Icon.Edit
+      OnSelect: |-
+        =UpdateContext({locPanel: "assign", locId: ThisItem.Job.ID})
+      PaddingBottom: =12
+      PaddingLeft: =12
+      PaddingRight: =12
+      PaddingTop: =12
+      PressedColor: =Self.Color
+      PressedFill: =ColorFade(Self.Fill, -30%)
+      Tooltip: ="Change line or date"
+      Width: =48
+      X: =Parent.Width - 52
+      Y: =70

@@ -1,0 +1,394 @@
+Screens:
+  scrHome:
+    Properties:
+      Fill: =clrPage
+    Children:
+      - conHomHeader:
+          Control: GroupContainer@1.5.0
+          Variant: AutoLayout
+          Properties:
+            BorderThickness: =0
+            DropShadow: =DropShadow.None
+            Fill: =clrCard
+            Height: =64
+            LayoutAlignItems: =LayoutAlignItems.Center
+            LayoutDirection: =LayoutDirection.Horizontal
+            LayoutGap: =12
+            LayoutJustifyContent: =LayoutJustifyContent.Start
+            PaddingLeft: =16
+            PaddingRight: =16
+            Width: =1366
+            X: =0
+            Y: =0
+          Children:
+            - lblHomTitle:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrText
+                  FillPortions: =1
+                  FontWeight: =FontWeight.Bold
+                  Height: =44
+                  LayoutMinWidth: =160
+                  PaddingLeft: =0
+                  Size: =22
+                  Text: ="The White Board"
+                  Wrap: =false
+            - lblHomUser:
+                Control: Label@2.5.1
+                Properties:
+                  Align: =Align.Right
+                  Color: =clrMuted
+                  FillPortions: =0
+                  Height: =44
+                  LayoutMinWidth: =480
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  Size: =14
+                  Text: |-
+                    =With({n: User().FullName & "", e: User().Email & ""},
+                        "Signed in as " & If(n <> "", n, e <> "", e, "unknown user")
+                    )
+                  Width: =480
+                  Wrap: =false
+      - lblHomPlan:
+          Control: Label@2.5.1
+          Properties:
+            Color: =clrMuted
+            FontWeight: =FontWeight.Semibold
+            Height: =32
+            PaddingLeft: =0
+            Size: =15
+            Text: ="Planning"
+            Width: =600
+            Wrap: =false
+            X: =47
+            Y: =112
+      - btnHomPunch:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderThickness: =0
+            Color: =clrWhite
+            DisabledColor: =Self.Color
+            DisabledFill: =ColorFade(Self.Fill, -30%)
+            Fill: =clrBlue
+            FocusedBorderThickness: =0
+            FontWeight: =FontWeight.Bold
+            Height: =200
+            HoverColor: =Self.Color
+            HoverFill: =ColorFade(Self.Fill, -15%)
+            OnSelect: =Navigate(scrPunch, ScreenTransition.None)
+            PressedColor: =Self.Color
+            PressedFill: =ColorFade(Self.Fill, -30%)
+            RadiusBottomLeft: =14
+            RadiusBottomRight: =14
+            RadiusTopLeft: =14
+            RadiusTopRight: =14
+            Size: =30
+            Text: ="Punch"
+            Width: =300
+            X: =47
+            Y: =148
+      - lblHomPunchInfo:
+          Control: Label@2.5.1
+          Properties:
+            Align: =Align.Center
+            Color: =clrMuted
+            Height: =30
+            PaddingLeft: =0
+            PaddingRight: =0
+            Size: =13
+            Text: ="Place and order punch jobs"
+            Width: =300
+            Wrap: =false
+            X: =47
+            Y: =354
+      - btnHomAssembly:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderThickness: =0
+            Color: =clrWhite
+            DisabledColor: =Self.Color
+            DisabledFill: =ColorFade(Self.Fill, -30%)
+            Fill: =clrBlue
+            FocusedBorderThickness: =0
+            FontWeight: =FontWeight.Bold
+            Height: =200
+            HoverColor: =Self.Color
+            HoverFill: =ColorFade(Self.Fill, -15%)
+            OnSelect: =Navigate(scrAssembly, ScreenTransition.None)
+            PressedColor: =Self.Color
+            PressedFill: =ColorFade(Self.Fill, -30%)
+            RadiusBottomLeft: =14
+            RadiusBottomRight: =14
+            RadiusTopLeft: =14
+            RadiusTopRight: =14
+            Size: =30
+            Text: ="Assembly"
+            Width: =300
+            X: =371
+            Y: =148
+      - lblHomAssemblyInfo:
+          Control: Label@2.5.1
+          Properties:
+            Align: =Align.Center
+            Color: =clrMuted
+            Height: =30
+            PaddingLeft: =0
+            PaddingRight: =0
+            Size: =13
+            Text: ="Plan lines and start days"
+            Width: =300
+            Wrap: =false
+            X: =371
+            Y: =354
+      - btnHomNesting:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderThickness: =0
+            Color: =clrWhite
+            DisabledColor: =Self.Color
+            DisabledFill: =ColorFade(Self.Fill, -30%)
+            Fill: =clrBlue
+            FocusedBorderThickness: =0
+            FontWeight: =FontWeight.Bold
+            Height: =200
+            HoverColor: =Self.Color
+            HoverFill: =ColorFade(Self.Fill, -15%)
+            OnSelect: =Navigate(scrNesting, ScreenTransition.None)
+            PressedColor: =Self.Color
+            PressedFill: =ColorFade(Self.Fill, -30%)
+            RadiusBottomLeft: =14
+            RadiusBottomRight: =14
+            RadiusTopLeft: =14
+            RadiusTopRight: =14
+            Size: =30
+            Text: ="Nesting"
+            Width: =300
+            X: =695
+            Y: =148
+      - lblHomNestingInfo:
+          Control: Label@2.5.1
+          Properties:
+            Align: =Align.Center
+            Color: =clrMuted
+            Height: =30
+            PaddingLeft: =0
+            PaddingRight: =0
+            Size: =13
+            Text: ="Gauges and nest labels"
+            Width: =300
+            Wrap: =false
+            X: =695
+            Y: =354
+      - btnHomImport:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderThickness: =0
+            Color: =clrWhite
+            DisabledColor: =Self.Color
+            DisabledFill: =ColorFade(Self.Fill, -30%)
+            Fill: =clrBlue
+            FocusedBorderThickness: =0
+            FontWeight: =FontWeight.Bold
+            Height: =200
+            HoverColor: =Self.Color
+            HoverFill: =ColorFade(Self.Fill, -15%)
+            OnSelect: =Navigate(scrImport, ScreenTransition.None)
+            PressedColor: =Self.Color
+            PressedFill: =ColorFade(Self.Fill, -30%)
+            RadiusBottomLeft: =14
+            RadiusBottomRight: =14
+            RadiusTopLeft: =14
+            RadiusTopRight: =14
+            Size: =30
+            Text: ="Import"
+            Width: =300
+            X: =1019
+            Y: =148
+      - lblHomImportInfo:
+          Control: Label@2.5.1
+          Properties:
+            Align: =Align.Center
+            Color: =clrMuted
+            Height: =30
+            PaddingLeft: =0
+            PaddingRight: =0
+            Size: =13
+            Text: ="Paste the CASMFG jobs"
+            Width: =300
+            Wrap: =false
+            X: =1019
+            Y: =354
+      - lblHomFloor:
+          Control: Label@2.5.1
+          Properties:
+            Color: =clrMuted
+            FontWeight: =FontWeight.Semibold
+            Height: =32
+            PaddingLeft: =0
+            Size: =15
+            Text: ="Shop floor"
+            Width: =600
+            Wrap: =false
+            X: =47
+            Y: =416
+      - btnHomSB8:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderThickness: =0
+            Color: =clrPage
+            DisabledColor: =Self.Color
+            DisabledFill: =ColorFade(Self.Fill, -30%)
+            Fill: =clrSB8
+            FocusedBorderThickness: =0
+            FontWeight: =FontWeight.Bold
+            Height: =200
+            HoverColor: =Self.Color
+            HoverFill: =ColorFade(Self.Fill, -15%)
+            OnSelect: |-
+              =Set(varMachine, "SB8");
+              Navigate(scrTurret, ScreenTransition.None)
+            PressedColor: =Self.Color
+            PressedFill: =ColorFade(Self.Fill, -30%)
+            RadiusBottomLeft: =14
+            RadiusBottomRight: =14
+            RadiusTopLeft: =14
+            RadiusTopRight: =14
+            Size: =30
+            Text: ="SB8"
+            Width: =300
+            X: =47
+            Y: =452
+      - lblHomSB8Info:
+          Control: Label@2.5.1
+          Properties:
+            Align: =Align.Center
+            Color: =clrMuted
+            Height: =30
+            PaddingLeft: =0
+            PaddingRight: =0
+            Size: =13
+            Text: ="Check off gauges on SB8"
+            Width: =300
+            Wrap: =false
+            X: =47
+            Y: =658
+      - btnHomSB15:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderThickness: =0
+            Color: =clrPage
+            DisabledColor: =Self.Color
+            DisabledFill: =ColorFade(Self.Fill, -30%)
+            Fill: =clrSB15
+            FocusedBorderThickness: =0
+            FontWeight: =FontWeight.Bold
+            Height: =200
+            HoverColor: =Self.Color
+            HoverFill: =ColorFade(Self.Fill, -15%)
+            OnSelect: |-
+              =Set(varMachine, "SB15");
+              Navigate(scrTurret, ScreenTransition.None)
+            PressedColor: =Self.Color
+            PressedFill: =ColorFade(Self.Fill, -30%)
+            RadiusBottomLeft: =14
+            RadiusBottomRight: =14
+            RadiusTopLeft: =14
+            RadiusTopRight: =14
+            Size: =30
+            Text: ="SB15"
+            Width: =300
+            X: =371
+            Y: =452
+      - lblHomSB15Info:
+          Control: Label@2.5.1
+          Properties:
+            Align: =Align.Center
+            Color: =clrMuted
+            Height: =30
+            PaddingLeft: =0
+            PaddingRight: =0
+            Size: =13
+            Text: ="Check off gauges on SB15"
+            Width: =300
+            Wrap: =false
+            X: =371
+            Y: =658
+      - btnHomBending:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderThickness: =0
+            Color: =clrPage
+            DisabledColor: =Self.Color
+            DisabledFill: =ColorFade(Self.Fill, -30%)
+            Fill: =clrBending
+            FocusedBorderThickness: =0
+            FontWeight: =FontWeight.Bold
+            Height: =200
+            HoverColor: =Self.Color
+            HoverFill: =ColorFade(Self.Fill, -15%)
+            OnSelect: =Navigate(scrBending, ScreenTransition.None)
+            PressedColor: =Self.Color
+            PressedFill: =ColorFade(Self.Fill, -30%)
+            RadiusBottomLeft: =14
+            RadiusBottomRight: =14
+            RadiusTopLeft: =14
+            RadiusTopRight: =14
+            Size: =30
+            Text: ="Bending"
+            Width: =300
+            X: =695
+            Y: =452
+      - lblHomBendingInfo:
+          Control: Label@2.5.1
+          Properties:
+            Align: =Align.Center
+            Color: =clrMuted
+            Height: =30
+            PaddingLeft: =0
+            PaddingRight: =0
+            Size: =13
+            Text: ="Press brake and P4 ticks"
+            Width: =300
+            Wrap: =false
+            X: =695
+            Y: =658
+      - btnHomTV:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderThickness: =0
+            Color: =clrWhite
+            DisabledColor: =Self.Color
+            DisabledFill: =ColorFade(Self.Fill, -30%)
+            Fill: =clrGrey
+            FocusedBorderThickness: =0
+            FontWeight: =FontWeight.Bold
+            Height: =200
+            HoverColor: =Self.Color
+            HoverFill: =ColorFade(Self.Fill, -15%)
+            OnSelect: =Navigate(scrTV, ScreenTransition.None)
+            PressedColor: =Self.Color
+            PressedFill: =ColorFade(Self.Fill, -30%)
+            RadiusBottomLeft: =14
+            RadiusBottomRight: =14
+            RadiusTopLeft: =14
+            RadiusTopRight: =14
+            Size: =30
+            Text: ="TV"
+            Width: =300
+            X: =1019
+            Y: =452
+      - lblHomTVInfo:
+          Control: Label@2.5.1
+          Properties:
+            Align: =Align.Center
+            Color: =clrMuted
+            Height: =30
+            PaddingLeft: =0
+            PaddingRight: =0
+            Size: =13
+            Text: ="Wall display, read only"
+            Width: =300
+            Wrap: =false
+            X: =1019
+            Y: =658

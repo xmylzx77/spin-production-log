@@ -1,0 +1,595 @@
+Screens:
+  scrAssembly:
+    Properties:
+      Fill: =clrPage
+      OnVisible: |-
+        =UpdateContext({locPanel: "", locId: 0});
+        Refresh(RunListJobs);
+        Set(gblRefreshTick, gblRefreshTick + 1)
+    Children:
+      - conAsmHeader:
+          Control: GroupContainer@1.5.0
+          Variant: AutoLayout
+          Properties:
+            BorderThickness: =0
+            DropShadow: =DropShadow.None
+            Fill: =clrCard
+            Height: =64
+            LayoutAlignItems: =LayoutAlignItems.Center
+            LayoutDirection: =LayoutDirection.Horizontal
+            LayoutGap: =12
+            LayoutJustifyContent: =LayoutJustifyContent.Start
+            PaddingLeft: =16
+            PaddingRight: =16
+            Width: =1366
+            X: =0
+            Y: =0
+          Children:
+            - lblAsmTitle:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrText
+                  FillPortions: =1
+                  FontWeight: =FontWeight.Bold
+                  Height: =44
+                  LayoutMinWidth: =160
+                  PaddingLeft: =0
+                  Size: =22
+                  Text: ="Assembly"
+                  Wrap: =false
+            - tglAsmShowStarted:
+                Control: Classic/Toggle@2.1.0
+                Properties:
+                  Default: =false
+                  FalseFill: =clrGrey
+                  FalseHoverFill: =clrGrey
+                  FillPortions: =0
+                  FocusedBorderThickness: =0
+                  HandleFill: =clrText
+                  Height: =36
+                  LayoutMinWidth: =64
+                  ShowLabel: =false
+                  TrueFill: =clrGreen
+                  TrueHoverFill: =clrGreen
+                  Width: =64
+            - lblAsmShowStarted:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrText
+                  FillPortions: =0
+                  Height: =44
+                  LayoutMinWidth: =130
+                  PaddingLeft: =0
+                  Size: =14
+                  Text: ="Show started"
+                  Width: =130
+                  Wrap: =false
+            - lblAsmCounts:
+                Control: Label@2.5.1
+                Properties:
+                  Align: =Align.Right
+                  Color: =clrMuted
+                  FillPortions: =0
+                  Height: =44
+                  LayoutMinWidth: =330
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  Size: =14
+                  Text: |-
+                    =With(
+                        {vis: Filter(ActiveJobs, tglAsmShowStarted.Value || AsmShown)},
+                        "On the lines: " & CountRows(Filter(vis, LineText <> "" && AsmYmd <> "")) &
+                        "      Unassigned: " & CountRows(Filter(vis, LineText = "" || AsmYmd = ""))
+                    )
+                  Width: =330
+                  Wrap: =false
+            - btnAsmRefresh:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =clrWhite
+                  DisabledColor: =Self.Color
+                  DisabledFill: =ColorFade(Self.Fill, -30%)
+                  Fill: =clrBlue
+                  FillPortions: =0
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Semibold
+                  Height: =44
+                  HoverColor: =Self.Color
+                  HoverFill: =ColorFade(Self.Fill, -15%)
+                  LayoutMinWidth: =110
+                  OnSelect: |-
+                    =Refresh(RunListJobs);
+                    Set(gblRefreshTick, gblRefreshTick + 1)
+                  PressedColor: =Self.Color
+                  PressedFill: =ColorFade(Self.Fill, -30%)
+                  RadiusBottomLeft: =8
+                  RadiusBottomRight: =8
+                  RadiusTopLeft: =8
+                  RadiusTopRight: =8
+                  Size: =15
+                  Text: ="Refresh"
+                  Width: =110
+            - btnAsmHome:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =clrWhite
+                  DisabledColor: =Self.Color
+                  DisabledFill: =ColorFade(Self.Fill, -30%)
+                  Fill: =clrGrey
+                  FillPortions: =0
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Semibold
+                  Height: =44
+                  HoverColor: =Self.Color
+                  HoverFill: =ColorFade(Self.Fill, -15%)
+                  LayoutMinWidth: =100
+                  OnSelect: =Navigate(scrHome, ScreenTransition.None)
+                  PressedColor: =Self.Color
+                  PressedFill: =ColorFade(Self.Fill, -30%)
+                  RadiusBottomLeft: =8
+                  RadiusBottomRight: =8
+                  RadiusTopLeft: =8
+                  RadiusTopRight: =8
+                  Size: =15
+                  Text: ="Home"
+                  Width: =100
+      - conAsmTray:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            BorderThickness: =0
+            DropShadow: =DropShadow.None
+            Fill: =clrPage
+            Height: =704
+            Width: =280
+            X: =0
+            Y: =64
+          Children:
+            - lblAsmTrayTitle:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrText
+                  FontWeight: =FontWeight.Bold
+                  Height: =32
+                  PaddingLeft: =0
+                  Size: =16
+                  Text: |-
+                    ="Unassigned (" & CountRows(Filter(ActiveJobs, (LineText = "" || AsmYmd = "") && (tglAsmShowStarted.Value || AsmShown))) & ")"
+                  Width: =256
+                  Wrap: =false
+                  X: =12
+                  Y: =8
+            - galAsmTray:
+                Control: Gallery@2.15.0
+                Variant: Vertical
+                Properties:
+                  BorderThickness: =0
+                  DelayItemLoading: =false
+                  Fill: =clrNone
+                  Height: =652
+                  Items: |-
+                    =SortByColumns(
+                        Filter(ActiveJobs, (LineText = "" || AsmYmd = "") && (tglAsmShowStarted.Value || AsmShown)),
+                        "ShipKey", SortOrder.Ascending,
+                        "ID", SortOrder.Ascending
+                    )
+                  LoadingSpinner: =LoadingSpinner.None
+                  ShowScrollbar: =true
+                  TemplatePadding: =0
+                  TemplateSize: =96
+                  Width: =272
+                  X: =6
+                  Y: =44
+                Children:
+                  - conAsmTrCard:
+                      Control: GroupContainer@1.5.0
+                      Variant: ManualLayout
+                      Properties:
+                        BorderColor: =clrBorder
+                        BorderThickness: =1
+                        DropShadow: =DropShadow.None
+                        Fill: =clrCard
+                        Height: =Parent.TemplateHeight - 6
+                        RadiusBottomLeft: =8
+                        RadiusBottomRight: =8
+                        RadiusTopLeft: =8
+                        RadiusTopRight: =8
+                        Width: =Parent.TemplateWidth - 14
+                        X: =0
+                        Y: =3
+                      Children:
+                        - lblAsmTrJob:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =clrText
+                              FontWeight: =FontWeight.Bold
+                              Height: =26
+                              PaddingLeft: =0
+                              PaddingRight: =0
+                              Size: =16
+                              Text: =ThisItem.JobLabel
+                              Width: =124
+                              Wrap: =false
+                              X: =10
+                              Y: =6
+                        - btnAsmTrPair:
+                            Control: Classic/Button@2.2.0
+                            Properties:
+                              BorderThickness: =0
+                              Color: =clrPage
+                              Fill: =ThisItem.PairColor
+                              FocusedBorderThickness: =0
+                              FontWeight: =FontWeight.Bold
+                              Height: =26
+                              HoverColor: =Self.Color
+                              HoverFill: =Self.Fill
+                              PaddingLeft: =0
+                              PaddingRight: =0
+                              PressedColor: =Self.Color
+                              PressedFill: =Self.Fill
+                              RadiusBottomLeft: =13
+                              RadiusBottomRight: =13
+                              RadiusTopLeft: =13
+                              RadiusTopRight: =13
+                              Size: =11
+                              Text: =Text(ThisItem.PairRank)
+                              Tooltip: ="Paired job"
+                              Visible: =!IsBlank(ThisItem.PairNo)
+                              Width: =26
+                              X: =136
+                              Y: =6
+                        - lblAsmTrSize:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =If(IsBlank(ThisItem.JobSize), clrRed, clrText)
+                              FontWeight: =FontWeight.Semibold
+                              Height: =22
+                              PaddingLeft: =0
+                              PaddingRight: =0
+                              Size: =If(IsBlank(ThisItem.JobSize), 11, 13)
+                              Text: =ThisItem.SizeText
+                              Width: =68
+                              Wrap: =false
+                              X: =10
+                              Y: =34
+                        - lblAsmTrShip:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =If(ThisItem.ShipKey = 99999999, clrRed, clrMuted)
+                              Height: =22
+                              PaddingLeft: =0
+                              PaddingRight: =0
+                              Size: =If(ThisItem.ShipKey = 99999999, 10, 13)
+                              Text: |-
+                                =If(ThisItem.ShipKey = 99999999, ThisItem.ShipText, "📅 " & ThisItem.ShipText)
+                              Width: =102
+                              Wrap: =false
+                              X: =80
+                              Y: =34
+                        - lblAsmTrCust:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =clrMuted
+                              Height: =24
+                              PaddingLeft: =0
+                              PaddingRight: =0
+                              Size: =13
+                              Text: =ThisItem.CustShort
+                              Width: =160
+                              Wrap: =false
+                              X: =10
+                              Y: =58
+                        - btnAsmTrAssign:
+                            Control: Classic/Button@2.2.0
+                            Properties:
+                              BorderThickness: =0
+                              Color: =clrWhite
+                              DisabledColor: =Self.Color
+                              DisabledFill: =ColorFade(Self.Fill, -30%)
+                              Fill: =clrBlue
+                              FocusedBorderThickness: =0
+                              FontWeight: =FontWeight.Semibold
+                              Height: =48
+                              HoverColor: =Self.Color
+                              HoverFill: =ColorFade(Self.Fill, -15%)
+                              OnSelect: |-
+                                =UpdateContext({locPanel: "assign", locId: ThisItem.ID})
+                              PaddingLeft: =0
+                              PaddingRight: =0
+                              PressedColor: =Self.Color
+                              PressedFill: =ColorFade(Self.Fill, -30%)
+                              RadiusBottomLeft: =8
+                              RadiusBottomRight: =8
+                              RadiusTopLeft: =8
+                              RadiusTopRight: =8
+                              Size: =13
+                              Text: ="Assign"
+                              Width: =64
+                              X: =Parent.Width - Self.Width - 8
+                              Y: =(Parent.Height - Self.Height) / 2
+            - lblAsmTrayEmpty:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrMuted
+                  Height: =40
+                  PaddingLeft: =0
+                  Size: =14
+                  Text: ="Nothing to assign."
+                  Visible: |-
+                    =IsEmpty(Filter(ActiveJobs, (LineText = "" || AsmYmd = "") && (tglAsmShowStarted.Value || AsmShown)))
+                  Width: =256
+                  X: =12
+                  Y: =48
+      - recAsmDivider:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderThickness: =0
+            Fill: =clrBorder
+            Height: =704
+            Width: =1
+            X: =280
+            Y: =64
+      - lblAsmColL1:
+          Control: Label@2.5.1
+          Properties:
+            Align: =Align.Center
+            Color: =clrText
+            Fill: =clrCard
+            FontWeight: =FontWeight.Bold
+            Height: =28
+            PaddingLeft: =0
+            PaddingRight: =0
+            Size: =15
+            Text: |-
+              =With(
+                  {n: CountRows(Filter(ActiveJobs, LineText = "Line 1" && AsmYmd <> "" && (tglAsmShowStarted.Value || AsmShown)))},
+                  "Line 1     " & n & If(n = 1, " job", " jobs")
+              )
+            Width: =346
+            Wrap: =false
+            X: =290
+            Y: =70
+      - lblAsmColL2:
+          Control: Label@2.5.1
+          Properties:
+            Align: =Align.Center
+            Color: =clrText
+            Fill: =clrCard
+            FontWeight: =FontWeight.Bold
+            Height: =28
+            PaddingLeft: =0
+            PaddingRight: =0
+            Size: =15
+            Text: |-
+              =With(
+                  {n: CountRows(Filter(ActiveJobs, LineText = "Line 2" && AsmYmd <> "" && (tglAsmShowStarted.Value || AsmShown)))},
+                  "Line 2     " & n & If(n = 1, " job", " jobs")
+              )
+            Width: =346
+            Wrap: =false
+            X: =642
+            Y: =70
+      - lblAsmColL3:
+          Control: Label@2.5.1
+          Properties:
+            Align: =Align.Center
+            Color: =clrText
+            Fill: =clrCard
+            FontWeight: =FontWeight.Bold
+            Height: =28
+            PaddingLeft: =0
+            PaddingRight: =0
+            Size: =15
+            Text: |-
+              =With(
+                  {n: CountRows(Filter(ActiveJobs, LineText = "Line 3" && AsmYmd <> "" && (tglAsmShowStarted.Value || AsmShown)))},
+                  "Line 3     " & n & If(n = 1, " job", " jobs")
+              )
+            Width: =346
+            Wrap: =false
+            X: =994
+            Y: =70
+      - galAsmDays:
+          Control: Gallery@2.15.0
+          Variant: VariableHeight
+          Properties:
+            BorderThickness: =0
+            DelayItemLoading: =false
+            Fill: =clrNone
+            Height: =662
+            Items: |-
+              =With(
+                  // One row per workday (AsmDays / AsmDaysAll). C1..C3 = that day's cards on
+                  // Line 1..3 in cell order. Slots = the cards laid out 3 across (Line 1, 2, 3),
+                  // padded with empty slots so each line keeps its own column.
+                  {
+                      asmSrc: AddColumns(
+                          Filter(ActiveJobs, LineText <> "" && AsmYmd <> "" && (tglAsmShowStarted.Value || AsmShown)),
+                          AsmLocSlack,
+                              If(
+                                  ShipKey = 99999999,
+                                  Blank(),
+                                  With(
+                                      {
+                                          a: DateDiff(Date(2001, 1, 1), Date(Year(AssemblyDate), Month(AssemblyDate), Day(AssemblyDate)), TimeUnit.Days),
+                                          b: DateDiff(Date(2001, 1, 1), Date(Year(ShipDate), Month(ShipDate), Day(ShipDate)), TimeUnit.Days)
+                                      },
+                                      5 * RoundDown(b / 7, 0) + Min(Mod(b, 7), 5) - 5 * RoundDown(a / 7, 0) - Min(Mod(a, 7), 5)
+                                  )
+                              ),
+                          AsmLocRule,
+                              If(
+                                  JobSize >= 4 && LineText <> "Line 3", "Size 4 builds on Line 3 only.",
+                                  JobSize = 3 && HeavyTon && LineText <> "Line 3", "Size 3 with " & TonToken & " TON is a heavy build: Line 3 only.",
+                                  JobSize = 3 && LineText = "Line 1", "Size 3 does not build on Line 1 (Line 1 runs the small 1-2s).",
+                                  JobSize = 1 && LineText = "Line 3", "Size 1 does not build on Line 3 by default.",
+                                  ""
+                              )
+                      )
+                  },
+                  With(
+                      {
+                          asmCells: AddColumns(
+                              If(tglAsmShowStarted.Value, AsmDaysAll, AsmDays) As dy,
+                              C1, SortByColumns(Filter(asmSrc, AsmBand = "Line 1|" & dy.BandYmd), "AsmGroupOrder", SortOrder.Ascending, "PairKey", SortOrder.Ascending, "AsmSort", SortOrder.Ascending, "ID", SortOrder.Ascending),
+                              C2, SortByColumns(Filter(asmSrc, AsmBand = "Line 2|" & dy.BandYmd), "AsmGroupOrder", SortOrder.Ascending, "PairKey", SortOrder.Ascending, "AsmSort", SortOrder.Ascending, "ID", SortOrder.Ascending),
+                              C3, SortByColumns(Filter(asmSrc, AsmBand = "Line 3|" & dy.BandYmd), "AsmGroupOrder", SortOrder.Ascending, "PairKey", SortOrder.Ascending, "AsmSort", SortOrder.Ascending, "ID", SortOrder.Ascending)
+                          )
+                      },
+                      AddColumns(
+                          asmCells As cr,
+                          N1, CountRows(cr.C1),
+                          N2, CountRows(cr.C2),
+                          N3, CountRows(cr.C3),
+                          RowCount, Max(CountRows(cr.C1), CountRows(cr.C2), CountRows(cr.C3)),
+                          Slots,
+                              ForAll(
+                                  Sequence(3 * Max(CountRows(cr.C1), CountRows(cr.C2), CountRows(cr.C3)), 0) As s,
+                                  With(
+                                      {r: RoundDown(s.Value / 3, 0) + 1, k: Mod(s.Value, 3) + 1},
+                                      {
+                                          Slot: s.Value,
+                                          HasJob: r <= Switch(k, 1, CountRows(cr.C1), 2, CountRows(cr.C2), CountRows(cr.C3)),
+                                          Job: Switch(
+                                              k,
+                                              1, If(r <= CountRows(cr.C1), Index(cr.C1, r)),
+                                              2, If(r <= CountRows(cr.C2), Index(cr.C2, r)),
+                                              If(r <= CountRows(cr.C3), Index(cr.C3, r))
+                                          )
+                                      }
+                                  )
+                              )
+                      )
+                  )
+              )
+            LoadingSpinner: =LoadingSpinner.None
+            ShowScrollbar: =true
+            TemplatePadding: =0
+            TemplateSize: =40
+            Width: =1072
+            X: =290
+            Y: =102
+          Children:
+            - lblAsmDay1:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =If(ThisItem.IsWeekend, clrAmber, clrText)
+                  Fill: |-
+                    =If(ThisItem.IsToday, clrBlue, ThisItem.BandKey < TodayKey, ColorFade(clrRed, -55%), clrBorder)
+                  FontWeight: =FontWeight.Semibold
+                  Height: =28
+                  PaddingLeft: =10
+                  Size: =13
+                  Text: |-
+                    =ThisItem.Label & If(ThisItem.IsToday, "  (today)", "") & "      " & ThisItem.N1 & If(ThisItem.N1 = 1, " job", " jobs")
+                  Width: =346
+                  Wrap: =false
+                  X: =0
+                  Y: =4
+            - lblAsmDay2:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =If(ThisItem.IsWeekend, clrAmber, clrText)
+                  Fill: |-
+                    =If(ThisItem.IsToday, clrBlue, ThisItem.BandKey < TodayKey, ColorFade(clrRed, -55%), clrBorder)
+                  FontWeight: =FontWeight.Semibold
+                  Height: =28
+                  PaddingLeft: =10
+                  Size: =13
+                  Text: |-
+                    =ThisItem.Label & If(ThisItem.IsToday, "  (today)", "") & "      " & ThisItem.N2 & If(ThisItem.N2 = 1, " job", " jobs")
+                  Width: =346
+                  Wrap: =false
+                  X: =352
+                  Y: =4
+            - lblAsmDay3:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =If(ThisItem.IsWeekend, clrAmber, clrText)
+                  Fill: |-
+                    =If(ThisItem.IsToday, clrBlue, ThisItem.BandKey < TodayKey, ColorFade(clrRed, -55%), clrBorder)
+                  FontWeight: =FontWeight.Semibold
+                  Height: =28
+                  PaddingLeft: =10
+                  Size: =13
+                  Text: |-
+                    =ThisItem.Label & If(ThisItem.IsToday, "  (today)", "") & "      " & ThisItem.N3 & If(ThisItem.N3 = 1, " job", " jobs")
+                  Width: =346
+                  Wrap: =false
+                  X: =704
+                  Y: =4
+            - galAsmCells:
+                Control: Gallery@2.15.0
+                Variant: Vertical
+                Properties:
+                  BorderThickness: =0
+                  DelayItemLoading: =false
+                  Fill: =clrNone
+                  Height: =ThisItem.RowCount * 134 + 4
+                  Items: =ThisItem.Slots
+                  LoadingSpinner: =LoadingSpinner.None
+                  ShowScrollbar: =false
+                  TemplatePadding: =0
+                  TemplateSize: =134
+                  Width: =1056
+                  WrapCount: =3
+                  X: =0
+                  Y: =34
+                Children:
+                  - conAsmCard:
+                      Control: GroupContainer@1.5.0
+                      Variant: ManualLayout
+                      Properties:
+                        BorderColor: =If(ThisItem.Job.AsmLocRule <> "", clrAmber, clrBorder)
+                        BorderThickness: =If(ThisItem.Job.AsmLocRule <> "", 2, 1)
+                        DropShadow: =DropShadow.None
+                        Fill: =clrCard
+                        Height: =Parent.TemplateHeight - 6
+                        RadiusBottomLeft: =8
+                        RadiusBottomRight: =8
+                        RadiusTopLeft: =8
+                        RadiusTopRight: =8
+                        Visible: =ThisItem.HasJob
+                        Width: =Parent.TemplateWidth - 6
+                        X: =0
+                        Y: =0
+      - tmrAsmRefresh:
+          Control: Timer@2.1.0
+          Properties:
+            AutoPause: =true
+            AutoStart: =true
+            Duration: =60000
+            OnTimerEnd: |-
+              =If(IsBlank(locPanel), Refresh(RunListJobs); Set(gblRefreshTick, gblRefreshTick + 1))
+            Repeat: =true
+            Visible: =false
+      - recAsmOverlay:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderThickness: =0
+            Fill: =clrOverlay
+            Height: =768
+            OnSelect: =false
+            Visible: =locPanel = "assign"
+            Width: =1366
+            X: =0
+            Y: =0
+      - conAsmPanel:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            BorderColor: =clrBorder
+            BorderThickness: =1
+            DropShadow: =DropShadow.None
+            Fill: =clrCard
+            Height: =520
+            RadiusBottomLeft: =12
+            RadiusBottomRight: =12
+            RadiusTopLeft: =12
+            RadiusTopRight: =12
+            Visible: =locPanel = "assign"
+            Width: =600
+            X: =(1366 - Self.Width) / 2
+            Y: =(768 - Self.Height) / 2

@@ -1,0 +1,2 @@
+Set(gblRefreshTick, 0);
+Set(varMachine, "")

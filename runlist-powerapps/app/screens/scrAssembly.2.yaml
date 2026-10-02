@@ -1,0 +1,284 @@
+- lblAsmPTitle:
+    Control: Label@2.5.1
+    Properties:
+      Color: =clrText
+      FontWeight: =FontWeight.Bold
+      Height: =40
+      PaddingLeft: =0
+      Size: =22
+      Text: |-
+        =With({j: LookUp(ActiveJobs, ID = locId)},
+            If(j.LineText <> "" && j.AsmYmd <> "", "Move ", "Assign ") & j.JobLabel)
+      Width: =552
+      Wrap: =false
+      X: =24
+      Y: =16
+- lblAsmPInfo:
+    Control: Label@2.5.1
+    Properties:
+      Color: =clrMuted
+      Height: =30
+      PaddingLeft: =0
+      Size: =14
+      Text: |-
+        =With({j: LookUp(ActiveJobs, ID = locId)},
+            j.SizeText & "      📅 " & j.ShipText & "      " & j.CustShort &
+            If(j.TonToken <> "", "      " & j.TonToken & " TON", ""))
+      Width: =552
+      Wrap: =false
+      X: =24
+      Y: =58
+- lblAsmPNow:
+    Control: Label@2.5.1
+    Properties:
+      Color: =clrMuted
+      Height: =28
+      PaddingLeft: =0
+      Size: =14
+      Text: |-
+        =With({j: LookUp(ActiveJobs, ID = locId)},
+            "Now: " & If(j.LineText = "", "no line", j.LineText) & ", " &
+            If(j.AsmYmd = "", "no date", Text(j.AssemblyDate, "ddd mmm d", "en-US")))
+      Width: =552
+      Wrap: =false
+      X: =24
+      Y: =88
+- lblAsmPLineCap:
+    Control: Label@2.5.1
+    Properties:
+      Color: =clrMuted
+      Height: =28
+      PaddingLeft: =0
+      Size: =13
+      Text: ="Line"
+      Width: =200
+      X: =24
+      Y: =128
+- ddAsmLine:
+    Control: Classic/DropDown@2.3.1
+    Properties:
+      BorderColor: =clrBorder
+      ChevronBackground: =clrGrey
+      ChevronFill: =clrText
+      Color: =clrText
+      Default: |-
+        =With({j: LookUp(ActiveJobs, ID = locId)},
+            If(
+                IsBlank(j.ID), Blank(),
+                j.LineText <> "", j.LineText,
+                j.JobSize >= 4 || (j.JobSize = 3 && j.HeavyTon), "Line 3",
+                j.JobSize = 3, "Line 2",
+                "Line 1"
+            )
+        )
+      Fill: =clrPage
+      Height: =48
+      HoverColor: =clrText
+      HoverFill: =clrCard
+      Items: =Choices(RunListJobs.AssemblyLine)
+      Items.Value: =Value
+      PressedColor: =clrText
+      PressedFill: =clrCard
+      SelectionColor: =clrWhite
+      SelectionFill: =clrBlue
+      Size: =15
+      Width: =200
+      X: =24
+      Y: =158
+- lblAsmPDateCap:
+    Control: Label@2.5.1
+    Properties:
+      Color: =clrMuted
+      Height: =28
+      PaddingLeft: =0
+      Size: =13
+      Text: ="Start date (Mon-Fri)"
+      Width: =300
+      X: =250
+      Y: =128
+- dpAsmDate:
+    Control: Classic/DatePicker@2.6.0
+    Properties:
+      BorderColor: =clrBorder
+      Color: =clrText
+      DefaultDate: |-
+        =With({j: LookUp(ActiveJobs, ID = locId)},
+            If(
+                !IsBlank(j.AssemblyDate), j.AssemblyDate,
+                Switch(
+                    Weekday(TodayDate, StartOfWeek.Monday),
+                    6, DateAdd(TodayDate, 2, TimeUnit.Days),
+                    7, DateAdd(TodayDate, 1, TimeUnit.Days),
+                    TodayDate
+                )
+            )
+        )
+      Fill: =clrPage
+      Format: =DateTimeFormat.ShortDate
+      Height: =48
+      IconBackground: =clrGrey
+      IconFill: =clrText
+      Size: =15
+      StartOfWeek: =StartOfWeek.Monday
+      Width: =260
+      X: =250
+      Y: =158
+- lblAsmPWarn:
+    Control: Label@2.5.1
+    Properties:
+      Color: =clrAmber
+      FontWeight: =FontWeight.Semibold
+      Height: =96
+      PaddingLeft: =0
+      Size: =14
+      Text: |-
+        =With(
+            {j: LookUp(ActiveJobs, ID = locId), ln: ddAsmLine.Selected.Value, d: dpAsmDate.SelectedDate},
+            With(
+                {
+                    rule: If(
+                        j.JobSize >= 4 && ln <> "Line 3", "Size 4 builds on Line 3 only.",
+                        j.JobSize = 3 && j.HeavyTon && ln <> "Line 3", "Size 3 with " & j.TonToken & " TON is a heavy build: Line 3 only.",
+                        j.JobSize = 3 && ln = "Line 1", "Size 3 does not build on Line 1 (Line 1 runs the small 1-2s).",
+                        j.JobSize = 1 && ln = "Line 3", "Size 1 does not build on Line 3 by default.",
+                        ""
+                    ),
+                    wk: If(!IsBlank(d) && Weekday(d, StartOfWeek.Monday) > 5, Text(d, "dddd", "en-US") & " is not a workday: the lines run Mon-Fri.", ""),
+                    past: If(!IsBlank(d) && Year(d) * 10000 + Month(d) * 100 + Day(d) < TodayKey, "That date is in the past.", "")
+                },
+                Concat(Filter(Table({Msg: rule}, {Msg: wk}, {Msg: past}), Msg <> ""), "⚠ " & Msg, Char(10))
+            )
+        )
+      VerticalAlign: =VerticalAlign.Top
+      Width: =552
+      X: =24
+      Y: =222
+- lblAsmPPair:
+    Control: Label@2.5.1
+    Properties:
+      Color: =clrMuted
+      Height: =60
+      PaddingLeft: =0
+      Size: =13
+      Text: |-
+        =With({j: LookUp(ActiveJobs, ID = locId)},
+            If(
+                IsBlank(j.PairNo) || IsEmpty(Filter(ActiveJobs, PairNo = j.PairNo && ID <> j.ID)), "",
+                "Paired with " &
+                Concat(
+                    Filter(ActiveJobs, PairNo = j.PairNo && ID <> j.ID),
+                    JobLabel & " (" & If(LineText <> "" && AsmYmd <> "", LineText & " " & Text(AssemblyDate, "ddd m/d", "en-US"), "not assigned") & ")",
+                    ", "
+                ) &
+                ". Move the mate too if they build together."
+            )
+        )
+      VerticalAlign: =VerticalAlign.Top
+      Width: =552
+      X: =24
+      Y: =326
+- btnAsmPSave:
+    Control: Classic/Button@2.2.0
+    Properties:
+      BorderThickness: =0
+      Color: =clrWhite
+      DisabledColor: =clrMuted
+      DisabledFill: =clrGrey
+      DisplayMode: |-
+        =If(IsBlank(ddAsmLine.Selected.Value) || IsBlank(dpAsmDate.SelectedDate), DisplayMode.Disabled, DisplayMode.Edit)
+      Fill: =clrBlue
+      FocusedBorderThickness: =0
+      FontWeight: =FontWeight.Semibold
+      Height: =56
+      HoverColor: =Self.Color
+      HoverFill: =ColorFade(Self.Fill, -15%)
+      OnSelect: |-
+        =With(
+            {id: locId, ln: ddAsmLine.Selected.Value, d: dpAsmDate.SelectedDate},
+            If(
+                IsBlank(ln) || IsBlank(d),
+                Notify("Pick a line and a date first.", NotificationType.Warning),
+                // The timer does not refresh while this panel is open. Fetch the latest rows
+                // first, so the cell max and the same-cell check see changes made on other tablets.
+                // ln and d were read above, before a refresh can reset the drop-down and picker.
+                Refresh(RunListJobs);
+                Set(gblRefreshTick, gblRefreshTick + 1);
+                With(
+                    {band: ln & "|" & Text(d, "yyyy-mm-dd"), cur: LookUp(ActiveJobs, ID = id)},
+                    If(
+                        IsBlank(cur.ID),
+                        Notify("This job is no longer active, so nothing was saved.", NotificationType.Warning);
+                        Reset(ddAsmLine);
+                        Reset(dpAsmDate);
+                        UpdateContext({locPanel: "", locId: 0}),
+                        cur.AsmBand = band,
+                        Reset(ddAsmLine);
+                        Reset(dpAsmDate);
+                        UpdateContext({locPanel: "", locId: 0}),
+                        With(
+                            {
+                                changes: {
+                                    AssemblyLine: {Value: ln},
+                                    AssemblyDate: d,
+                                    AssemblyOrder: Coalesce(Max(Filter(ActiveJobs, AsmBand = band), AsmSort), 0) + 1
+                                }
+                            },
+                            IfError(
+                                Patch(RunListJobs, LookUp(RunListJobs, ID = id), changes),
+                                Refresh(RunListJobs);
+                                IfError(
+                                    Patch(RunListJobs, LookUp(RunListJobs, ID = id), changes),
+                                    Notify("Save failed: " & FirstError.Message, NotificationType.Error, 0),
+                                    Reset(ddAsmLine);
+                                    Reset(dpAsmDate);
+                                    UpdateContext({locPanel: "", locId: 0})
+                                ),
+                                Reset(ddAsmLine);
+                                Reset(dpAsmDate);
+                                UpdateContext({locPanel: "", locId: 0})
+                            )
+                        )
+                    )
+                )
+            )
+        )
+      PressedColor: =Self.Color
+      PressedFill: =ColorFade(Self.Fill, -30%)
+      RadiusBottomLeft: =8
+      RadiusBottomRight: =8
+      RadiusTopLeft: =8
+      RadiusTopRight: =8
+      Size: =16
+      Text: |-
+        =With({j: LookUp(ActiveJobs, ID = locId)}, If(j.LineText <> "" && j.AsmYmd <> "", "Move here", "Assign"))
+      Width: =200
+      X: =24
+      Y: =440
+- btnAsmPCancel:
+    Control: Classic/Button@2.2.0
+    Properties:
+      BorderThickness: =0
+      Color: =clrWhite
+      DisabledColor: =Self.Color
+      DisabledFill: =ColorFade(Self.Fill, -30%)
+      Fill: =clrGrey
+      FocusedBorderThickness: =0
+      FontWeight: =FontWeight.Semibold
+      Height: =56
+      HoverColor: =Self.Color
+      HoverFill: =ColorFade(Self.Fill, -15%)
+      OnSelect: |-
+        =Reset(ddAsmLine);
+        Reset(dpAsmDate);
+        UpdateContext({locPanel: "", locId: 0})
+      PressedColor: =Self.Color
+      PressedFill: =ColorFade(Self.Fill, -30%)
+      RadiusBottomLeft: =8
+      RadiusBottomRight: =8
+      RadiusTopLeft: =8
+      RadiusTopRight: =8
+      Size: =16
+      Text: ="Cancel"
+      Width: =140
+      X: =236
+      Y: =440

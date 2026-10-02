@@ -1,0 +1,704 @@
+Screens:
+  scrPunch:
+    Properties:
+      Fill: =clrPage
+      OnVisible: |-
+        =UpdateContext({locPanel: "", locId: 0, locPunJob: If(false, LookUp(RunListJobs, ID = 0)), locPunEdMode: "", locPunEdFrom: "", locPunEdClrPunch: false, locPunEdClrAsm: false, locPunDismissArm: false, locPunSaved: false, locPunPlaceMachine: "SB8", locPunP12: false, locPunP14: false, locPunP16: false, locPunP18: false, locPunP20: false, locPunP24: false, locPunFindText: "", locPunFindHit: false});
+        // locPunJob above is a typed blank (no server call): it tells Studio
+        // that locPunJob holds one RunListJobs row (the job in the edit panel).
+        Refresh(RunListJobs);
+        Set(gblRefreshTick, gblRefreshTick + 1);
+        // Housekeeping (app-spec, list-design status model 3): a job closes to Done
+        // 30 days after the line started it, once punch, PB and P4 are all done.
+        // The filter is snapshotted first; ForAll walks a Sequence, not the list.
+        With({hk: Filter(ActiveJobs, PunchDone && Started && !IsBlank(StartedOn) && DateDiff(StartedOn, TodayDate, TimeUnit.Days) >= 30)},
+            ForAll(Sequence(CountRows(hk)) As s,
+                With({id: Index(hk, s.Value).ID},
+                    IfError(
+                        Patch(RunListJobs, LookUp(RunListJobs, ID = id), {JobStatus: {Value: "Done"}}),
+                        Refresh(RunListJobs);
+                        IfError(
+                            Patch(RunListJobs, LookUp(RunListJobs, ID = id), {JobStatus: {Value: "Done"}}),
+                            Notify("Housekeeping could not close a job: " & FirstError.Message, NotificationType.Error, 0)
+                        )
+                    )
+                )
+            )
+        )
+    Children:
+      - conPunHeader:
+          Control: GroupContainer@1.5.0
+          Variant: AutoLayout
+          Properties:
+            BorderThickness: =0
+            DropShadow: =DropShadow.None
+            Fill: =clrCard
+            Height: =64
+            LayoutAlignItems: =LayoutAlignItems.Center
+            LayoutDirection: =LayoutDirection.Horizontal
+            LayoutGap: =10
+            LayoutJustifyContent: =LayoutJustifyContent.Start
+            PaddingLeft: =16
+            PaddingRight: =16
+            Width: =1366
+            X: =0
+            Y: =0
+          Children:
+            - lblPunTitle:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrText
+                  FillPortions: =1
+                  FontWeight: =FontWeight.Bold
+                  Height: =44
+                  LayoutMinWidth: =120
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =22
+                  Text: ="Punch"
+                  Width: =120
+                  Wrap: =false
+            - lblPunCounts:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrMuted
+                  FillPortions: =0
+                  Height: =44
+                  LayoutMinWidth: =310
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =13
+                  Text: |-
+                    ="Jobs: " & With({o: Filter(ActiveJobs, !PunchDone)}, CountRows(o) & "    S1 " & CountRows(Filter(o, JobSize = 1)) & "  S2 " & CountRows(Filter(o, JobSize = 2)) & "  S3 " & CountRows(Filter(o, JobSize = 3)) & "  S4 " & CountRows(Filter(o, JobSize >= 4)))
+                  Tooltip: |-
+                    ="Open jobs (punch, brake or P4 still to do), then by size: S1 to S4"
+                  Width: =310
+                  Wrap: =false
+            - txtPunFind:
+                Control: Classic/TextInput@2.3.2
+                Properties:
+                  BorderColor: =clrBorder
+                  BorderThickness: =1
+                  Clear: =true
+                  Color: =clrText
+                  Default: =""
+                  DisabledColor: =clrMuted
+                  DisabledFill: =clrCard
+                  Fill: =clrPage
+                  FillPortions: =0
+                  FocusedBorderColor: =clrBlue
+                  FocusedBorderThickness: =2
+                  Height: =44
+                  HintText: |-
+                    ="Find job #"
+                  HoverColor: =clrText
+                  HoverFill: =clrPage
+                  LayoutMinWidth: =140
+                  PressedColor: =clrText
+                  PressedFill: =clrPage
+                  Size: =14
+                  Tooltip: ="Type a job number, then tap Find"
+                  Width: =140
+            - btnPunFind:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =clrWhite
+                  DisabledColor: =Self.Color
+                  DisabledFill: =ColorFade(Self.Fill, -30%)
+                  Fill: =clrGrey
+                  FillPortions: =0
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Semibold
+                  Height: =44
+                  HoverColor: =Self.Color
+                  HoverFill: =ColorFade(Self.Fill, -10%)
+                  LayoutMinWidth: =70
+                  OnSelect: |-
+                    =If(Trim(txtPunFind.Text) = "",
+                        Notify("Type a job number first.", NotificationType.Warning),
+                        UpdateContext({locPanel: "find", locPunFindText: Trim(txtPunFind.Text), locPunFindHit: !IsBlank(LookUp(RunListJobs, JobNumber = Trim(txtPunFind.Text)))})
+                    )
+                  PressedColor: =Self.Color
+                  PressedFill: =ColorFade(Self.Fill, -25%)
+                  RadiusBottomLeft: =8
+                  RadiusBottomRight: =8
+                  RadiusTopLeft: =8
+                  RadiusTopRight: =8
+                  Size: =14
+                  Text: ="Find"
+                  Width: =70
+            - tglPunShowDone:
+                Control: Classic/Toggle@2.1.0
+                Properties:
+                  Default: =false
+                  FalseFill: =clrGrey
+                  FalseHoverFill: =clrGrey
+                  FillPortions: =0
+                  FocusedBorderThickness: =0
+                  HandleFill: =clrText
+                  Height: =36
+                  LayoutMinWidth: =64
+                  ShowLabel: =false
+                  TrueFill: =clrGreen
+                  TrueHoverFill: =clrGreen
+                  Width: =64
+            - lblPunShowDone:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrText
+                  FillPortions: =0
+                  Height: =44
+                  LayoutMinWidth: =144
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =14
+                  Text: ="Show completed"
+                  Width: =144
+                  Wrap: =false
+            - btnPunAdd:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =clrWhite
+                  Fill: =clrBlue
+                  FillPortions: =0
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Semibold
+                  Height: =44
+                  HoverColor: =Self.Color
+                  HoverFill: =ColorFade(Self.Fill, -10%)
+                  LayoutMinWidth: =104
+                  OnSelect: |-
+                    =UpdateContext({locPanel: "edit", locId: 0, locPunEdMode: "add", locPunEdFrom: "", locPunJob: Blank(), locPunEdClrPunch: false, locPunEdClrAsm: false, locPunDismissArm: false})
+                  PressedColor: =Self.Color
+                  PressedFill: =ColorFade(Self.Fill, -25%)
+                  RadiusBottomLeft: =8
+                  RadiusBottomRight: =8
+                  RadiusTopLeft: =8
+                  RadiusTopRight: =8
+                  Size: =15
+                  Text: ="+ Add job"
+                  Width: =104
+            - btnPunImport:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =clrWhite
+                  Fill: =clrBlue
+                  FillPortions: =0
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Semibold
+                  Height: =44
+                  HoverColor: =Self.Color
+                  HoverFill: =ColorFade(Self.Fill, -10%)
+                  LayoutMinWidth: =92
+                  OnSelect: =Navigate(scrImport, ScreenTransition.None)
+                  PressedColor: =Self.Color
+                  PressedFill: =ColorFade(Self.Fill, -25%)
+                  RadiusBottomLeft: =8
+                  RadiusBottomRight: =8
+                  RadiusTopLeft: =8
+                  RadiusTopRight: =8
+                  Size: =15
+                  Text: ="Import"
+                  Width: =92
+            - btnPunRefresh:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =clrWhite
+                  DisabledColor: =Self.Color
+                  DisabledFill: =ColorFade(Self.Fill, -30%)
+                  Fill: =clrBlue
+                  FillPortions: =0
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Semibold
+                  Height: =44
+                  HoverColor: =Self.Color
+                  HoverFill: =ColorFade(Self.Fill, -15%)
+                  LayoutMinWidth: =100
+                  OnSelect: |-
+                    =Refresh(RunListJobs);
+                    Set(gblRefreshTick, gblRefreshTick + 1)
+                  PressedColor: =Self.Color
+                  PressedFill: =ColorFade(Self.Fill, -30%)
+                  RadiusBottomLeft: =8
+                  RadiusBottomRight: =8
+                  RadiusTopLeft: =8
+                  RadiusTopRight: =8
+                  Size: =15
+                  Text: ="Refresh"
+                  Width: =100
+            - btnPunHome:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =clrWhite
+                  Fill: =clrGrey
+                  FillPortions: =0
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Semibold
+                  Height: =44
+                  HoverColor: =Self.Color
+                  HoverFill: =ColorFade(Self.Fill, -15%)
+                  LayoutMinWidth: =90
+                  OnSelect: =Navigate(scrHome, ScreenTransition.None)
+                  PressedColor: =Self.Color
+                  PressedFill: =ColorFade(Self.Fill, -30%)
+                  RadiusBottomLeft: =8
+                  RadiusBottomRight: =8
+                  RadiusTopLeft: =8
+                  RadiusTopRight: =8
+                  Size: =15
+                  Text: ="Home"
+                  Width: =90
+      - conPunTray:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            BorderColor: =clrBorder
+            BorderThickness: =1
+            DropShadow: =DropShadow.None
+            Fill: =clrPage
+            Height: =704
+            RadiusBottomLeft: =0
+            RadiusBottomRight: =0
+            RadiusTopLeft: =0
+            RadiusTopRight: =0
+            Visible: =!locPunTrayHidden
+            Width: =300
+            X: =0
+            Y: =64
+          Children:
+            - lblPunTrayTitle:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrText
+                  FontWeight: =FontWeight.Bold
+                  Height: =34
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =16
+                  Text: ="Incoming  (" & CountRows(IncomingJobs) & ")"
+                  Width: =220
+                  Wrap: =false
+                  X: =12
+                  Y: =10
+            - btnPunTrayHide:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =clrText
+                  Fill: =clrGrey
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Semibold
+                  Height: =34
+                  HoverColor: =Self.Color
+                  HoverFill: =ColorFade(Self.Fill, -10%)
+                  OnSelect: |-
+                    =UpdateContext({locPunTrayHidden: true})
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PressedColor: =Self.Color
+                  PressedFill: =ColorFade(Self.Fill, -25%)
+                  RadiusBottomLeft: =8
+                  RadiusBottomRight: =8
+                  RadiusTopLeft: =8
+                  RadiusTopRight: =8
+                  Size: =14
+                  Text: |-
+                    ="◀"
+                  Tooltip: ="Hide the Incoming tray"
+                  Width: =44
+                  X: =248
+                  Y: =10
+            - lblPunTrayEmpty:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrMuted
+                  Height: =48
+                  Italic: =true
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =13
+                  Text: ="No incoming jobs. Use Import to bring jobs in."
+                  Visible: =IsEmpty(IncomingJobs)
+                  Width: =276
+                  Wrap: =true
+                  X: =12
+                  Y: =56
+      - btnPunTrayShow:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderThickness: =0
+            Color: =clrText
+            Fill: =clrGrey
+            FocusedBorderThickness: =0
+            FontWeight: =FontWeight.Semibold
+            Height: =48
+            HoverColor: =Self.Color
+            HoverFill: =ColorFade(Self.Fill, -10%)
+            OnSelect: |-
+              =UpdateContext({locPunTrayHidden: false})
+            PaddingLeft: =0
+            PaddingRight: =0
+            PressedColor: =Self.Color
+            PressedFill: =ColorFade(Self.Fill, -25%)
+            RadiusBottomLeft: =8
+            RadiusBottomRight: =8
+            RadiusTopLeft: =8
+            RadiusTopRight: =8
+            Size: =14
+            Text: |-
+              ="▶"
+            Tooltip: ="Show the Incoming tray"
+            Visible: =locPunTrayHidden
+            Width: =40
+            X: =4
+            Y: =72
+      - lblPunTrayCount:
+          Control: Label@2.5.1
+          Properties:
+            Align: =Align.Center
+            Color: =clrYellow
+            FontWeight: =FontWeight.Bold
+            Height: =28
+            PaddingBottom: =0
+            PaddingLeft: =0
+            PaddingRight: =0
+            PaddingTop: =0
+            Size: =15
+            Text: =CountRows(IncomingJobs)
+            Tooltip: ="Jobs waiting in the Incoming tray"
+            Visible: =locPunTrayHidden
+            Width: =40
+            Wrap: =false
+            X: =4
+            Y: =124
+      - lblPunBanner:
+          Control: Label@2.5.1
+          Properties:
+            Color: =clrAmber
+            Fill: =RGBA(245, 158, 11, 0.18)
+            FontWeight: =FontWeight.Semibold
+            Height: =30
+            PaddingBottom: =0
+            PaddingLeft: =12
+            PaddingRight: =0
+            PaddingTop: =0
+            Size: =14
+            Text: |-
+              =With({n: CountRows(Filter(ActiveJobs, PrevShipText <> ""))},
+                  "📅  CASMFG moved " & n & If(n = 1, " ship date", " ship dates") & ".  Tap the amber ""moved from"" tag on a card to acknowledge it."
+              )
+            Visible: =!IsEmpty(Filter(ActiveJobs, PrevShipText <> ""))
+            Width: =If(locPunTrayHidden, 1302, 1050)
+            Wrap: =false
+            X: =If(locPunTrayHidden, 56, 308)
+            Y: =68
+      - lblPunColS8:
+          Control: Label@2.5.1
+          Properties:
+            Color: =clrSB8
+            FontWeight: =FontWeight.Bold
+            Height: =30
+            PaddingBottom: =0
+            PaddingLeft: =10
+            PaddingRight: =0
+            PaddingTop: =0
+            Size: =16
+            Text: |-
+              ="SB-8    ·    " & CountRows(Filter(ActiveJobs, MachineText = "SB8" && !TurretDone)) & " to punch"
+            Width: =If(locPunTrayHidden, 646, 520)
+            Wrap: =false
+            X: =If(locPunTrayHidden, 56, 308)
+            Y: =If(!IsEmpty(Filter(ActiveJobs, PrevShipText <> "")), 102, 68)
+      - lblPunColS15:
+          Control: Label@2.5.1
+          Properties:
+            Color: =clrSB15
+            FontWeight: =FontWeight.Bold
+            Height: =30
+            PaddingBottom: =0
+            PaddingLeft: =10
+            PaddingRight: =0
+            PaddingTop: =0
+            Size: =16
+            Text: |-
+              ="SB-15    ·    " & CountRows(Filter(ActiveJobs, MachineText = "SB15" && !TurretDone)) & " to punch"
+            Width: =If(locPunTrayHidden, 646, 520)
+            Wrap: =false
+            X: =If(locPunTrayHidden, 712, 838)
+            Y: =If(!IsEmpty(Filter(ActiveJobs, PrevShipText <> "")), 102, 68)
+      - galPunBoard:
+          Control: Gallery@2.15.0
+          Variant: VariableHeight
+          Properties:
+            BorderThickness: =0
+            DelayItemLoading: =false
+            Fill: =clrNone
+            Height: =If(!IsEmpty(Filter(ActiveJobs, PrevShipText <> "")), 630, 664)
+            Items: |-
+              =With({show: tglPunShowDone.Value},
+                  AddColumns(
+                      If(show, PunchBandsAll, PunchBandsOpen) As b,
+                      CardsS8, SortByColumns(Filter(ActiveJobs, PunchBand = "SB8|" & b.BandYmd && (show || !TurretDone)), "PunchGroupOrder", SortOrder.Ascending, "PairKey", SortOrder.Ascending, "PunchSort", SortOrder.Ascending, "ID", SortOrder.Ascending),
+                      CardsS15, SortByColumns(Filter(ActiveJobs, PunchBand = "SB15|" & b.BandYmd && (show || !TurretDone)), "PunchGroupOrder", SortOrder.Ascending, "PairKey", SortOrder.Ascending, "PunchSort", SortOrder.Ascending, "ID", SortOrder.Ascending)
+                  )
+              )
+            LoadingSpinner: =LoadingSpinner.None
+            ShowScrollbar: =true
+            TemplatePadding: =0
+            TemplateSize: =72
+            Width: =If(locPunTrayHidden, 1302, 1050)
+            X: =If(locPunTrayHidden, 56, 308)
+            Y: =If(!IsEmpty(Filter(ActiveJobs, PrevShipText <> "")), 134, 100)
+          Children:
+            - lblPunBandS8:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =If(ThisItem.BandKey = 0, clrAmber, ThisItem.BandKey < TodayKey, RGBA(252, 165, 165, 1), clrText)
+                  Fill: |-
+                    =If(ThisItem.BandKey = 0, RGBA(245, 158, 11, 0.22), ThisItem.IsToday, RGBA(37, 99, 235, 0.45), ThisItem.BandKey < TodayKey, RGBA(239, 68, 68, 0.22), RGBA(51, 65, 85, 0.6))
+                  FontWeight: =FontWeight.Semibold
+                  Height: =30
+                  PaddingBottom: =0
+                  PaddingLeft: =10
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =14
+                  Text: |-
+                    =With({n: CountRows(ThisItem.CardsS8)},
+                        If(ThisItem.BandKey = 0, "⚠  Unscheduled", ThisItem.Label & If(ThisItem.IsToday, "   (today)", ThisItem.BandKey < TodayKey, "   (past)", ""))
+                        & "    ·    " & n & If(n = 1, " job", " jobs")
+                    )
+                  Width: =(Parent.TemplateWidth - 10) / 2
+                  Wrap: =false
+                  X: =0
+                  Y: =4
+            - lblPunBandS15:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =If(ThisItem.BandKey = 0, clrAmber, ThisItem.BandKey < TodayKey, RGBA(252, 165, 165, 1), clrText)
+                  Fill: |-
+                    =If(ThisItem.BandKey = 0, RGBA(245, 158, 11, 0.22), ThisItem.IsToday, RGBA(37, 99, 235, 0.45), ThisItem.BandKey < TodayKey, RGBA(239, 68, 68, 0.22), RGBA(51, 65, 85, 0.6))
+                  FontWeight: =FontWeight.Semibold
+                  Height: =30
+                  PaddingBottom: =0
+                  PaddingLeft: =10
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =14
+                  Text: |-
+                    =With({n: CountRows(ThisItem.CardsS15)},
+                        If(ThisItem.BandKey = 0, "⚠  Unscheduled", ThisItem.Label & If(ThisItem.IsToday, "   (today)", ThisItem.BandKey < TodayKey, "   (past)", ""))
+                        & "    ·    " & n & If(n = 1, " job", " jobs")
+                    )
+                  Width: =(Parent.TemplateWidth - 10) / 2
+                  Wrap: =false
+                  X: =(Parent.TemplateWidth - 10) / 2 + 10
+                  Y: =4
+            - lblPunEmptyS8:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrMuted
+                  Height: =26
+                  Italic: =true
+                  PaddingBottom: =0
+                  PaddingLeft: =10
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =12
+                  Text: ="No jobs"
+                  Visible: =IsEmpty(ThisItem.CardsS8)
+                  Width: =(Parent.TemplateWidth - 10) / 2
+                  Wrap: =false
+                  X: =0
+                  Y: =38
+            - lblPunEmptyS15:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrMuted
+                  Height: =26
+                  Italic: =true
+                  PaddingBottom: =0
+                  PaddingLeft: =10
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =12
+                  Text: ="No jobs"
+                  Visible: =IsEmpty(ThisItem.CardsS15)
+                  Width: =(Parent.TemplateWidth - 10) / 2
+                  Wrap: =false
+                  X: =(Parent.TemplateWidth - 10) / 2 + 10
+                  Y: =38
+            - galPunCardsS8:
+                Control: Gallery@2.15.0
+                Variant: Vertical
+                Properties:
+                  BorderThickness: =0
+                  DelayItemLoading: =false
+                  Fill: =clrNone
+                  Height: =CountRows(ThisItem.CardsS8) * 110
+                  Items: =ThisItem.CardsS8
+                  LoadingSpinner: =LoadingSpinner.None
+                  ShowScrollbar: =false
+                  TemplatePadding: =0
+                  TemplateSize: =110
+                  Width: =(Parent.TemplateWidth - 10) / 2
+                  X: =0
+                  Y: =38
+                Children:
+                  - conPunCardS8:
+                      Control: GroupContainer@1.5.0
+                      Variant: ManualLayout
+                      Properties:
+                        BorderColor: =If(IsBlank(ThisItem.PairNo), clrBorder, ThisItem.PairColor)
+                        BorderThickness: =If(IsBlank(ThisItem.PairNo), 1, 2)
+                        DropShadow: =DropShadow.None
+                        Fill: =If(ThisItem.TurretDone, ColorFade(clrCard, -35%), clrCard)
+                        Height: =Parent.TemplateHeight - 6
+                        RadiusBottomLeft: =8
+                        RadiusBottomRight: =8
+                        RadiusTopLeft: =8
+                        RadiusTopRight: =8
+                        Width: =Parent.TemplateWidth
+                        X: =0
+                        Y: =0
+            - galPunCardsS15:
+                Control: Gallery@2.15.0
+                Variant: Vertical
+                Properties:
+                  BorderThickness: =0
+                  DelayItemLoading: =false
+                  Fill: =clrNone
+                  Height: =CountRows(ThisItem.CardsS15) * 110
+                  Items: =ThisItem.CardsS15
+                  LoadingSpinner: =LoadingSpinner.None
+                  ShowScrollbar: =false
+                  TemplatePadding: =0
+                  TemplateSize: =110
+                  Width: =(Parent.TemplateWidth - 10) / 2
+                  X: =(Parent.TemplateWidth - 10) / 2 + 10
+                  Y: =38
+                Children:
+                  - conPunCardS15:
+                      Control: GroupContainer@1.5.0
+                      Variant: ManualLayout
+                      Properties:
+                        BorderColor: =If(IsBlank(ThisItem.PairNo), clrBorder, ThisItem.PairColor)
+                        BorderThickness: =If(IsBlank(ThisItem.PairNo), 1, 2)
+                        DropShadow: =DropShadow.None
+                        Fill: =If(ThisItem.TurretDone, ColorFade(clrCard, -35%), clrCard)
+                        Height: =Parent.TemplateHeight - 6
+                        RadiusBottomLeft: =8
+                        RadiusBottomRight: =8
+                        RadiusTopLeft: =8
+                        RadiusTopRight: =8
+                        Width: =Parent.TemplateWidth
+                        X: =0
+                        Y: =0
+      - tmrPunRefresh:
+          Control: Timer@2.1.0
+          Properties:
+            AutoPause: =true
+            AutoStart: =true
+            Duration: =60000
+            OnTimerEnd: =If(IsBlank(locPanel), Refresh(RunListJobs); Set(gblRefreshTick, gblRefreshTick + 1))
+            Repeat: =true
+            Visible: =false
+      - tmrPunHousekeep:
+          Control: Timer@2.1.0
+          Properties:
+            AutoPause: =true
+            AutoStart: =true
+            Duration: =600000
+            OnTimerEnd: |-
+              =With({hk: Filter(ActiveJobs, PunchDone && Started && !IsBlank(StartedOn) && DateDiff(StartedOn, TodayDate, TimeUnit.Days) >= 30)},
+                  ForAll(Sequence(CountRows(hk)) As s,
+                      With({id: Index(hk, s.Value).ID},
+                          IfError(
+                              Patch(RunListJobs, LookUp(RunListJobs, ID = id), {JobStatus: {Value: "Done"}}),
+                              Refresh(RunListJobs);
+                              IfError(
+                                  Patch(RunListJobs, LookUp(RunListJobs, ID = id), {JobStatus: {Value: "Done"}}),
+                                  Notify("Housekeeping could not close a job: " & FirstError.Message, NotificationType.Error, 0)
+                              )
+                          )
+                      )
+                  )
+              )
+            Repeat: =true
+            Visible: =false
+      - recPunOverlay:
+          Control: Rectangle@2.3.0
+          Properties:
+            Fill: =clrOverlay
+            Height: =768
+            OnSelect: =false
+            Visible: =!IsBlank(locPanel)
+            Width: =1366
+            X: =0
+            Y: =0
+      - conPunPlacePanel:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            BorderColor: =clrBorder
+            BorderThickness: =1
+            DropShadow: =DropShadow.None
+            Fill: =clrCard
+            Height: =480
+            RadiusBottomLeft: =12
+            RadiusBottomRight: =12
+            RadiusTopLeft: =12
+            RadiusTopRight: =12
+            Visible: =locPanel = "place"
+            Width: =620
+            X: =(1366 - Self.Width) / 2
+            Y: =(768 - Self.Height) / 2
+      - conPunEditPanel:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            BorderColor: =clrBorder
+            BorderThickness: =1
+            DropShadow: =DropShadow.None
+            Fill: =clrCard
+            Height: =640
+            RadiusBottomLeft: =12
+            RadiusBottomRight: =12
+            RadiusTopLeft: =12
+            RadiusTopRight: =12
+            Visible: =locPanel = "edit"
+            Width: =940
+            X: =(1366 - Self.Width) / 2
+            Y: =(768 - Self.Height) / 2
+      - conPunFindPanel:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            BorderColor: =clrBorder
+            BorderThickness: =1
+            DropShadow: =DropShadow.None
+            Fill: =clrCard
+            Height: =560
+            RadiusBottomLeft: =12
+            RadiusBottomRight: =12
+            RadiusTopLeft: =12
+            RadiusTopRight: =12
+            Visible: =locPanel = "find"
+            Width: =820
+            X: =(1366 - Self.Width) / 2
+            Y: =(768 - Self.Height) / 2

@@ -1,0 +1,141 @@
+Screens:
+  scrYamlTest:
+    Properties:
+      Fill: =RGBA(15, 23, 42, 1)
+    Children:
+      - lblT1Title:
+          Control: Label@2.5.1
+          Properties:
+            Color: =RGBA(229, 231, 235, 1)
+            FontWeight: =FontWeight.Bold
+            Height: =48
+            PaddingLeft: =0
+            Size: =20
+            Text: |-
+              ="Test 1: gallery with template children"
+            Width: =600
+            X: =24
+            Y: =76
+      - galT1Jobs:
+          Control: Gallery@2.15.0
+          Variant: Vertical
+          Properties:
+            BorderThickness: =0
+            DelayItemLoading: =false
+            Fill: =RGBA(0, 0, 0, 0)
+            Height: =600
+            Items: |-
+              =Table(
+                  {Job: "24101-1", Customer: "ACME FANS INC", Size: 2, Ship: Date(2026, 10, 9), Done: false},
+                  {Job: "24102", Customer: "NORTHWIND", Size: 3, Ship: Date(2026, 10, 14), Done: true},
+                  {Job: "24103-2", Customer: "CONTOSO", Size: Blank(), Ship: Date(2026, 10, 20), Done: false}
+              )
+            LoadingSpinner: =LoadingSpinner.None
+            ShowScrollbar: =false
+            TemplatePadding: =0
+            TemplateSize: =100
+            Width: =620
+            X: =24
+            Y: =132
+          Children:
+            - conT1Card:
+                Control: GroupContainer@1.5.0
+                Variant: ManualLayout
+                Properties:
+                  BorderColor: =RGBA(51, 65, 85, 1)
+                  BorderThickness: =1
+                  DropShadow: =DropShadow.None
+                  Fill: =RGBA(30, 41, 59, 1)
+                  Height: =Parent.TemplateHeight - 8
+                  RadiusBottomLeft: =10
+                  RadiusBottomRight: =10
+                  RadiusTopLeft: =10
+                  RadiusTopRight: =10
+                  Width: =Parent.TemplateWidth
+                  X: =0
+                  Y: =4
+                Children:
+                  - lblT1Job:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =RGBA(229, 231, 235, 1)
+                        FontWeight: =FontWeight.Bold
+                        Height: =34
+                        PaddingLeft: =0
+                        Size: =18
+                        Text: =ThisItem.Job
+                        Width: =190
+                        X: =16
+                        Y: =8
+                  - lblT1Size:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =If(IsBlank(ThisItem.Size), RGBA(239, 68, 68, 1), RGBA(229, 231, 235, 1))
+                        FontWeight: =FontWeight.Semibold
+                        Height: =34
+                        PaddingLeft: =0
+                        Size: =15
+                        Text: =If(IsBlank(ThisItem.Size), "SET SIZE", "Size " & ThisItem.Size)
+                        Width: =110
+                        X: =210
+                        Y: =8
+                  - lblT1Ship:
+                      Control: Label@2.5.1
+                      Properties:
+                        Color: =RGBA(148, 163, 184, 1)
+                        Height: =30
+                        PaddingLeft: =0
+                        Size: =13
+                        Text: |-
+                          ="📅 " & Text(ThisItem.Ship, "m/d") & "   " & Left(ThisItem.Customer, 12)
+                        Width: =320
+                        X: =16
+                        Y: =50
+                  - btnT1Done:
+                      Control: Classic/Button@2.2.0
+                      Properties:
+                        BorderThickness: =0
+                        Color: =RGBA(15, 23, 42, 1)
+                        Fill: =If(ThisItem.Done, RGBA(34, 197, 94, 1), RGBA(234, 179, 8, 1))
+                        FocusedBorderThickness: =0
+                        FontWeight: =FontWeight.Bold
+                        Height: =56
+                        HoverColor: =Self.Color
+                        HoverFill: =ColorFade(Self.Fill, -10%)
+                        OnSelect: |-
+                          =Notify("Tapped " & ThisItem.Job, NotificationType.Information)
+                        PressedColor: =Self.Color
+                        PressedFill: =ColorFade(Self.Fill, -25%)
+                        RadiusBottomLeft: =28
+                        RadiusBottomRight: =28
+                        RadiusTopLeft: =28
+                        RadiusTopRight: =28
+                        Size: =16
+                        Text: =If(ThisItem.Done, "Done", "To do")
+                        Width: =130
+                        X: =Parent.Width - Self.Width - 76
+                        Y: =(Parent.Height - Self.Height) / 2
+                  - icoT1Up:
+                      Control: Classic/Icon@2.5.0
+                      Properties:
+                        AccessibleLabel: ="Move up"
+                        Color: =RGBA(229, 231, 235, 1)
+                        Height: =40
+                        Icon: =Icon.ChevronUp
+                        OnSelect: |-
+                          =Notify("Move up " & ThisItem.Job, NotificationType.Information)
+                        Width: =56
+                        X: =Parent.Width - Self.Width - 8
+                        Y: =4
+                  - icoT1Down:
+                      Control: Classic/Icon@2.5.0
+                      Properties:
+                        AccessibleLabel: ="Move down"
+                        Color: =RGBA(229, 231, 235, 1)
+                        Height: =40
+                        Icon: =Icon.ChevronDown
+                        OnSelect: |-
+                          =Notify("Move down " & ThisItem.Job, NotificationType.Information)
+                        Width: =56
+                        X: =Parent.Width - Self.Width - 8
+                        Y: =Parent.Height - Self.Height - 4

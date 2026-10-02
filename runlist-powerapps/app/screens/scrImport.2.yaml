@@ -1,0 +1,426 @@
+- lblImpFailHead:
+    Control: Label@2.5.1
+    Properties:
+      Color: =clrRed
+      FontWeight: =FontWeight.Bold
+      Height: =28
+      PaddingLeft: =0
+      Size: =14
+      Text: |-
+        ="Failed (" & CountRows(Filter(colImpResult, Kind = "failed")) & "): not saved. Retry, or tap Import again (it's safe)."
+      Visible: |-
+        =locImpRan && !locImpRunning && CountRows(Filter(colImpResult, Kind = "failed")) > 0
+      Width: =734
+      Wrap: =false
+      X: =20
+      Y: =212
+- galImpFailed:
+    Control: Gallery@2.15.0
+    Variant: Vertical
+    Properties:
+      BorderThickness: =0
+      DelayItemLoading: =false
+      Fill: =clrNone
+      Height: =Max(1, Min(CountRows(Filter(colImpResult, Kind = "failed")), 3)) * 52
+      Items: =SortByColumns(Filter(colImpResult, Kind = "failed"), "Key", SortOrder.Ascending)
+      LoadingSpinner: =LoadingSpinner.None
+      ShowScrollbar: =true
+      TemplatePadding: =0
+      TemplateSize: =52
+      Visible: |-
+        =locImpRan && !locImpRunning && CountRows(Filter(colImpResult, Kind = "failed")) > 0
+      Width: =746
+      X: =14
+      Y: =240
+    Children:
+      - conImpFailRow:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            BorderColor: =clrRed
+            BorderThickness: =1
+            DropShadow: =DropShadow.None
+            Fill: =clrPage
+            Height: =Parent.TemplateHeight - 6
+            RadiusBottomLeft: =8
+            RadiusBottomRight: =8
+            RadiusTopLeft: =8
+            RadiusTopRight: =8
+            Width: =Parent.TemplateWidth - 12
+            X: =0
+            Y: =0
+          Children:
+            - lblImpFailMsg:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrRed
+                  Height: =46
+                  PaddingLeft: =12
+                  Size: =11
+                  Text: =ThisItem.Msg
+                  Tooltip: =ThisItem.Msg
+                  Width: =Parent.Width - 190
+                  X: =0
+                  Y: =0
+            - btnImpRetry:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =clrWhite
+                  DisabledColor: =clrMuted
+                  DisabledFill: =ColorFade(clrBlue, -55%)
+                  Fill: =clrBlue
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Semibold
+                  Height: =36
+                  HoverColor: =Self.Color
+                  HoverFill: =ColorFade(Self.Fill, -15%)
+                  OnSelect: |-
+                    =With({r: ThisItem},
+                        With({e: IfError(
+                                Text(Patch(RunListJobs, Defaults(RunListJobs), {
+                                    Title: r.Key,
+                                    JobNumber: r.Num,
+                                    UnitNumber: r.Unit,
+                                    FanNumber: r.Unit,
+                                    JobName: r.Name,
+                                    ProductModel: r.Model,
+                                    CasmfgId: r.CasId,
+                                    JobSize: r.Size,
+                                    ShipDate: r.ShipDate,
+                                    JobStatus: {Value: "Incoming"},
+                                    Nested: false,
+                                    Need12: false, Need14: false, Need16: false, Need18: false, Need20: false, Need24: false,
+                                    Done12: false, Done14: false, Done16: false, Done18: false, Done20: false, Done24: false,
+                                    PBDone: false, P4Done: false, Started: false
+                                }).ID),
+                                "!" & FirstError.Message,
+                                ""
+                            )},
+                            If(e = "",
+                                Patch(colImpResult, LookUp(colImpResult, Key = r.Key), {Kind: "added", Sub: "Incoming", Msg: ""});
+                                Notify(r.Label & " added to the Incoming tray.", NotificationType.Success),
+                                With({again: IfError(LookUp(RunListJobs, Title = r.Key), Blank())},
+                                    If(IsBlank(again),
+                                        Patch(colImpResult, LookUp(colImpResult, Key = r.Key), {Msg: r.Key & ": " & Mid(e, 2)});
+                                        Notify("Still not saved. " & r.Key & ": " & Mid(e, 2), NotificationType.Error, 0),
+                                        Patch(colImpResult, LookUp(colImpResult, Key = r.Key), {
+                                            Kind: If(again.JobStatus.Value = "Dismissed", "blocked", "had"),
+                                            Sub: again.JobStatus.Value & "",
+                                            Msg: "",
+                                            RowID: again.ID,
+                                            Modified: again.Modified
+                                        });
+                                        Notify(r.Label & " is already in the list (" & again.JobStatus.Value & ").", NotificationType.Information)
+                                    )
+                                )
+                            )
+                        )
+                    )
+                  PressedColor: =Self.Color
+                  PressedFill: =ColorFade(Self.Fill, -30%)
+                  RadiusBottomLeft: =8
+                  RadiusBottomRight: =8
+                  RadiusTopLeft: =8
+                  RadiusTopRight: =8
+                  Size: =14
+                  Text: ="Retry"
+                  Visible: =ThisItem.Sub = "create"
+                  Width: =120
+                  X: =Parent.Width - Self.Width - 10
+                  Y: =(Parent.Height - Self.Height) / 2
+            - lblImpFailHint:
+                Control: Label@2.5.1
+                Properties:
+                  Align: =Align.Right
+                  Color: =clrMuted
+                  Height: =46
+                  PaddingLeft: =0
+                  PaddingRight: =10
+                  Size: =11
+                  Text: ="Tap Import again to retry"
+                  Visible: =ThisItem.Sub <> "create"
+                  Width: =180
+                  X: =Parent.Width - Self.Width
+                  Y: =0
+- lblImpBlockHead:
+    Control: Label@2.5.1
+    Properties:
+      Color: =clrSB15
+      FontWeight: =FontWeight.Bold
+      Height: =28
+      PaddingLeft: =0
+      Size: =14
+      Text: |-
+        ="Blocked - dismissed (" & CountRows(Filter(colImpResult, Kind = "blocked")) & "): CASMFG still has them. Restore only a mistake."
+      Visible: |-
+        =locImpRan && !locImpRunning && CountRows(Filter(colImpResult, Kind = "blocked")) > 0
+      Width: =734
+      Wrap: =false
+      X: =20
+      Y: |-
+        =212 + With({nf: CountRows(Filter(colImpResult, Kind = "failed"))}, If(nf > 0, 28 + Min(nf, 3) * 52 + 10, 0))
+- galImpBlocked:
+    Control: Gallery@2.15.0
+    Variant: Vertical
+    Properties:
+      BorderThickness: =0
+      DelayItemLoading: =false
+      Fill: =clrNone
+      Height: =Max(1, Min(CountRows(Filter(colImpResult, Kind = "blocked")), 3)) * 52
+      Items: |-
+        =SortByColumns(Filter(colImpResult, Kind = "blocked"), "ShipKey", SortOrder.Ascending, "Key", SortOrder.Ascending)
+      LoadingSpinner: =LoadingSpinner.None
+      ShowScrollbar: =true
+      TemplatePadding: =0
+      TemplateSize: =52
+      Visible: |-
+        =locImpRan && !locImpRunning && CountRows(Filter(colImpResult, Kind = "blocked")) > 0
+      Width: =746
+      X: =14
+      Y: |-
+        =240 + With({nf: CountRows(Filter(colImpResult, Kind = "failed"))}, If(nf > 0, 28 + Min(nf, 3) * 52 + 10, 0))
+    Children:
+      - conImpBlockRow:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            BorderColor: =clrBorder
+            BorderThickness: =1
+            DropShadow: =DropShadow.None
+            Fill: =clrPage
+            Height: =Parent.TemplateHeight - 6
+            RadiusBottomLeft: =8
+            RadiusBottomRight: =8
+            RadiusTopLeft: =8
+            RadiusTopRight: =8
+            Width: =Parent.TemplateWidth - 12
+            X: =0
+            Y: =0
+          Children:
+            - lblImpBlockJob:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrText
+                  FontWeight: =FontWeight.Bold
+                  Height: =46
+                  PaddingLeft: =12
+                  Size: =14
+                  Text: =ThisItem.Label
+                  Width: =170
+                  Wrap: =false
+                  X: =0
+                  Y: =0
+            - lblImpBlockInfo:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrMuted
+                  Height: =46
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingTop: =0
+                  Size: =12
+                  Text: |-
+                    ="CASMFG ship " & ThisItem.ShipShow & "   " & Left(ThisItem.Name, 12) &
+                    If(IsBlank(ThisItem.Modified), "", Char(10) & "last changed " & Text(ThisItem.Modified, "m/d/yyyy"))
+                  Width: =Parent.Width - 170 - 150
+                  Wrap: =true
+                  X: =170
+                  Y: =0
+            - btnImpRestore:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =clrWhite
+                  DisabledColor: =clrMuted
+                  DisabledFill: =ColorFade(clrBlue, -55%)
+                  Fill: =clrBlue
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Semibold
+                  Height: =36
+                  HoverColor: =Self.Color
+                  HoverFill: =ColorFade(Self.Fill, -15%)
+                  OnSelect: |-
+                    =With({id: ThisItem.RowID, k: ThisItem.Key, lb: ThisItem.Label, ok: ThisItem.ShipOk, sh: ThisItem.Ship},
+                        With({row: LookUp(RunListJobs, ID = id)},
+                            If(
+                                IsError(row),
+                                    Notify("Couldn't reach the list, so " & lb & " wasn't restored. Tap Restore again.", NotificationType.Error, 0),
+                                IsBlank(row),
+                                    Notify(lb & " is no longer in the list.", NotificationType.Warning),
+                                row.JobStatus.Value <> "Dismissed",
+                                    Patch(colImpResult, LookUp(colImpResult, Key = k), {Restored: true});
+                                    Notify(lb & " is already " & row.JobStatus.Value & ".", NotificationType.Information),
+                                With({hint: If(ok && If(IsBlank(row.ShipDate), "", Text(row.ShipDate, "yyyy-mm-dd")) <> sh, " Tap Import again to bring its ship date up to date.", "")},
+                                    IfError(
+                                        Patch(RunListJobs, LookUp(RunListJobs, ID = id), {JobStatus: {Value: "Incoming"}}),
+                                        Refresh(RunListJobs);
+                                        IfError(
+                                            Patch(RunListJobs, LookUp(RunListJobs, ID = id), {JobStatus: {Value: "Incoming"}}),
+                                            Notify("Restore failed: " & FirstError.Message, NotificationType.Error, 0),
+                                            Patch(colImpResult, LookUp(colImpResult, Key = k), {Restored: true});
+                                            Notify(lb & " restored to the Incoming tray." & hint, NotificationType.Success)
+                                        ),
+                                        Patch(colImpResult, LookUp(colImpResult, Key = k), {Restored: true});
+                                        Notify(lb & " restored to the Incoming tray." & hint, NotificationType.Success)
+                                    )
+                                )
+                            )
+                        )
+                    )
+                  PressedColor: =Self.Color
+                  PressedFill: =ColorFade(Self.Fill, -30%)
+                  RadiusBottomLeft: =8
+                  RadiusBottomRight: =8
+                  RadiusTopLeft: =8
+                  RadiusTopRight: =8
+                  Size: =14
+                  Text: ="Restore"
+                  Visible: =!ThisItem.Restored
+                  Width: =120
+                  X: =Parent.Width - Self.Width - 10
+                  Y: =(Parent.Height - Self.Height) / 2
+            - lblImpRestored:
+                Control: Label@2.5.1
+                Properties:
+                  Align: =Align.Right
+                  Color: =clrGreen
+                  FontWeight: =FontWeight.Semibold
+                  Height: =46
+                  PaddingLeft: =0
+                  PaddingRight: =14
+                  Size: =13
+                  Text: ="Restored"
+                  Visible: =ThisItem.Restored
+                  Width: =140
+                  X: =Parent.Width - Self.Width
+                  Y: =0
+- lblImpChgHead:
+    Control: Label@2.5.1
+    Properties:
+      Color: =clrText
+      FontWeight: =FontWeight.Bold
+      Height: =28
+      PaddingLeft: =0
+      Size: =14
+      Text: |-
+        ="Added and moved (" & CountRows(Filter(colImpResult, Kind = "added" || Moved)) & ")"
+      Visible: =locImpRan && !locImpRunning
+      Width: =734
+      Wrap: =false
+      X: =20
+      Y: |-
+        =212 +
+        With({nf: CountRows(Filter(colImpResult, Kind = "failed")), nb: CountRows(Filter(colImpResult, Kind = "blocked"))},
+            If(nf > 0, 28 + Min(nf, 3) * 52 + 10, 0) + If(nb > 0, 28 + Min(nb, 3) * 52 + 10, 0)
+        )
+- lblImpChgEmpty:
+    Control: Label@2.5.1
+    Properties:
+      Color: =clrMuted
+      Height: =32
+      PaddingLeft: =0
+      Size: =13
+      Text: ="No new jobs and no ship moves this time."
+      Visible: |-
+        =locImpRan && !locImpRunning && CountRows(Filter(colImpResult, Kind = "added" || Moved)) = 0
+      Width: =734
+      Wrap: =false
+      X: =20
+      Y: |-
+        =240 +
+        With({nf: CountRows(Filter(colImpResult, Kind = "failed")), nb: CountRows(Filter(colImpResult, Kind = "blocked"))},
+            If(nf > 0, 28 + Min(nf, 3) * 52 + 10, 0) + If(nb > 0, 28 + Min(nb, 3) * 52 + 10, 0)
+        )
+- galImpChanges:
+    Control: Gallery@2.15.0
+    Variant: Vertical
+    Properties:
+      BorderThickness: =0
+      DelayItemLoading: =false
+      Fill: =clrNone
+      Height: |-
+        =Max(36, 668 - (240 +
+        With({nf: CountRows(Filter(colImpResult, Kind = "failed")), nb: CountRows(Filter(colImpResult, Kind = "blocked"))},
+            If(nf > 0, 28 + Min(nf, 3) * 52 + 10, 0) + If(nb > 0, 28 + Min(nb, 3) * 52 + 10, 0)
+        )))
+      Items: |-
+        =SortByColumns(Filter(colImpResult, Kind = "added" || Moved), "Kind", SortOrder.Ascending, "ShipKey", SortOrder.Ascending, "Key", SortOrder.Ascending)
+      LoadingSpinner: =LoadingSpinner.None
+      ShowScrollbar: =true
+      TemplatePadding: =0
+      TemplateSize: =36
+      Visible: |-
+        =locImpRan && !locImpRunning && CountRows(Filter(colImpResult, Kind = "added" || Moved)) > 0
+      Width: =746
+      X: =14
+      Y: |-
+        =240 +
+        With({nf: CountRows(Filter(colImpResult, Kind = "failed")), nb: CountRows(Filter(colImpResult, Kind = "blocked"))},
+            If(nf > 0, 28 + Min(nf, 3) * 52 + 10, 0) + If(nb > 0, 28 + Min(nb, 3) * 52 + 10, 0)
+        )
+    Children:
+      - conImpChgRow:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            BorderColor: =clrBorder
+            BorderThickness: =1
+            DropShadow: =DropShadow.None
+            Fill: =clrPage
+            Height: =Parent.TemplateHeight - 4
+            RadiusBottomLeft: =6
+            RadiusBottomRight: =6
+            RadiusTopLeft: =6
+            RadiusTopRight: =6
+            Width: =Parent.TemplateWidth - 12
+            X: =0
+            Y: =0
+          Children:
+            - lblImpChgTag:
+                Control: Label@2.5.1
+                Properties:
+                  Align: =Align.Center
+                  Color: =clrPage
+                  Fill: =If(ThisItem.Kind = "added", clrGreen, clrAmber)
+                  FontWeight: =FontWeight.Bold
+                  Height: =22
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =11
+                  Text: =If(ThisItem.Kind = "added", "ADDED", "MOVED")
+                  Width: =70
+                  Wrap: =false
+                  X: =8
+                  Y: =(Parent.Height - Self.Height) / 2
+            - lblImpChgJob:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrText
+                  FontWeight: =FontWeight.Bold
+                  Height: =32
+                  PaddingLeft: =0
+                  Size: =13
+                  Text: =ThisItem.Label
+                  Width: =150
+                  Wrap: =false
+                  X: =88
+                  Y: =0
+            - lblImpChgInfo:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrMuted
+                  Height: =32
+                  PaddingLeft: =0
+                  Size: =12
+                  Text: |-
+                    =If(ThisItem.Kind = "added",
+                        "ships " & ThisItem.ShipShow & "   " & Left(ThisItem.Name, 12) & "   " & If(IsBlank(ThisItem.Size), "SET SIZE", "Size " & ThisItem.Size),
+                        "ship " & ThisItem.OldShow & " to " & ThisItem.ShipShow & "   (" & ThisItem.Sub & If(ThisItem.Kind = "had" && ThisItem.Msg <> "", ", " & ThisItem.Msg, "") & ")"
+                    )
+                  Width: =Parent.Width - 250
+                  Wrap: =false
+                  X: =240
+                  Y: =0

@@ -1,0 +1,698 @@
+Screens:
+  scrImport:
+    Properties:
+      Fill: =clrPage
+      OnVisible: |-
+        =Refresh(RunListJobs);
+        Set(gblRefreshTick, gblRefreshTick + 1);
+        // locImpRunning is NOT reset here: only the end of a run clears it (blank on the first visit reads as false)
+        UpdateContext({locImpAsk: false, locImpMsg: "", locImpNarrow: false});
+        Reset(txtImpPaste)
+    Children:
+      - conImpHeader:
+          Control: GroupContainer@1.5.0
+          Variant: AutoLayout
+          Properties:
+            BorderThickness: =0
+            DropShadow: =DropShadow.None
+            Fill: =clrCard
+            Height: =64
+            LayoutAlignItems: =LayoutAlignItems.Center
+            LayoutDirection: =LayoutDirection.Horizontal
+            LayoutGap: =12
+            LayoutJustifyContent: =LayoutJustifyContent.Start
+            PaddingLeft: =16
+            PaddingRight: =16
+            Width: =1366
+            X: =0
+            Y: =0
+          Children:
+            - lblImpTitle:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrText
+                  FillPortions: =1
+                  FontWeight: =FontWeight.Bold
+                  Height: =44
+                  LayoutMinWidth: =160
+                  PaddingLeft: =0
+                  Size: =22
+                  Text: ="Import from CASMFG"
+                  Wrap: =false
+            - btnImpPunch:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =clrWhite
+                  DisabledColor: =clrMuted
+                  DisabledFill: =ColorFade(Self.Fill, -40%)
+                  DisplayMode: =If(locImpRunning, DisplayMode.Disabled, DisplayMode.Edit)
+                  Fill: =clrBlue
+                  FillPortions: =0
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Semibold
+                  Height: =44
+                  HoverColor: =Self.Color
+                  HoverFill: =ColorFade(Self.Fill, -15%)
+                  LayoutMinWidth: =150
+                  OnSelect: =Navigate(scrPunch, ScreenTransition.None)
+                  PressedColor: =Self.Color
+                  PressedFill: =ColorFade(Self.Fill, -30%)
+                  RadiusBottomLeft: =8
+                  RadiusBottomRight: =8
+                  RadiusTopLeft: =8
+                  RadiusTopRight: =8
+                  Size: =15
+                  Text: ="Go to Punch"
+                  Width: =150
+            - btnImpHome:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =clrWhite
+                  DisabledColor: =clrMuted
+                  DisabledFill: =ColorFade(Self.Fill, -40%)
+                  DisplayMode: =If(locImpRunning, DisplayMode.Disabled, DisplayMode.Edit)
+                  Fill: =clrGrey
+                  FillPortions: =0
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Semibold
+                  Height: =44
+                  HoverColor: =Self.Color
+                  HoverFill: =ColorFade(Self.Fill, -15%)
+                  LayoutMinWidth: =100
+                  OnSelect: =Navigate(scrHome, ScreenTransition.None)
+                  PressedColor: =Self.Color
+                  PressedFill: =ColorFade(Self.Fill, -30%)
+                  RadiusBottomLeft: =8
+                  RadiusBottomRight: =8
+                  RadiusTopLeft: =8
+                  RadiusTopRight: =8
+                  Size: =15
+                  Text: ="Home"
+                  Width: =100
+      - lblImpHelp:
+          Control: Label@2.5.1
+          Properties:
+            Color: =clrText
+            FontWeight: =FontWeight.Semibold
+            Height: =40
+            PaddingLeft: =0
+            Size: =13
+            Text: ="In CASMFG, click Copy jobs for White Board, then paste here."
+            Width: =532
+            Wrap: =false
+            X: =24
+            Y: =76
+      - txtImpPaste:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =clrBorder
+            BorderThickness: =1
+            Color: =clrText
+            Default: =""
+            DisabledColor: =clrMuted
+            DisabledFill: =clrCard
+            EnableSpellCheck: =false
+            Fill: =clrCard
+            FocusedBorderColor: =clrBlue
+            FocusedBorderThickness: =2
+            Height: =320
+            HintText: ="Paste the copied jobs here (click here, then Ctrl+V)"
+            HoverColor: =clrText
+            HoverFill: =clrCard
+            MaxLength: =2000000
+            Mode: =TextMode.MultiLine
+            PressedColor: =clrText
+            PressedFill: =clrCard
+            Size: =11
+            Width: =532
+            X: =24
+            Y: =120
+      - btnImpImport:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderThickness: =0
+            Color: |-
+              =If(locImpAsk && locImpAskLen = Len(txtImpPaste.Text), clrPage, clrWhite)
+            DisabledColor: =clrMuted
+            DisabledFill: =ColorFade(clrBlue, -55%)
+            DisplayMode: |-
+              =If(locImpRunning || Len(Trim(txtImpPaste.Text)) = 0, DisplayMode.Disabled, DisplayMode.Edit)
+            Fill: |-
+              =If(locImpAsk && locImpAskLen = Len(txtImpPaste.Text), clrAmber, clrBlue)
+            FocusedBorderThickness: =0
+            FontWeight: =FontWeight.Bold
+            Height: =56
+            HoverColor: =Self.Color
+            HoverFill: =ColorFade(Self.Fill, -15%)
+            OnSelect: |-
+              =UpdateContext({locImpMsg: "", locImpNarrow: false, locImpReady: false});
+              // ---- 1. Read the paste (import contract v1, list-design) ----
+              With({j: IfError(ParseJSON(txtImpPaste.Text), Blank())},
+                  If(
+                      IsBlank(j),
+                          UpdateContext({locImpMsg: "This isn't a White Board copy (it isn't valid JSON). In CASMFG, click Copy jobs for White Board, then paste here again."}),
+                      IfError(Value(j.v), -1) <> 1,
+                          UpdateContext({locImpMsg: "This copy has the wrong format (it isn't version 1). Update the CASMFG copy script, then copy again."}),
+                      IfError(
+                          ClearCollect(colImpRaw,
+                              ForAll(Table(j.jobs) As r,
+                                  With({
+                                          num: Trim(IfError(Text(r.Value.number), Text(Value(r.Value.number)))) & "",
+                                          unit: Trim(IfError(Text(r.Value.unit), Text(Value(r.Value.unit)))) & "",
+                                          sh: Trim(Text(r.Value.shipDate)) & "",
+                                          model: Trim(Text(r.Value.model)) & ""
+                                      },
+                                  With({ok: IsMatch(sh, "\d{4}-\d{2}-\d{2}", MatchOptions.BeginsWith)},
+                                  With({sd: If(ok, Date(Value(Left(sh, 4)), Value(Mid(sh, 6, 2)), Value(Mid(sh, 9, 2))), Blank())},
+                                  With({m: Match(Upper(model), "CASRTU\s*(?<sz>\d+)")},
+                                      {
+                                          Key: Upper(Trim(num)) & "|" & Upper(Trim(unit)),
+                                          Num: num,
+                                          Unit: unit,
+                                          Label: num & If(unit <> "", "-" & unit, ""),
+                                          Name: Trim(Text(r.Value.name)) & "",
+                                          Model: model,
+                                          CasId: Trim(IfError(Text(r.Value.id), Text(Value(r.Value.id)))) & "",
+                                          Ship: If(ok, Left(sh, 10), ""),
+                                          ShipOk: ok,
+                                          ShipDate: sd,
+                                          ShipKey: If(ok, Value(Left(sh, 4)) * 10000 + Value(Mid(sh, 6, 2)) * 100 + Value(Mid(sh, 9, 2)), 99999999),
+                                          ShipShow: If(ok, Text(sd, "m/d"), "NO SHIP DATE"),
+                                          Size: If(!IsBlank(m) && Value(m.sz) >= 1 && Value(m.sz) <= 4, Value(m.sz), Blank())
+                                      }
+                                  ))))
+                              )
+                          ),
+                          UpdateContext({locImpMsg: "The job list in this copy couldn't be read (" & FirstError.Message & "). Copy again in CASMFG."}),
+                          UpdateContext({
+                              locImpReady: true,
+                              locImpDays: IfError(Value(j.days), 0),
+                              locImpPulledTxt: IfError(Text(j.pulledAt), "") & "",
+                              locImpPulled: IfError(DateTimeValue(j.pulledAt), Blank())
+                          })
+                      )
+                  )
+              );
+              // ---- 2. Checks before running ----
+              If(locImpReady,
+                  // one row per job key (a repeated key in the copy counts once)
+                  ClearCollect(colImpPaste, ForAll(Distinct(Filter(colImpRaw, Num <> ""), Key) As d, LookUp(colImpRaw, Key = d.Value)));
+                  UpdateContext({
+                      locImpNarrow: locImpDays < 90,
+                      locImpAge: If(IsBlank(locImpPulled), 0, DateDiff(locImpPulled, Now(), TimeUnit.Minutes))
+                  });
+                  If(
+                      CountRows(colImpPaste) = 0,
+                          UpdateContext({locImpMsg: "This copy holds no jobs. In CASMFG, check that the In-Process CASRTU jobs are listed, then copy again."}),
+                      (IsBlank(locImpPulled) || locImpAge > 120) && !(locImpAsk && locImpAskFor = locImpPulledTxt && locImpAskLen = Len(txtImpPaste.Text) && DateDiff(locImpAskAt, Now(), TimeUnit.Milliseconds) >= 1000),
+                          // older than 2 hours (or no copy time): ask first; a second tap on this button confirms.
+                          // A second tap within 1 second of the question (a fast double tap) only asks again.
+                          UpdateContext({locImpAsk: true, locImpAskFor: locImpPulledTxt, locImpAskLen: Len(txtImpPaste.Text), locImpAskAt: Now()}),
+                      // ---- 3. IMPORT RUN (list-design, status model) ----
+                      UpdateContext({locImpRunning: true, locImpAsk: false});
+                      Refresh(RunListJobs);
+                      Set(gblRefreshTick, gblRefreshTick + 1);
+                      Clear(colImpResult);
+                      With({
+                              act: ShowColumns(ActiveJobs, ID, Title, ShipYmd, CasmfgId, Started),
+                              inc: ShowColumns(IncomingJobs, ID, Title, ShipYmd, CasmfgId, Started),
+                              hz: With({h: DateAdd(Today(), 16, TimeUnit.Days)}, Year(h) * 10000 + Month(h) * 100 + Day(h))
+                          },
+                          ForAll(colImpPaste As p,
+                              With({oa: LookUp(act, Title = p.Key)},
+                              With({o: If(IsBlank(oa), LookUp(inc, Title = p.Key), oa)},
+                              If(
+                                  // the board copy couldn't be read (network, SharePoint busy): list it as failed, never drop it
+                                  IsError(o),
+                                      Collect(colImpResult, Patch(p, {Kind: "failed", Sub: "update", Moved: false, OldShow: "", IdNew: false, Msg: p.Label & ": couldn't read the board (" & IfError(Text(o.ID), FirstError.Message) & ")", RowID: 0, Modified: Blank(), Restored: false})),
+                                  // (a) open job, and its board copy already matches CASMFG: nothing to write
+                                  !IsBlank(o) && !(p.ShipOk && o.ShipYmd <> p.Ship) && !(p.CasId <> "" && o.CasmfgId & "" <> p.CasId),
+                                      Collect(colImpResult, Patch(p, {Kind: "had", Sub: If(IsBlank(oa), "Incoming", "Active"), Moved: false, OldShow: "", IdNew: false, Msg: "", RowID: o.ID, Modified: Blank(), Restored: false})),
+                                  // (a) open job that may need a ship move or a CasmfgId refresh: decide from a fresh row
+                                  !IsBlank(o),
+                                      With({row: LookUp(RunListJobs, ID = o.ID)},
+                                      If(IsError(row),
+                                          // the fresh read failed: list it as failed (Tap Import again), never drop it
+                                          Collect(colImpResult, Patch(p, {Kind: "failed", Sub: "update", Moved: false, OldShow: "", IdNew: false, Msg: p.Label & ": couldn't read this job from the list (" & IfError(Text(row.ID), FirstError.Message) & ")", RowID: o.ID, Modified: Blank(), Restored: false})),
+                                      With({
+                                              st: row.JobStatus.Value & "",
+                                              oldYmd: If(IsBlank(row.ShipDate), "", Text(row.ShipDate, "yyyy-mm-dd")),
+                                              prevYmd: If(IsBlank(row.PrevShipDate), "", Text(row.PrevShipDate, "yyyy-mm-dd"))
+                                          },
+                                      With({
+                                              mv: If(IsBlank(row) || !p.ShipOk || oldYmd = p.Ship, "", st = "Incoming", "inc", st = "Active" && !row.Started, "act", ""),
+                                              idNew: !IsBlank(row) && (st = "Incoming" || st = "Active") && p.CasId <> "" && row.CasmfgId & "" <> p.CasId,
+                                              np: If(p.Ship = prevYmd, Blank(), Coalesce(row.PrevShipDate, row.ShipDate))
+                                          },
+                                      With({
+                                              e1: Switch(mv,
+                                                  "inc",
+                                                      IfError(
+                                                          Text(Patch(RunListJobs, LookUp(RunListJobs, ID = o.ID), {ShipDate: p.ShipDate}).ID),
+                                                          Refresh(RunListJobs);
+                                                          IfError(Text(Patch(RunListJobs, LookUp(RunListJobs, ID = o.ID), {ShipDate: p.ShipDate}).ID), "!" & FirstError.Message, ""),
+                                                          ""
+                                                      ),
+                                                  "act",
+                                                      IfError(
+                                                          Text(Patch(RunListJobs, LookUp(RunListJobs, ID = o.ID), {PrevShipDate: np, ShipDate: p.ShipDate}).ID),
+                                                          Refresh(RunListJobs);
+                                                          IfError(Text(Patch(RunListJobs, LookUp(RunListJobs, ID = o.ID), {PrevShipDate: np, ShipDate: p.ShipDate}).ID), "!" & FirstError.Message, ""),
+                                                          ""
+                                                      ),
+                                                  ""
+                                              )
+                                          },
+                                      With({
+                                              e2: If(idNew,
+                                                  IfError(
+                                                      Text(Patch(RunListJobs, LookUp(RunListJobs, ID = o.ID), {CasmfgId: p.CasId}).ID),
+                                                      Refresh(RunListJobs);
+                                                      IfError(Text(Patch(RunListJobs, LookUp(RunListJobs, ID = o.ID), {CasmfgId: p.CasId}).ID), "!" & FirstError.Message, ""),
+                                                      ""
+                                                  ),
+                                                  ""
+                                              )
+                                          },
+                                          Collect(colImpResult, Patch(p, {
+                                              Kind: If(e1 = "" && e2 = "", "had", "failed"),
+                                              // "update" only when the ship move itself failed (a saved move keeps its status for the moved list)
+                                              Sub: If(e1 = "", st, "update"),
+                                              Moved: mv <> "" && e1 = "",
+                                              OldShow: If(oldYmd = "", "none", Text(row.ShipDate, "m/d")),
+                                              IdNew: idNew && e2 = "",
+                                              // saved: what the move did to the Punch flag (PrevShipDate); failed: the reason
+                                              Msg: If(e1 = "" && e2 = "",
+                                                  If(mv = "act", If(IsBlank(np), If(IsBlank(row.PrevShipDate), "", "flag cleared"), "flagged on the Punch board"), ""),
+                                                  p.Label & ": " & If(e1 <> "", "ship date not saved (" & Mid(e1, 2) & ") ", "") & If(e2 <> "", "CASMFG id not saved (" & Mid(e2, 2) & ")", "")
+                                              ),
+                                              RowID: o.ID,
+                                              Modified: Blank(),
+                                              Restored: false
+                                          }))
+                                      )))))),
+                                  // (c) not open, ships more than 16 days out: watch only, no server call
+                                  p.ShipOk && p.ShipKey > hz,
+                                      Collect(colImpResult, Patch(p, {Kind: "watch", Sub: "", Moved: false, OldShow: "", IdNew: false, Msg: "", RowID: 0, Modified: Blank(), Restored: false})),
+                                  // (b) not open, ships within 16 days (or no valid ship date): look the key up in any status
+                                  With({f: LookUp(RunListJobs, Title = p.Key)},
+                                      If(
+                                          // the key check failed (network, SharePoint busy): list it as failed with Retry, never drop it
+                                          IsError(f),
+                                              Collect(colImpResult, Patch(p, {Kind: "failed", Sub: "create", Moved: false, OldShow: "", IdNew: false, Msg: p.Label & ": couldn't check the list (" & IfError(Text(f.ID), FirstError.Message) & ")", RowID: 0, Modified: Blank(), Restored: false})),
+                                          !IsBlank(f),
+                                              Collect(colImpResult, Patch(p, {Kind: If(f.JobStatus.Value = "Dismissed", "blocked", "had"), Sub: f.JobStatus.Value & "", Moved: false, OldShow: "", IdNew: false, Msg: "", RowID: f.ID, Modified: f.Modified, Restored: false})),
+                                          // not found: create an Incoming job with every value explicit
+                                          With({e: IfError(
+                                                  Text(Patch(RunListJobs, Defaults(RunListJobs), {
+                                                      Title: p.Key,
+                                                      JobNumber: p.Num,
+                                                      UnitNumber: p.Unit,
+                                                      FanNumber: p.Unit,
+                                                      JobName: p.Name,
+                                                      ProductModel: p.Model,
+                                                      CasmfgId: p.CasId,
+                                                      JobSize: p.Size,
+                                                      ShipDate: p.ShipDate,
+                                                      JobStatus: {Value: "Incoming"},
+                                                      Nested: false,
+                                                      Need12: false, Need14: false, Need16: false, Need18: false, Need20: false, Need24: false,
+                                                      Done12: false, Done14: false, Done16: false, Done18: false, Done20: false, Done24: false,
+                                                      PBDone: false, P4Done: false, Started: false
+                                                  }).ID),
+                                                  "!" & FirstError.Message,
+                                                  ""
+                                              )},
+                                              If(e = "",
+                                                  Collect(colImpResult, Patch(p, {Kind: "added", Sub: "Incoming", Moved: false, OldShow: "", IdNew: false, Msg: "", RowID: 0, Modified: Blank(), Restored: false})),
+                                                  // the create failed: re-check before calling it a failure (another import may have made it).
+                                                  // A failed re-check counts as not found, so the job lands in Failed with Retry.
+                                                  With({again: IfError(LookUp(RunListJobs, Title = p.Key), Blank())},
+                                                      Collect(colImpResult, Patch(p, {
+                                                          Kind: If(IsBlank(again), "failed", "had"),
+                                                          Sub: If(IsBlank(again), "create", again.JobStatus.Value & ""),
+                                                          Moved: false,
+                                                          OldShow: "",
+                                                          IdNew: false,
+                                                          Msg: If(IsBlank(again), p.Key & ": " & Mid(e, 2), ""),
+                                                          RowID: If(IsBlank(again), 0, again.ID),
+                                                          Modified: Blank(),
+                                                          Restored: false
+                                                      }))
+                                                  )
+                                              )
+                                          )
+                                      )
+                                  )
+                              )))
+                          )
+                      );
+                      // ---- 4. Summary ----
+                      UpdateContext({
+                          locImpRunning: false,
+                          locImpRan: true,
+                          locImpRanAt: Now(),
+                          locImpRanCount: CountRows(colImpPaste),
+                          locImpRanDays: locImpDays,
+                          locImpRanPulled: locImpPulled,
+                          locImpRanHz: DateAdd(Today(), 16, TimeUnit.Days),
+                          locImpRanNote: With({
+                                  dup: CountRows(Filter(colImpRaw, Num <> "")) - CountRows(colImpPaste),
+                                  skip: CountRows(Filter(colImpRaw, Num = ""))
+                              },
+                              If(dup > 0, " " & dup & " job(s) were listed twice in the copy and counted once.", "") &
+                              If(skip > 0, " " & skip & " row(s) without a job number were ignored.", "")
+                          )
+                      });
+                      With({
+                              na: CountRows(Filter(colImpResult, Kind = "added")),
+                              nm: CountRows(Filter(colImpResult, Moved)),
+                              nf: CountRows(Filter(colImpResult, Kind = "failed"))
+                          },
+                          Notify(
+                              "Import done: " & na & " added, " & nm & " ship move(s)" & If(nf > 0, ", " & nf & " failed (see the red list)", "") & ".",
+                              If(nf > 0, NotificationType.Warning, NotificationType.Success)
+                          )
+                      )
+                  )
+              );
+              // a red message replaces any old "copy is old" question
+              If(!IsBlank(locImpMsg), UpdateContext({locImpAsk: false}))
+            PressedColor: =Self.Color
+            PressedFill: =ColorFade(Self.Fill, -30%)
+            RadiusBottomLeft: =10
+            RadiusBottomRight: =10
+            RadiusTopLeft: =10
+            RadiusTopRight: =10
+            Size: =18
+            Text: |-
+              =If(locImpRunning, "Importing...", locImpAsk && locImpAskLen = Len(txtImpPaste.Text), "Import anyway", "Import")
+            Width: =300
+            X: =24
+            Y: =452
+      - btnImpClear:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderThickness: =0
+            Color: =clrWhite
+            DisabledColor: =clrMuted
+            DisabledFill: =ColorFade(clrGrey, -40%)
+            DisplayMode: =If(locImpRunning, DisplayMode.Disabled, DisplayMode.Edit)
+            Fill: =clrGrey
+            FocusedBorderThickness: =0
+            FontWeight: =FontWeight.Semibold
+            Height: =56
+            HoverColor: =Self.Color
+            HoverFill: =ColorFade(Self.Fill, -15%)
+            OnSelect: |-
+              =Reset(txtImpPaste);
+              UpdateContext({locImpAsk: false, locImpMsg: "", locImpNarrow: false})
+            PressedColor: =Self.Color
+            PressedFill: =ColorFade(Self.Fill, -30%)
+            RadiusBottomLeft: =10
+            RadiusBottomRight: =10
+            RadiusTopLeft: =10
+            RadiusTopRight: =10
+            Size: =16
+            Text: ="Clear"
+            Width: =140
+            X: =336
+            Y: =452
+      - lblImpError:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =clrRed
+            BorderThickness: =2
+            Color: =clrRed
+            Fill: =clrCard
+            FontWeight: =FontWeight.Semibold
+            Height: =110
+            PaddingBottom: =10
+            PaddingLeft: =14
+            PaddingRight: =14
+            PaddingTop: =10
+            Size: =15
+            Text: =locImpMsg
+            VerticalAlign: =VerticalAlign.Top
+            Visible: =!IsBlank(locImpMsg)
+            Width: =532
+            X: =24
+            Y: =520
+      - lblImpNarrow:
+          Control: Label@2.5.1
+          Properties:
+            Color: =clrWhite
+            Fill: =clrRed
+            FontWeight: =FontWeight.Bold
+            Height: =76
+            PaddingBottom: =4
+            PaddingLeft: =14
+            PaddingRight: =14
+            PaddingTop: =4
+            Size: =14
+            Text: |-
+              ="Narrow pull: ship dates moved more than 16 days out can't be seen. Copy again." & Char(10) & "(This copy looks ahead " & locImpDays & " days, not 180.)"
+            VerticalAlign: =VerticalAlign.Middle
+            Visible: =locImpNarrow && IsBlank(locImpMsg)
+            Width: =532
+            X: =24
+            Y: =520
+      - lblImpRunning:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =clrBlue
+            BorderThickness: =2
+            Color: =clrText
+            Fill: =clrCard
+            FontWeight: =FontWeight.Semibold
+            Height: =76
+            PaddingLeft: =14
+            PaddingRight: =14
+            Size: =15
+            Text: |-
+              ="Importing " & CountRows(colImpPaste) & " jobs. Please wait and stay on this screen. A big first import can take a minute or two."
+            Visible: =locImpRunning
+            Width: =532
+            X: =24
+            Y: =If(locImpNarrow, 606, 520)
+      - conImpAsk:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            BorderColor: =clrAmber
+            BorderThickness: =2
+            DropShadow: =DropShadow.None
+            Fill: =clrCard
+            Height: =156
+            RadiusBottomLeft: =10
+            RadiusBottomRight: =10
+            RadiusTopLeft: =10
+            RadiusTopRight: =10
+            Visible: |-
+              =locImpAsk && !locImpRunning && locImpAskLen = Len(txtImpPaste.Text)
+            Width: =532
+            X: =24
+            Y: =If(locImpNarrow, 606, 520)
+          Children:
+            - lblImpAskText:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrText
+                  Height: =92
+                  PaddingLeft: =0
+                  PaddingTop: =0
+                  Size: =14
+                  Text: |-
+                    =If(
+                        IsBlank(locImpPulled),
+                            "This copy has no copy time, so its age is unknown.",
+                        "This copy is old: it was made " &
+                            With({hrs: RoundDown(locImpAge / 60, 0)},
+                                If(hrs >= 48, RoundDown(hrs / 24, 0) & " days", hrs & " h " & Mod(locImpAge, 60) & " min")
+                            ) &
+                            " ago (" & Text(locImpPulled, "ddd mmm d, h:mm AM/PM", "en-US") & ")."
+                    ) & " Ship dates may have changed since. Copy again in CASMFG, or tap Import anyway."
+                  VerticalAlign: =VerticalAlign.Top
+                  Width: =500
+                  X: =16
+                  Y: =12
+            - btnImpAskCancel:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =clrWhite
+                  Fill: =clrGrey
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Semibold
+                  Height: =40
+                  HoverColor: =Self.Color
+                  HoverFill: =ColorFade(Self.Fill, -15%)
+                  OnSelect: |-
+                    =Reset(txtImpPaste);
+                    UpdateContext({locImpAsk: false, locImpMsg: "", locImpNarrow: false})
+                  PressedColor: =Self.Color
+                  PressedFill: =ColorFade(Self.Fill, -30%)
+                  RadiusBottomLeft: =8
+                  RadiusBottomRight: =8
+                  RadiusTopLeft: =8
+                  RadiusTopRight: =8
+                  Size: =14
+                  Text: ="Cancel"
+                  Width: =140
+                  X: =16
+                  Y: =104
+      - conImpResults:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            BorderColor: =clrBorder
+            BorderThickness: =1
+            DropShadow: =DropShadow.None
+            Fill: =clrCard
+            Height: =680
+            RadiusBottomLeft: =12
+            RadiusBottomRight: =12
+            RadiusTopLeft: =12
+            RadiusTopRight: =12
+            Width: =774
+            X: =576
+            Y: =76
+          Children:
+            - lblImpResTitle:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrText
+                  FontWeight: =FontWeight.Bold
+                  Height: =32
+                  PaddingLeft: =0
+                  Size: =18
+                  Text: |-
+                    =If(locImpRunning, "Importing...", locImpRan, "Import finished at " & Text(locImpRanAt, "h:mm AM/PM", "en-US"), "Results")
+                  Width: =734
+                  Wrap: =false
+                  X: =20
+                  Y: =12
+            - lblImpResEmpty:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrMuted
+                  Height: =120
+                  PaddingLeft: =0
+                  Size: =15
+                  Text: |-
+                    =If(locImpRunning,
+                        "Working through the copy. The results show here when it's done.",
+                        "Nothing imported yet. Paste a CASMFG copy on the left and tap Import." & Char(10) & Char(10) &
+                        "Importing the same copy twice is safe: the second time adds nothing and moves nothing."
+                    )
+                  VerticalAlign: =VerticalAlign.Top
+                  Visible: =!locImpRan || locImpRunning
+                  Width: =734
+                  X: =20
+                  Y: =52
+            - lblImpResInfo:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrMuted
+                  Height: =58
+                  PaddingLeft: =0
+                  PaddingTop: =0
+                  Size: =12
+                  Text: |-
+                    =locImpRanCount & " jobs in the copy (copied " &
+                    If(IsBlank(locImpRanPulled), "at an unknown time", Text(locImpRanPulled, "ddd h:mm AM/PM", "en-US")) &
+                    ", " & locImpRanDays & "-day look-ahead). New cards are added for ship dates up to " &
+                    Text(locImpRanHz, "ddd mmm d", "en-US") & "." &
+                    With({nd: CountRows(Filter(colImpResult, Kind = "had" && Sub = "Done"))}, If(nd > 0, " Already had includes " & nd & " done job(s).", "")) &
+                    With({nid: CountRows(Filter(colImpResult, IdNew))}, If(nid > 0, " CASMFG ids refreshed: " & nid & ".", "")) &
+                    locImpRanNote
+                  VerticalAlign: =VerticalAlign.Top
+                  Visible: =locImpRan && !locImpRunning
+                  Width: =734
+                  X: =20
+                  Y: =44
+            - galImpTiles:
+                Control: Gallery@2.15.0
+                Variant: Horizontal
+                Properties:
+                  BorderThickness: =0
+                  DelayItemLoading: =false
+                  Fill: =clrNone
+                  Height: =96
+                  Items: |-
+                    =Table(
+                        {T: "Added", N: CountRows(Filter(colImpResult, Kind = "added")), C: clrGreen, S: "new cards in the Incoming tray"},
+                        {T: "Ship moves", N: CountRows(Filter(colImpResult, Moved)), C: clrAmber, S: "ship dates changed"},
+                        {T: "Already had", N: CountRows(Filter(colImpResult, Kind = "had")), C: clrText, S: "on the board or done"},
+                        {T: "Blocked", N: CountRows(Filter(colImpResult, Kind = "blocked")), C: clrSB15, S: "dismissed, see the list"},
+                        {T: "Failed", N: CountRows(Filter(colImpResult, Kind = "failed")), C: clrRed, S: "not saved, see the list"},
+                        {T: "Watch only", N: CountRows(Filter(colImpResult, Kind = "watch")), C: clrSB8, S: "ship more than 16 days out"}
+                    )
+                  LoadingSpinner: =LoadingSpinner.None
+                  ShowScrollbar: =false
+                  TemplatePadding: =0
+                  TemplateSize: =124
+                  Visible: =locImpRan && !locImpRunning
+                  Width: =746
+                  X: =14
+                  Y: =104
+                Children:
+                  - conImpTile:
+                      Control: GroupContainer@1.5.0
+                      Variant: ManualLayout
+                      Properties:
+                        BorderColor: =If(ThisItem.N > 0, ThisItem.C, clrBorder)
+                        BorderThickness: =1
+                        DropShadow: =DropShadow.None
+                        Fill: =clrPage
+                        Height: =Parent.TemplateHeight
+                        RadiusBottomLeft: =8
+                        RadiusBottomRight: =8
+                        RadiusTopLeft: =8
+                        RadiusTopRight: =8
+                        Width: =Parent.TemplateWidth - 8
+                        X: =0
+                        Y: =0
+                      Children:
+                        - lblImpTileNum:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =If(ThisItem.N > 0, ThisItem.C, clrMuted)
+                              FontWeight: =FontWeight.Bold
+                              Height: =40
+                              PaddingLeft: =0
+                              Size: =26
+                              Text: =Text(ThisItem.N)
+                              Width: =100
+                              Wrap: =false
+                              X: =10
+                              Y: =4
+                        - lblImpTileName:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =clrText
+                              FontWeight: =FontWeight.Semibold
+                              Height: =22
+                              PaddingLeft: =0
+                              Size: =13
+                              Text: =ThisItem.T
+                              Width: =104
+                              Wrap: =false
+                              X: =10
+                              Y: =44
+                        - lblImpTileSub:
+                            Control: Label@2.5.1
+                            Properties:
+                              Color: =clrMuted
+                              Height: =28
+                              PaddingBottom: =0
+                              PaddingLeft: =0
+                              PaddingTop: =0
+                              Size: =9
+                              Text: =ThisItem.S
+                              VerticalAlign: =VerticalAlign.Top
+                              Width: =106
+                              X: =10
+                              Y: =66

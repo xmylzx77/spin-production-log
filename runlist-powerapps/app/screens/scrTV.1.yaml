@@ -1,0 +1,163 @@
+Screens:
+  scrTV:
+    Properties:
+      Fill: =clrPage
+      OnVisible: |-
+        =UpdateContext({locTvPage: 0});
+        Refresh(RunListJobs);
+        Set(gblRefreshTick, gblRefreshTick + 1)
+    Children:
+      - conTvHeader:
+          Control: GroupContainer@1.5.0
+          Variant: AutoLayout
+          Properties:
+            BorderThickness: =0
+            DropShadow: =DropShadow.None
+            Fill: =clrCard
+            Height: =64
+            LayoutAlignItems: =LayoutAlignItems.Center
+            LayoutDirection: =LayoutDirection.Horizontal
+            LayoutGap: =12
+            LayoutJustifyContent: =LayoutJustifyContent.Start
+            PaddingLeft: =16
+            PaddingRight: =16
+            Width: =1366
+            X: =0
+            Y: =0
+          Children:
+            - lblTvTitle:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =clrText
+                  FillPortions: =1
+                  FontWeight: =FontWeight.Bold
+                  Height: =52
+                  LayoutMinWidth: =300
+                  PaddingLeft: =0
+                  Size: =30
+                  Text: ="The White Board"
+                  Wrap: =false
+            - lblTvPage:
+                Control: Label@2.5.1
+                Properties:
+                  Align: =Align.Right
+                  Color: =clrMuted
+                  FillPortions: =0
+                  Height: =44
+                  LayoutMinWidth: =120
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  Size: =14
+                  Text: |-
+                    =// Same row count as galTvBoard.Items: each band (today..today+5, plus every other day
+                    // holding a TV job) takes Max(1, SB-8 cards, SB-15 cards) rows; 9 rows per page.
+                    With({win: PunchWindow, tvJobs: Filter(ActiveJobs, !TurretDone && MachineText <> "" && PunchDayKey > 0)},
+                    With({extra: Filter(Distinct(tvJobs, PunchDayKey) As u, IsBlank(LookUp(win, BandKey = u.Value)))},
+                    With({rows: Coalesce(Sum(ForAll(win As w, {R: Max(1, CountRows(Filter(tvJobs, PunchDayKey = w.BandKey && MachineText = "SB8")), CountRows(Filter(tvJobs, PunchDayKey = w.BandKey && MachineText = "SB15")))}), R), 0)
+                            + Coalesce(Sum(ForAll(extra As e, {R: Max(1, CountRows(Filter(tvJobs, PunchDayKey = e.Value && MachineText = "SB8")), CountRows(Filter(tvJobs, PunchDayKey = e.Value && MachineText = "SB15")))}), R), 0)},
+                    With({pages: Max(1, RoundUp(rows / 9, 0))},
+                        If(pages > 1, "Page " & (Mod(Coalesce(locTvPage, 0), pages) + 1) & " of " & pages, "")
+                    ))))
+                  Width: =120
+                  Wrap: =false
+            - lblTvDate:
+                Control: Label@2.5.1
+                Properties:
+                  Align: =Align.Right
+                  Color: =clrMuted
+                  FillPortions: =0
+                  Height: =44
+                  LayoutMinWidth: =280
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  Size: =16
+                  Text: =Text(TodayDate, "dddd, mmmm d", "en-US")
+                  Width: =280
+                  Wrap: =false
+            - lblTvClock:
+                Control: Label@2.5.1
+                Properties:
+                  Align: =Align.Right
+                  Color: =clrText
+                  FillPortions: =0
+                  FontWeight: =FontWeight.Bold
+                  Height: =52
+                  LayoutMinWidth: =180
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  Size: =28
+                  Text: |-
+                    =// Contract 7.3: Now() is re-read when the refresh tick or the page changes (every 30 s).
+                    Text(DateAdd(Now(), 0 * gblRefreshTick + 0 * locTvPage, TimeUnit.Minutes), "h:mm AM/PM")
+                  Width: =180
+                  Wrap: =false
+            - btnTvHome:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =0
+                  Color: =clrWhite
+                  Fill: =clrGrey
+                  FillPortions: =0
+                  FocusedBorderThickness: =0
+                  FontWeight: =FontWeight.Semibold
+                  Height: =44
+                  HoverColor: =Self.Color
+                  HoverFill: =ColorFade(Self.Fill, -15%)
+                  LayoutMinWidth: =100
+                  OnSelect: =Navigate(scrHome, ScreenTransition.None)
+                  PressedColor: =Self.Color
+                  PressedFill: =ColorFade(Self.Fill, -30%)
+                  RadiusBottomLeft: =8
+                  RadiusBottomRight: =8
+                  RadiusTopLeft: =8
+                  RadiusTopRight: =8
+                  Size: =15
+                  Text: ="Home"
+                  Width: =100
+      - lblTvColDay:
+          Control: Label@2.5.1
+          Properties:
+            Color: =clrMuted
+            FontWeight: =FontWeight.Semibold
+            Height: =34
+            PaddingBottom: =0
+            PaddingLeft: =10
+            PaddingTop: =0
+            Size: =13
+            Text: ="Punch day"
+            Width: =140
+            Wrap: =false
+            X: =8
+            Y: =70
+      - lblTvColS8:
+          Control: Label@2.5.1
+          Properties:
+            Color: =clrSB8
+            FontWeight: =FontWeight.Bold
+            Height: =34
+            PaddingBottom: =0
+            PaddingLeft: =10
+            PaddingTop: =0
+            Size: =18
+            Text: |-
+              ="SB-8  ·  " & CountRows(Filter(ActiveJobs, MachineText = "SB8" && !TurretDone)) & " to punch"
+            Width: =596
+            Wrap: =false
+            X: =156
+            Y: =70
+      - lblTvColS15:
+          Control: Label@2.5.1
+          Properties:
+            Color: =clrSB15
+            FontWeight: =FontWeight.Bold
+            Height: =34
+            PaddingBottom: =0
+            PaddingLeft: =10
+            PaddingTop: =0
+            Size: =18
+            Text: |-
+              ="SB-15  ·  " & CountRows(Filter(ActiveJobs, MachineText = "SB15" && !TurretDone)) & " to punch"
+            Width: =596
+            Wrap: =false
+            X: =762
+            Y: =70
