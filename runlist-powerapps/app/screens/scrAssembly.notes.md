@@ -141,6 +141,8 @@ Afterwards, set the TEST jobs to Dismissed in Punch.
 | U-i | **Text widths.** Segoe UI isn't available offline, so every tight label was measured with Open Sans and Arial metrics (both wider than Segoe UI) and fits. | Red "NO SHIP DATE" / "SET SIZE", a long job #, or the "📅 was" chip is cut off. | Report which label and on which device; it's a Size or Width property patch. |
 | U-j | **"✓ Started m/d"** wraps to two lines inside the 56 px Start button (text about 135-142 px, button 124 px). Two lines fit the height, so nothing is cut. | The button shows the date on a second line. | Cosmetic; no action. |
 
+**U-a fallback is ready:** if U-a happens, you don't need to wait for a reply. Follow `app/fallbacks/scrAssembly.6a-fixed-rows.md`, which replaces Paste 6a with `app/fallbacks/scrAssembly.6a-fixed-rows.yaml` (fixed-height day rows) and re-pastes 6b and 6c unchanged.
+
 ## Open issues
 
 1. ~~scrPunch has the same ship-move acknowledge gap~~ **Fixed in the integration pass:** btnPunMovedS8 / btnPunMovedS15 now use this screen's A15 check (CONTRACT 6.4).

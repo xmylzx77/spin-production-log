@@ -1,6 +1,6 @@
 # scrPunch (Punch, supervisor): paste notes
 
-The Punch screen comes in **8 pastes** (4a to 4h), because the whole screen is about 3,900 YAML lines (guide 3.8 asks for under about 800 per paste). Paste 4a first. Every later paste goes **into a container** that paste 4a created; 4b to 4h can then go in any order, except that 4c comes after 4b and 4g after 4f (they use controls from those pastes).
+The Punch screen comes in **8 pastes** (4a to 4h), because the whole screen is about 3,900 YAML lines (guide 3.8 asks for under about 800 per paste). Paste 4a first. Every later paste goes **into a container** that paste 4a created; 4b to 4h can then go in any order, except that 4c comes after 4b (it uses controls from 4b). 4g doesn't use 4f's controls; it follows 4f only to keep the two cards together.
 
 | Paste | File | Lines | Goes into |
 |---|---|---|---|
@@ -9,8 +9,8 @@ The Punch screen comes in **8 pastes** (4a to 4h), because the whole screen is a
 | 4c | `scrPunch.3.yaml` | 410 | `conPunEditPanel` (edit panel: pairing, warnings, Cancel / Dismiss / Save) |
 | 4d | `scrPunch.4.yaml` | 417 | `conPunPlacePanel` (Place panel) |
 | 4e | `scrPunch.5.yaml` | 275 | `conPunFindPanel` (Find job # panel) |
-| 4f | `scrPunch.6.yaml` | 677 | `conPunCardS8` (the SB8 punch card) |
-| 4g | `scrPunch.7.yaml` | 677 | `conPunCardS15` (the SB15 punch card) |
+| 4f | `scrPunch.6.yaml` | 686 | `conPunCardS8` (the SB8 punch card) |
+| 4g | `scrPunch.7.yaml` | 686 | `conPunCardS15` (the SB15 punch card) |
 | 4h | `scrPunch.8.yaml` | 144 | `conPunTray` (the Incoming tray's card list, `galPunTray`) |
 
 All eight pass `tools/palint.py` with 0 errors and 0 warnings, alone and together with the other screens in this folder (425 names app-wide, no duplicates). Together they hold 152 controls, all named `…Pun…`. The context variables are `locPanel`, `locId` and `locPun…`.
@@ -191,6 +191,8 @@ These cover the round 2 fixes. Use TEST jobs.
 ```
 44 + 110 * Max(1, Max(ForAll(Distinct(Filter(ActiveJobs, MachineText <> "" && (tglPunShowDone.Value || !TurretDone)), PunchBand) As d, {n: CountRows(Filter(ActiveJobs, PunchBand = d.Value && (tglPunShowDone.Value || !TurretDone)))}), n))
 ```
+
+**F2 is ready:** if F1 doesn't fix row 1, you don't need to wait for a reply. Follow `app/fallbacks/scrPunch.board-F2-flat.md`, which deletes `galPunBoard`, pastes `app/fallbacks/scrPunch.board-F2-flat.yaml` (two flat lists, `galPunSB8` and `galPunSB15`) and re-pastes 4f and 4g unchanged into the new card containers. Its rows are joined with `Table(...)`; the `Ungroup` form named in row 1 is its patch P1.
 
 ## Data rules followed
 

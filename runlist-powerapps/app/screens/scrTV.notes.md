@@ -26,7 +26,8 @@ Before this: Pastes 1-9 done (App.OnStart, App.Formulas, scrHome, scrPunch, scrI
 Where: Tree view > Screens tab > right-click any screen > Paste. Copy ALL of scrTV.1.yaml
        (use the copy button; the first line is "Screens:" and the last is "            Y: =70").
 After: run the 3.4 checks. Expected: 0 errors. A new screen "scrTV" (no _1 at the end).
-       It shows the header and the two column titles. The board stays empty until Paste 10b.
+       It shows the header and the three column titles ("Punch day", "SB-8 · n to punch",
+       "SB-15 · n to punch"). The board stays empty until Paste 10b.
 ```
 
 ```

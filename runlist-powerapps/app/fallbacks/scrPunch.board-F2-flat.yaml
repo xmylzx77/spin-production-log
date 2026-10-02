@@ -1,0 +1,188 @@
+- galPunSB8:
+    Control: Gallery@2.15.0
+    Variant: Vertical
+    Properties:
+      BorderThickness: =0
+      DelayItemLoading: =false
+      Fill: =clrNone
+      FocusedBorderThickness: =0
+      Height: =If(!IsEmpty(Filter(ActiveJobs, PrevShipText <> "")), 630, 664)
+      Items: |-
+        =With({show: tglPunShowDone.Value},
+        With({cards: Filter(ActiveJobs, MachineText = "SB8" && (show || !TurretDone))},
+            // Flat list (guide U4): one header row per day band, followed by that band's SB8 cards.
+            // Table(header rows, card rows) keeps every column of both (Learn, Table function).
+            // Bands as CONTRACT 3.5. Cards matched to a band by day key: the same cards as its
+            // PunchBand filter. Card order as CONTRACT 5.1. Same result as the old galPunBoard.
+            SortByColumns(
+                Table(
+                    AddColumns(If(show, PunchBandsAll, PunchBandsOpen) As b, IsHeader, true, BandN, CountRows(Filter(cards, PunchDayKey = b.BandKey))),
+                    AddColumns(cards, IsHeader, false, BandKey, PunchDayKey)
+                ),
+                "BandKey", SortOrder.Ascending,
+                "IsHeader", SortOrder.Descending,
+                "PunchGroupOrder", SortOrder.Ascending,
+                "PairKey", SortOrder.Ascending,
+                "PunchSort", SortOrder.Ascending,
+                "ID", SortOrder.Ascending
+            )
+        ))
+      LoadingSpinner: =LoadingSpinner.None
+      ShowScrollbar: =true
+      TemplatePadding: =0
+      TemplateSize: =110
+      Width: =If(locPunTrayHidden, 654, 528)
+      X: =If(locPunTrayHidden, 56, 308)
+      Y: =If(!IsEmpty(Filter(ActiveJobs, PrevShipText <> "")), 134, 100)
+    Children:
+      - conPunCardS8:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            BorderColor: =If(IsBlank(ThisItem.PairNo), clrBorder, ThisItem.PairColor)
+            BorderThickness: =If(IsBlank(ThisItem.PairNo), 1, 2)
+            DropShadow: =DropShadow.None
+            Fill: =If(ThisItem.TurretDone, ColorFade(clrCard, -35%), clrCard)
+            Height: =Parent.TemplateHeight - 6
+            RadiusBottomLeft: =8
+            RadiusBottomRight: =8
+            RadiusTopLeft: =8
+            RadiusTopRight: =8
+            Visible: =!ThisItem.IsHeader
+            Width: =Parent.TemplateWidth - 8
+            X: =0
+            Y: =0
+      - lblPunBandS8:
+          Control: Label@2.5.1
+          Properties:
+            Color: =If(ThisItem.BandKey = 0, clrAmber, ThisItem.BandKey < TodayKey, RGBA(252, 165, 165, 1), clrText)
+            Fill: |-
+              =If(ThisItem.BandKey = 0, RGBA(245, 158, 11, 0.22), ThisItem.IsToday, RGBA(37, 99, 235, 0.45), ThisItem.BandKey < TodayKey, RGBA(239, 68, 68, 0.22), RGBA(51, 65, 85, 0.6))
+            FontWeight: =FontWeight.Semibold
+            Height: =30
+            PaddingBottom: =0
+            PaddingLeft: =10
+            PaddingRight: =0
+            PaddingTop: =0
+            Size: =14
+            Text: |-
+              =With({n: ThisItem.BandN},
+                  If(ThisItem.BandKey = 0, "⚠  Unscheduled", ThisItem.Label & If(ThisItem.IsToday, "   (today)", ThisItem.BandKey < TodayKey, "   (past)", ""))
+                  & "    ·    " & n & If(n = 1, " job", " jobs")
+              )
+            Visible: =ThisItem.IsHeader
+            Width: =Parent.TemplateWidth - 8
+            Wrap: =false
+            X: =0
+            Y: =If(ThisItem.BandN = 0, Parent.TemplateHeight - 66, Parent.TemplateHeight - 34)
+      - lblPunEmptyS8:
+          Control: Label@2.5.1
+          Properties:
+            Color: =clrMuted
+            Height: =26
+            Italic: =true
+            PaddingBottom: =0
+            PaddingLeft: =10
+            PaddingRight: =0
+            PaddingTop: =0
+            Size: =12
+            Text: ="No jobs"
+            Visible: =ThisItem.IsHeader && ThisItem.BandN = 0
+            Width: =Parent.TemplateWidth - 8
+            Wrap: =false
+            X: =0
+            Y: =Parent.TemplateHeight - 32
+- galPunSB15:
+    Control: Gallery@2.15.0
+    Variant: Vertical
+    Properties:
+      BorderThickness: =0
+      DelayItemLoading: =false
+      Fill: =clrNone
+      FocusedBorderThickness: =0
+      Height: =If(!IsEmpty(Filter(ActiveJobs, PrevShipText <> "")), 630, 664)
+      Items: |-
+        =With({show: tglPunShowDone.Value},
+        With({cards: Filter(ActiveJobs, MachineText = "SB15" && (show || !TurretDone))},
+            // Flat list (guide U4): one header row per day band, followed by that band's SB15 cards.
+            // Table(header rows, card rows) keeps every column of both (Learn, Table function).
+            // Bands as CONTRACT 3.5. Cards matched to a band by day key: the same cards as its
+            // PunchBand filter. Card order as CONTRACT 5.1. Same result as the old galPunBoard.
+            SortByColumns(
+                Table(
+                    AddColumns(If(show, PunchBandsAll, PunchBandsOpen) As b, IsHeader, true, BandN, CountRows(Filter(cards, PunchDayKey = b.BandKey))),
+                    AddColumns(cards, IsHeader, false, BandKey, PunchDayKey)
+                ),
+                "BandKey", SortOrder.Ascending,
+                "IsHeader", SortOrder.Descending,
+                "PunchGroupOrder", SortOrder.Ascending,
+                "PairKey", SortOrder.Ascending,
+                "PunchSort", SortOrder.Ascending,
+                "ID", SortOrder.Ascending
+            )
+        ))
+      LoadingSpinner: =LoadingSpinner.None
+      ShowScrollbar: =true
+      TemplatePadding: =0
+      TemplateSize: =110
+      Width: =If(locPunTrayHidden, 654, 528)
+      X: =If(locPunTrayHidden, 712, 838)
+      Y: =If(!IsEmpty(Filter(ActiveJobs, PrevShipText <> "")), 134, 100)
+    Children:
+      - conPunCardS15:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            BorderColor: =If(IsBlank(ThisItem.PairNo), clrBorder, ThisItem.PairColor)
+            BorderThickness: =If(IsBlank(ThisItem.PairNo), 1, 2)
+            DropShadow: =DropShadow.None
+            Fill: =If(ThisItem.TurretDone, ColorFade(clrCard, -35%), clrCard)
+            Height: =Parent.TemplateHeight - 6
+            RadiusBottomLeft: =8
+            RadiusBottomRight: =8
+            RadiusTopLeft: =8
+            RadiusTopRight: =8
+            Visible: =!ThisItem.IsHeader
+            Width: =Parent.TemplateWidth - 8
+            X: =0
+            Y: =0
+      - lblPunBandS15:
+          Control: Label@2.5.1
+          Properties:
+            Color: =If(ThisItem.BandKey = 0, clrAmber, ThisItem.BandKey < TodayKey, RGBA(252, 165, 165, 1), clrText)
+            Fill: |-
+              =If(ThisItem.BandKey = 0, RGBA(245, 158, 11, 0.22), ThisItem.IsToday, RGBA(37, 99, 235, 0.45), ThisItem.BandKey < TodayKey, RGBA(239, 68, 68, 0.22), RGBA(51, 65, 85, 0.6))
+            FontWeight: =FontWeight.Semibold
+            Height: =30
+            PaddingBottom: =0
+            PaddingLeft: =10
+            PaddingRight: =0
+            PaddingTop: =0
+            Size: =14
+            Text: |-
+              =With({n: ThisItem.BandN},
+                  If(ThisItem.BandKey = 0, "⚠  Unscheduled", ThisItem.Label & If(ThisItem.IsToday, "   (today)", ThisItem.BandKey < TodayKey, "   (past)", ""))
+                  & "    ·    " & n & If(n = 1, " job", " jobs")
+              )
+            Visible: =ThisItem.IsHeader
+            Width: =Parent.TemplateWidth - 8
+            Wrap: =false
+            X: =0
+            Y: =If(ThisItem.BandN = 0, Parent.TemplateHeight - 66, Parent.TemplateHeight - 34)
+      - lblPunEmptyS15:
+          Control: Label@2.5.1
+          Properties:
+            Color: =clrMuted
+            Height: =26
+            Italic: =true
+            PaddingBottom: =0
+            PaddingLeft: =10
+            PaddingRight: =0
+            PaddingTop: =0
+            Size: =12
+            Text: ="No jobs"
+            Visible: =ThisItem.IsHeader && ThisItem.BandN = 0
+            Width: =Parent.TemplateWidth - 8
+            Wrap: =false
+            X: =0
+            Y: =Parent.TemplateHeight - 32
