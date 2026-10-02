@@ -232,7 +232,7 @@ Screens:
                                       Collect(colImpResult, Patch(p, {Kind: "had", Sub: If(IsBlank(oa), "Incoming", "Active"), Moved: false, OldShow: "", IdNew: false, Msg: "", RowID: o.ID, Modified: Blank(), Restored: false})),
                                   // (a) open job that may need a ship move or a CasmfgId refresh: decide from a fresh row
                                   !IsBlank(o),
-                                      With({row: LookUp(TheWhiteBoard, ID = o.ID)},
+                                      With({oid: o.ID}, With({row: LookUp(TheWhiteBoard, ID = oid)},
                                       If(IsError(row),
                                           // the fresh read failed: list it as failed (Tap Import again), never drop it
                                           Collect(colImpResult, Patch(p, {Kind: "failed", Sub: "update", Moved: false, OldShow: "", IdNew: false, Msg: p.Label & ": couldn't read this job from the list (" & IfError(Text(row.ID), FirstError.Message) & ")", RowID: o.ID, Modified: Blank(), Restored: false})),
@@ -250,16 +250,16 @@ Screens:
                                               e1: Switch(mv,
                                                   "inc",
                                                       IfError(
-                                                          Text(Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = o.ID), {ShipDate: p.ShipDate}).ID),
+                                                          Text(Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = oid), {ShipDate: p.ShipDate}).ID),
                                                           Refresh(TheWhiteBoard);
-                                                          IfError(Text(Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = o.ID), {ShipDate: p.ShipDate}).ID), "!" & FirstError.Message, ""),
+                                                          IfError(Text(Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = oid), {ShipDate: p.ShipDate}).ID), "!" & FirstError.Message, ""),
                                                           ""
                                                       ),
                                                   "act",
                                                       IfError(
-                                                          Text(Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = o.ID), {PrevShipDate: np, ShipDate: p.ShipDate}).ID),
+                                                          Text(Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = oid), {PrevShipDate: np, ShipDate: p.ShipDate}).ID),
                                                           Refresh(TheWhiteBoard);
-                                                          IfError(Text(Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = o.ID), {PrevShipDate: np, ShipDate: p.ShipDate}).ID), "!" & FirstError.Message, ""),
+                                                          IfError(Text(Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = oid), {PrevShipDate: np, ShipDate: p.ShipDate}).ID), "!" & FirstError.Message, ""),
                                                           ""
                                                       ),
                                                   ""
@@ -268,9 +268,9 @@ Screens:
                                       With({
                                               e2: If(idNew,
                                                   IfError(
-                                                      Text(Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = o.ID), {CasmfgId: p.CasId}).ID),
+                                                      Text(Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = oid), {CasmfgId: p.CasId}).ID),
                                                       Refresh(TheWhiteBoard);
-                                                      IfError(Text(Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = o.ID), {CasmfgId: p.CasId}).ID), "!" & FirstError.Message, ""),
+                                                      IfError(Text(Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = oid), {CasmfgId: p.CasId}).ID), "!" & FirstError.Message, ""),
                                                       ""
                                                   ),
                                                   ""
@@ -292,7 +292,7 @@ Screens:
                                               Modified: Blank(),
                                               Restored: false
                                           }))
-                                      )))))),
+                                      ))))))),
                                   // (c) not open, ships more than 16 days out: watch only, no server call
                                   p.ShipOk && p.ShipKey > hz,
                                       Collect(colImpResult, Patch(p, {Kind: "watch", Sub: "", Moved: false, OldShow: "", IdNew: false, Msg: "", RowID: 0, Modified: Blank(), Restored: false})),
