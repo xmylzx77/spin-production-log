@@ -19,8 +19,10 @@ Screens:
                         Refresh(TheWhiteBoard);
                         IfError(
                             Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {JobStatus: {Value: "Done"}}),
-                            Notify("Housekeeping could not close a job: " & FirstError.Message, NotificationType.Error, 0)
-                        )
+                            Notify("Housekeeping could not close a job: " & FirstError.Message, NotificationType.Error, 0),
+                            true
+                        ),
+                        true
                     )
                 )
             )
@@ -633,8 +635,10 @@ Screens:
                               Refresh(TheWhiteBoard);
                               IfError(
                                   Patch(TheWhiteBoard, LookUp(TheWhiteBoard, ID = id), {JobStatus: {Value: "Done"}}),
-                                  Notify("Housekeeping could not close a job: " & FirstError.Message, NotificationType.Error, 0)
-                              )
+                                  Notify("Housekeeping could not close a job: " & FirstError.Message, NotificationType.Error, 0),
+                                  true
+                              ),
+                              true
                           )
                       )
                   )
