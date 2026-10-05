@@ -434,7 +434,7 @@ The test copies (Copy A, B and C) are in `app/screens/scrImport.notes.md`, under
 - [ ] **2. Date picker.** On a tablet, Punch > **Place** a TEST job from the Incoming tray (or **+ Add job**), then tap the pencil on its board card > set **Punch day** > **Save**. SharePoint shows the same day.
 - [ ] **3. Same copy twice.** Paste Copy A again and tap **Import**, then **Import anyway**. The tiles show **Added 0, Ship moves 0**.
 - [ ] **4. Two devices.** First, on Punch, **Place** a TEST job on SB8 with gauges 12 and 14, and tap **Nested** on its card. Then tick a gauge on the SB8 tablet. A second device on Bending or Turret shows it within 30 seconds (the TV within 60).
-- [ ] **5. PB and P4 together.** Turn on **Show complete** on two tablets on Bending. Then tap **PB** on one and **P4** on the other, on the same Nested TEST job (for example the one from gate 4), within a few seconds. Both buttons stay green, and SharePoint shows PBDone and P4Done both Yes.
+- [ ] **5. PB and P4 together.** Put two windows (or tablets) on Bending. On the same Nested TEST job (for example the one from gate 4), tap **PB** in one and **P4** in the other within a few seconds. The card disappears (PB + P4 = finished on Bending; that's normal). SharePoint shows PBDone and P4Done both Yes.
 
 If gate 1 or 2 is off by one day, **stop and report it**. It gets fixed once, centrally, never per screen.
 
