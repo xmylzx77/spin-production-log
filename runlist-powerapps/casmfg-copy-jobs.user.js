@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         CASMFG → White Board: copy jobs
 // @namespace    captiveaire.runlist.copy
-// @version      1.0.2
+// @version      1.0.3
 // @description  One button in CASMFG's top bar: "Copy jobs for White Board". Click it and it reads CASMFG's In-Process CASRTU jobs for the next 180 days under your own sign-in and copies them to the clipboard, ready to paste into the White Board app's Import screen. Read-only.
 // @match        https://casmfg.captiveaire.com/*
 // @noframes
@@ -44,6 +44,7 @@
  *   1.0.0  2026-10-02  first version: the read-only copy button for the Power Apps White Board.
  *   1.0.1  2026-10-05  the button is just a clipboard icon (hover for its name).
  *   1.0.2  2026-10-05  the icon uses CASMFG's own top-bar colour, so it matches the other icons.
+ *   1.0.3  2026-10-05  copies the exact colour and opacity of the "+" icon next to it.
  */
 (function () {
   'use strict';
@@ -373,6 +374,24 @@
   }
   function paint() { paintItem(document.getElementById(LI_ID)); }
 
+  // Draw the clipboard in exactly the colour and opacity of CASMFG's own icon next to it (the "+"),
+  // read from the page, so it matches whatever shade CASMFG uses. Tried again each second until a
+  // neighbour icon exists; skipped while the mouse is over the bar so a hover colour isn't copied.
+  function matchNeighbour(li) {
+    try {
+      const next = li.nextElementSibling;
+      const a = next && next.querySelector('a');
+      if (!a || a.matches(':hover')) return;
+      const icon = a.querySelector('i, .fa, svg, span') || a;
+      const cs = getComputedStyle(icon);
+      const svg = li.querySelector('svg');
+      if (!svg || !cs.color) return;
+      svg.style.color = cs.color;
+      svg.style.opacity = String(Number(cs.opacity) * Number(getComputedStyle(a).opacity));
+      li.dataset.matched = '1';
+    } catch (e) { /* cosmetic only */ }
+  }
+
   // Put the button in CASMFG's top bar, and put it back if CASMFG redraws the bar. Same approach as
   // the hammer button: first item of the right-hand list (just left of the "+").
   function ensureButton() {
@@ -382,9 +401,11 @@
     if (ul) {
       navMissingSince = 0;
       if (float) float.remove();
-      if (existing && existing.parentElement === ul) return;
+      if (existing && existing.parentElement === ul) { if (!existing.dataset.matched) matchNeighbour(existing); return; }
       if (existing) existing.remove();
-      ul.insertBefore(buildItem(), ul.firstElementChild);
+      const li = buildItem();
+      ul.insertBefore(li, ul.firstElementChild);
+      matchNeighbour(li);
       return;
     }
     // No top bar. On the sign-in page that is normal (no header at all): no button there (the
