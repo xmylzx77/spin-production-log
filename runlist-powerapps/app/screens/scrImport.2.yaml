@@ -76,7 +76,7 @@
                   HoverColor: =Self.Color
                   HoverFill: =ColorFade(Self.Fill, -15%)
                   OnSelect: |-
-                    =With({r: ThisItem},
+                    =With({r: ThisItem, k: ThisItem.Key},
                         With({e: IfError(
                                 Text(Patch(TheWhiteBoard, Defaults(TheWhiteBoard), {
                                     Title: r.Key,
@@ -100,7 +100,7 @@
                             If(e = "",
                                 Patch(colImpResult, LookUp(colImpResult, Key = r.Key), {Kind: "added", Sub: "Incoming", Msg: ""});
                                 Notify(r.Label & " added to the Incoming tray.", NotificationType.Success),
-                                With({again: IfError(LookUp(TheWhiteBoard, Title = r.Key), Blank())},
+                                With({again: IfError(LookUp(TheWhiteBoard, Title = k), Blank())},
                                     If(IsBlank(again),
                                         Patch(colImpResult, LookUp(colImpResult, Key = r.Key), {Msg: r.Key & ": " & Mid(e, 2)});
                                         Notify("Still not saved. " & r.Key & ": " & Mid(e, 2), NotificationType.Error, 0),

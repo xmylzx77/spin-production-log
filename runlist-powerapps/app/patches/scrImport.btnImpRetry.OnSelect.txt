@@ -1,0 +1,41 @@
+With({r: ThisItem, k: ThisItem.Key},
+    With({e: IfError(
+            Text(Patch(TheWhiteBoard, Defaults(TheWhiteBoard), {
+                Title: r.Key,
+                JobNumber: r.Num,
+                UnitNumber: r.Unit,
+                FanNumber: r.Unit,
+                JobName: r.Name,
+                ProductModel: r.Model,
+                CasmfgId: r.CasId,
+                JobSize: r.Size,
+                ShipDate: r.ShipDate,
+                JobStatus: {Value: "Incoming"},
+                Nested: false,
+                Need12: false, Need14: false, Need16: false, Need18: false, Need20: false, Need24: false,
+                Done12: false, Done14: false, Done16: false, Done18: false, Done20: false, Done24: false,
+                PBDone: false, P4Done: false, Started: false
+            }).ID),
+            "!" & FirstError.Message,
+            ""
+        )},
+        If(e = "",
+            Patch(colImpResult, LookUp(colImpResult, Key = r.Key), {Kind: "added", Sub: "Incoming", Msg: ""});
+            Notify(r.Label & " added to the Incoming tray.", NotificationType.Success),
+            With({again: IfError(LookUp(TheWhiteBoard, Title = k), Blank())},
+                If(IsBlank(again),
+                    Patch(colImpResult, LookUp(colImpResult, Key = r.Key), {Msg: r.Key & ": " & Mid(e, 2)});
+                    Notify("Still not saved. " & r.Key & ": " & Mid(e, 2), NotificationType.Error, 0),
+                    Patch(colImpResult, LookUp(colImpResult, Key = r.Key), {
+                        Kind: If(again.JobStatus.Value = "Dismissed", "blocked", "had"),
+                        Sub: again.JobStatus.Value & "",
+                        Msg: "",
+                        RowID: again.ID,
+                        Modified: again.Modified
+                    });
+                    Notify(r.Label & " is already in the list (" & again.JobStatus.Value & ").", NotificationType.Information)
+                )
+            )
+        )
+    )
+)
