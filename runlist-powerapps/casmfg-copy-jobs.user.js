@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         CASMFG → White Board: copy jobs
 // @namespace    captiveaire.runlist.copy
-// @version      1.0.1
+// @version      1.0.2
 // @description  One button in CASMFG's top bar: "Copy jobs for White Board". Click it and it reads CASMFG's In-Process CASRTU jobs for the next 180 days under your own sign-in and copies them to the clipboard, ready to paste into the White Board app's Import screen. Read-only.
 // @match        https://casmfg.captiveaire.com/*
 // @noframes
@@ -43,6 +43,7 @@
  * Version history
  *   1.0.0  2026-10-02  first version: the read-only copy button for the Power Apps White Board.
  *   1.0.1  2026-10-05  the button is just a clipboard icon (hover for its name).
+ *   1.0.2  2026-10-05  the icon uses CASMFG's own top-bar colour, so it matches the other icons.
  */
 (function () {
   'use strict';
@@ -332,8 +333,8 @@
   }
   function clipIcon() {
     const svg = svgEl('svg', { width: '17', height: '17', viewBox: '0 0 24 24', 'aria-hidden': 'true', focusable: 'false', style: 'vertical-align:-3px;' });
-    svg.appendChild(svgEl('path', { fill: 'none', stroke: '#fff', 'stroke-width': '2', d: 'M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2' }));
-    svg.appendChild(svgEl('rect', { x: '8', y: '2', width: '8', height: '4', rx: '1', fill: '#fff' }));
+    svg.appendChild(svgEl('path', { fill: 'none', stroke: 'currentColor', 'stroke-width': '2', d: 'M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2' }));
+    svg.appendChild(svgEl('rect', { x: '8', y: '2', width: '8', height: '4', rx: '1', fill: 'currentColor' }));
     return svg;
   }
 
@@ -348,7 +349,8 @@
     a.setAttribute('role', 'button');
     a.title = LABEL + ": copies CASMFG's In-Process CASRTU jobs, then paste them into the White Board app's Import screen";
     a.setAttribute('aria-label', LABEL);
-    a.style.cssText = 'color:#fff;font-weight:600;font-size:12px;white-space:nowrap;';
+    // No colour of our own: the icon draws in currentColor, so it takes CASMFG's own top-bar colour.
+    a.style.cssText = 'font-weight:600;font-size:12px;white-space:nowrap;';
     const label = document.createElement('span');
     label.setAttribute('data-label', '');
     a.appendChild(clipIcon());
