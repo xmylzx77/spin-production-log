@@ -7,9 +7,9 @@ A basic rebuild of the shop's White Board run list as a Power Apps canvas app on
 - **Assembly:** jobs on Line 1 / 2 / 3 by start date and order, and the Started tick.
 - **Floor screens:** SB8 / SB15 (gauge ticks), Bending (PB and P4 ticks) and Nesting.
 - **TV / Progress:** read-only.
-- **Import:** a read-only Tampermonkey button in CASMFG copies the job list, and you paste it into the app.
+- **Import:** a read-only Tampermonkey button in CASMFG copies the job list, and you paste it into the app. New jobs are then placed on both boards automatically (a basic auto-place, see `design/app-spec.md`).
 
-Left out: the auto-planner and capacities, approvals and locks, Utility Sets, QC photos, parts issues, Electrical, stats, and sending dates back to CASMFG.
+Left out: the full auto-planner (only a basic auto-place is in), approvals and locks, Utility Sets, QC photos, parts issues, Electrical, stats, and sending dates back to CASMFG.
 
 ## Steps, in order
 1. `01-sharepoint-list-setup.md`: create the **TheWhiteBoard** list (about 30 minutes, in the browser).

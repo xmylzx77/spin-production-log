@@ -133,7 +133,7 @@ Mirrors `bending.js`.
 - Timer refresh every 60 s. No writes anywhere on this screen.
 
 ### scrImport (supervisor)
-- Explains in one line: "In CASMFG, click Copy jobs for White Board, then paste here."
+- Explains in one line: "In CASMFG, click the clipboard icon in the top bar, then paste here."
 - A large multiline text box and an **Import** button, disabled while running or while the box is empty.
 - **Checks before running:**
   - Parse the JSON. If it's invalid, or v isn't 1, show a red message.
@@ -149,6 +149,15 @@ Mirrors `bending.js`.
   - jobs beyond 16 days are watch-only
 - **Summary:** added / ship moves / already had / blocked (dismissed) / failed / watch-only. Pasting the same text twice must add 0 and move 0.
 - Then a button "Go to Punch".
+- **Auto-place** (`btnImpPlace`): runs by itself right after every import, and again when tapped ("Place N tray job(s) on Punch + Assembly"). Every Incoming job with a size (1–4) and a ship date becomes Active with a machine, punch day, line and assembly date. Earliest ship first:
+  - **Machine:** size 1 and 4 on SB8, size 2 and 3 on SB15.
+  - **Punch day:** 5 workdays before ship. A day holds 5 units on SB8 and 6 on SB15 (size 1 = 1 unit, 2 and 3 = 2, 4 = 3).
+  - **Line:** size 1 and 2 on Line 1, 3 on Line 2, 4 (and a heavy 3) on Line 3.
+  - **Assembly date:** 3 workdays before ship, and at least 2 workdays after the punch day. A line holds 3 jobs a day (a size 4 counts 1.5).
+  - A full day moves the job to the next workday. Workdays are Mon–Fri, today or later; a target already past becomes the first open workday.
+  - Each job goes at the end of its day (max order + 1). Gauges are not set: the supervisor still picks them on the Punch card.
+  - A job that another device placed or dismissed meanwhile is left alone. A job that can't be saved stays in the tray and is counted in the message ("tap Place again"). Jobs without a size or ship date stay in the tray for a manual Place.
+  - One message at the end: the import summary, then "Placed n job(s)…".
 
 ## Calls made without the user (keep unless they say otherwise)
 - Fan # = unit # on import (still editable).
@@ -156,3 +165,4 @@ Mirrors `bending.js`.
 - The TV is read-only.
 - No print sheets in v1.
 - No drag-and-drop: ▲▼ and the edit panel do the moving.
+- Auto-place uses the basic rules above, not the old app's planner.

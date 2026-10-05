@@ -99,7 +99,7 @@ Screens:
             Height: =40
             PaddingLeft: =0
             Size: =13
-            Text: ="In CASMFG, click Copy jobs for White Board, then paste here."
+            Text: ="In CASMFG, click the clipboard icon in the top bar, then paste here."
             Width: =532
             Wrap: =false
             X: =24
@@ -138,7 +138,7 @@ Screens:
             DisabledColor: =clrMuted
             DisabledFill: =ColorFade(clrBlue, -55%)
             DisplayMode: |-
-              =If(locImpRunning || Len(Trim(txtImpPaste.Text)) = 0, DisplayMode.Disabled, DisplayMode.Edit)
+              =If(locImpRunning || locImpPlacing || Len(Trim(txtImpPaste.Text)) = 0, DisplayMode.Disabled, DisplayMode.Edit)
             Fill: |-
               =If(locImpAsk && locImpAskLen = Len(txtImpPaste.Text), clrAmber, clrBlue)
             FocusedBorderThickness: =0
@@ -152,7 +152,7 @@ Screens:
               With({j: IfError(ParseJSON(txtImpPaste.Text), Blank())},
                   If(
                       IsBlank(j),
-                          UpdateContext({locImpMsg: "This isn't a White Board copy (it isn't valid JSON). In CASMFG, click Copy jobs for White Board, then paste here again."}),
+                          UpdateContext({locImpMsg: "This isn't a White Board copy (it isn't valid JSON). In CASMFG, click the clipboard icon in the top bar, then paste here again."}),
                       IfError(Value(j.v), -1) <> 1,
                           UpdateContext({locImpMsg: "This copy has the wrong format (it isn't version 1). Update the CASMFG copy script, then copy again."}),
                       IfError(
@@ -366,16 +366,16 @@ Screens:
                               If(skip > 0, " " & skip & " row(s) without a job number were ignored.", "")
                           )
                       });
+                      // ---- 5. Auto-place: btnImpPlace puts the tray jobs on the Punch and Assembly boards
+                      // and shows this summary in front of its own message (Select runs it after this formula)
                       With({
                               na: CountRows(Filter(colImpResult, Kind = "added")),
                               nm: CountRows(Filter(colImpResult, Moved)),
                               nf: CountRows(Filter(colImpResult, Kind = "failed"))
                           },
-                          Notify(
-                              "Import done: " & na & " added, " & nm & " ship move(s)" & If(nf > 0, ", " & nf & " failed (see the red list)", "") & ".",
-                              If(nf > 0, NotificationType.Warning, NotificationType.Success)
-                          )
-                      )
+                          UpdateContext({locImpPre: "Import done: " & na & " added, " & nm & " ship move(s)" & If(nf > 0, ", " & nf & " failed (see the red list)", "") & ". "})
+                      );
+                      Select(btnImpPlace)
                   )
               );
               // a red message replaces any old "copy is old" question
@@ -543,6 +543,130 @@ Screens:
                   Width: =140
                   X: =16
                   Y: =104
+      - btnImpPlace:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderThickness: =0
+            Color: =clrWhite
+            DisabledColor: =clrMuted
+            DisabledFill: =ColorFade(clrBlue, -55%)
+            DisplayMode: =If(locImpRunning || locImpPlacing, DisplayMode.Disabled, DisplayMode.Edit)
+            Fill: |-
+              =If(CountRows(Filter(IncomingJobs, JobSize >= 1 && JobSize <= 4 && ShipKey < 99999999)) = 0, clrGrey, clrBlue)
+            FocusedBorderThickness: =0
+            FontWeight: =FontWeight.Semibold
+            Height: =48
+            HoverColor: =Self.Color
+            HoverFill: =ColorFade(Self.Fill, -15%)
+            OnSelect: |-
+              =UpdateContext({locImpPlacing: true});
+              // Basic auto-place (runs by itself after every Import; a tap runs it again).
+              // Every tray job with a size and a ship date goes on both boards:
+              //   Punch: size 1 and 4 on SB8, size 2 and 3 on SB15. Aim 5 workdays before ship.
+              //          A day holds 5 units on SB8, 6 on SB15 (size 1 = 1 unit, 2 and 3 = 2, 4 = 3).
+              //   Assembly: size 1 and 2 on Line 1, 3 on Line 2, 4 (and a heavy 3) on Line 3. Aim 3 workdays
+              //          before ship, never sooner than 2 workdays after its punch day. A line holds 3 jobs a day
+              //          (a size 4 counts 1.5).
+              // A full day pushes the job to the next workday (Mon-Fri, today or later). It goes at the end of
+              // its day (max order + 1). Gauges are still picked on the Punch card.
+              Refresh(TheWhiteBoard);
+              Set(gblRefreshTick, gblRefreshTick + 1);
+              // open workdays, today or later (about 3 months)
+              ClearCollect(colPlDays,
+                  ForAll(Filter(ForAll(Sequence(90, 0) As s, {D: DateAdd(Today(), s.Value, TimeUnit.Days)}), Weekday(D, StartOfWeek.Monday) <= 5) As x,
+                      {D: x.D, K: Year(x.D) * 10000 + Month(x.D) * 100 + Day(x.D)}
+                  )
+              );
+              // what the boards already hold
+              ClearCollect(colPlPunch, ForAll(Filter(ActiveJobs, MachineText <> "" && PunchDayKey > 0) As a, {M: a.MachineText, K: a.PunchDayKey, U: Switch(a.JobSize, 1, 1, 4, 3, 2), O: a.PunchSort}));
+              ClearCollect(colPlAsm, ForAll(Filter(ActiveJobs, LineText <> "" && AsmKey < 99999999) As a, {L: a.LineText, K: a.AsmKey, W: If(a.JobSize = 4, 1.5, 1), O: a.AsmSort}));
+              // the tray jobs to place, earliest ship first
+              ClearCollect(colPlTodo,
+                  SortByColumns(
+                      ShowColumns(Filter(IncomingJobs, JobSize >= 1 && JobSize <= 4 && ShipKey < 99999999), ID, JobSize, HeavyTon, ShipKey, JobLabel),
+                      "ShipKey", SortOrder.Ascending, "ID", SortOrder.Ascending
+                  )
+              );
+              Clear(colPlDone);
+              ForAll(colPlTodo As j,
+                  With({
+                          jid: j.ID,
+                          mach: If(j.JobSize = 1 || j.JobSize = 4, "SB8", "SB15"),
+                          pu: Switch(j.JobSize, 1, 1, 4, 3, 2),
+                          line: If(j.JobSize = 4 || (j.JobSize = 3 && j.HeavyTon), "Line 3", j.JobSize = 3, "Line 2", "Line 1"),
+                          aw: If(j.JobSize = 4, 1.5, 1),
+                          nb: CountRows(Filter(colPlDays, K < j.ShipKey))
+                      },
+                  With({
+                          cap: If(mach = "SB8", 5, 6),
+                          // 5 and 3 workdays before ship (the first open day when that has passed)
+                          ptk: Index(colPlDays, Max(1, nb - 4)).K,
+                          atk: Index(colPlDays, Max(1, nb - 2)).K
+                      },
+                  With({pk: Coalesce(First(Filter(colPlDays As dd, dd.K >= ptk && Sum(Filter(colPlPunch, M = mach && K = dd.K), U) + pu <= cap)).K, ptk)},
+                  With({ppos: CountRows(Filter(colPlDays, K <= pk))},
+                  With({amin: Max(atk, Index(colPlDays, Min(ppos + 2, CountRows(colPlDays))).K)},
+                  With({ak: Coalesce(First(Filter(colPlDays As dd, dd.K >= amin && Sum(Filter(colPlAsm, L = line && K = dd.K), W) + aw <= 3)).K, amin)},
+                  With({
+                          pd: LookUp(colPlDays, K = pk).D,
+                          ad: LookUp(colPlDays, K = ak).D,
+                          po: Coalesce(Max(Filter(colPlPunch, M = mach && K = pk), O), 0) + 1,
+                          ao: Coalesce(Max(Filter(colPlAsm, L = line && K = ak), O), 0) + 1,
+                          cur: LookUp(TheWhiteBoard, ID = jid)
+                      },
+                  With({st: IfError(cur.JobStatus.Value & "", "!")},
+                      If(
+                          st = "!",
+                              Collect(colPlDone, {ID: jid, Ok: false, Msg: j.JobLabel & ": couldn't read it from the list"});
+                              false,
+                          // placed or dismissed on another device meanwhile: leave it
+                          st <> "Incoming",
+                              true,
+                          IfError(
+                              Patch(TheWhiteBoard, cur, {JobStatus: {Value: "Active"}, Machine: {Value: mach}, PunchDay: pd, PunchOrder: po, AssemblyLine: {Value: line}, AssemblyDate: ad, AssemblyOrder: ao}),
+                              Collect(colPlDone, {ID: jid, Ok: false, Msg: j.JobLabel & ": " & FirstError.Message});
+                              false,
+                              Collect(colPlPunch, {M: mach, K: pk, U: pu, O: po});
+                              Collect(colPlAsm, {L: line, K: ak, W: aw, O: ao});
+                              Collect(colPlDone, {ID: jid, Ok: true, Msg: ""});
+                              true
+                          )
+                      )
+                  ))))))))
+              );
+              Refresh(TheWhiteBoard);
+              Set(gblRefreshTick, gblRefreshTick + 1);
+              With({
+                      ok: CountRows(Filter(colPlDone, Ok)),
+                      bad: CountRows(Filter(colPlDone, !Ok)),
+                      left: CountRows(Filter(IncomingJobs, !(JobSize >= 1 && JobSize <= 4) || ShipKey = 99999999))
+                  },
+                  Notify(
+                      locImpPre &
+                      If(ok = 0 && bad = 0, "Nothing new to place.", "Placed " & ok & " job(s) on the Punch and Assembly boards.") &
+                      If(bad > 0, " " & bad & " couldn't be saved: tap Place again.", "") &
+                      If(left > 0, " " & left & " stay in the tray (no size or no ship date): place them on the Punch screen.", ""),
+                      If(bad > 0 || left > 0 || Find("failed", locImpPre) > 0, NotificationType.Warning, NotificationType.Success)
+                  )
+              );
+              UpdateContext({locImpPlacing: false, locImpPre: ""})
+            PressedColor: =Self.Color
+            PressedFill: =ColorFade(Self.Fill, -30%)
+            RadiusBottomLeft: =10
+            RadiusBottomRight: =10
+            RadiusTopLeft: =10
+            RadiusTopRight: =10
+            Size: =15
+            Text: |-
+              =If(locImpPlacing, "Placing jobs on the boards...",
+                  With({n: CountRows(Filter(IncomingJobs, JobSize >= 1 && JobSize <= 4 && ShipKey < 99999999))},
+                      If(n = 0, "Tray: nothing to place", "Place " & n & " tray job(s) on Punch + Assembly")
+                  )
+              )
+            Visible: =!conImpAsk.Visible
+            Width: =532
+            X: =24
+            Y: =708
       - conImpResults:
           Control: GroupContainer@1.5.0
           Variant: ManualLayout
@@ -623,7 +747,7 @@ Screens:
                   Height: =96
                   Items: |-
                     =Table(
-                        {T: "Added", N: CountRows(Filter(colImpResult, Kind = "added")), C: clrGreen, S: "new cards in the Incoming tray"},
+                        {T: "Added", N: CountRows(Filter(colImpResult, Kind = "added")), C: clrGreen, S: "new jobs from CASMFG"},
                         {T: "Ship moves", N: CountRows(Filter(colImpResult, Moved)), C: clrAmber, S: "ship dates changed"},
                         {T: "Already had", N: CountRows(Filter(colImpResult, Kind = "had")), C: clrText, S: "on the board or done"},
                         {T: "Blocked", N: CountRows(Filter(colImpResult, Kind = "blocked")), C: clrSB15, S: "dismissed, see the list"},

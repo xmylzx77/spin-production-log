@@ -417,7 +417,7 @@ On each device:
 - **Import PC:** install the CASMFG copy button. Follow "HOW TO INSTALL" at the top of `casmfg-copy-jobs.user.js`:
   - Install the Tampermonkey browser extension first (IT may need to approve it).
   - Tampermonkey > **Create a new script** > **select all in the editor and delete it** > paste the whole file > **Save**.
-  - Reload the CASMFG tab: the "Copy jobs for White Board" button appears in the top bar.
+  - Reload the CASMFG tab: a clipboard icon appears in the top bar (hover it: "Copy jobs for White Board").
   - Keep the old "CASMFG → RunList Sync" script turned **off** in Tampermonkey.
   - If the button doesn't appear, newer Edge and Chrome may need **Allow User Scripts** (in Tampermonkey's extension details) or **Developer mode** (on the Extensions page) turned on. This wasn't tested here.
 

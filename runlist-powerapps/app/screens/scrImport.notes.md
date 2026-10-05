@@ -25,6 +25,7 @@ After: run the 3.4 checks. Expected: 0 errors on scrImport. A new screen "scrImp
        One error may show on scrImport's OnVisible: "txtImpPaste isn't recognized"
        (the screen formula names a box that comes later in the same paste, guide U3).
        Fix it with the type-a-space fix (guide 3.4) on scrImport > OnVisible.
+       The same can happen on btnImpImport > OnSelect: "btnImpPlace isn't recognized". Same fix.
 ```
 
 ```
@@ -60,6 +61,7 @@ After: run the 3.4 checks. Expected: 0 errors. The lists stay hidden in the edit
 - `conImpHeader`, holding lblImpTitle, btnImpPunch and btnImpHome
 - lblImpHelp, txtImpPaste, btnImpImport, btnImpClear, lblImpError, lblImpNarrow, lblImpRunning
 - `conImpAsk`, holding lblImpAskText and btnImpAskCancel
+- btnImpPlace (auto-place; under the messages, hidden while the amber box shows)
 - `conImpResults`, holding:
   - lblImpResTitle, lblImpResEmpty and lblImpResInfo
   - `galImpTiles` > `conImpTile` (lblImpTileNum, lblImpTileName, lblImpTileSub)
@@ -73,9 +75,10 @@ After: run the 3.4 checks. Expected: 0 errors. The lists stay hidden in the edit
 
 - **Header:** "Import from CASMFG". On the right are a blue **Go to Punch** and a grey **Home**. Both are dimmed while an import runs.
 - **Left side:**
-  - the line "In CASMFG, click Copy jobs for White Board, then paste here.";
+  - the line "In CASMFG, click the clipboard icon in the top bar, then paste here.";
   - a large dark text box with the grey hint "Paste the copied jobs here (click here, then Ctrl+V)";
-  - a big **Import** button, dimmed until something is in the box, and a grey **Clear**.
+  - a big **Import** button, dimmed until something is in the box, and a grey **Clear**;
+  - near the bottom, a wide **Place N tray job(s) on Punch + Assembly** button (grey "Tray: nothing to place" when the tray has no job with a size and ship date).
 - **Right side:** a card titled "Results" that says "Nothing imported yet…".
 
 After you tap **Import**, one of these appears under the buttons:
@@ -85,13 +88,13 @@ After you tap **Import**, one of these appears under the buttons:
 - **Amber box** "This copy is old: it was made 3 h 12 min ago (…)". The copy is more than 2 hours old, or has no copy time. The button turns amber and reads **Import anyway**: tap it again to import. A tap within a second of the question (for example a fast double tap) only asks again. **Cancel** empties the box.
 - **"Importing N jobs. Please wait…"** while it runs. **Go to Punch**, **Home**, **Import** and **Clear** are dimmed until it finishes.
 
-When it finishes, a green banner says "Import done: n added, n ship move(s)." The results card then shows:
+When it finishes, the tray jobs are placed on the boards by themselves (the bottom button reads "Placing jobs on the boards..."), then one banner says "Import done: n added, n ship move(s). Placed n job(s) on the Punch and Assembly boards." The results card then shows:
 
 - **Six tiles:**
 
   | Tile | Counts |
   |---|---|
-  | Added | new Incoming cards |
+  | Added | new jobs from CASMFG (then placed on the boards) |
   | Ship moves | ship dates changed on open jobs |
   | Already had | jobs already on the board, or Done |
   | Blocked | jobs you dismissed that CASMFG still lists |
@@ -150,7 +153,7 @@ Copy C (copy A as a narrow 16-day pull):
    - Paste copy A and **double-tap Import quickly**. The amber box shows and stays, and nothing is imported (a second tap within a second only asks again).
    - Now tap **Cancel**: the box empties and nothing is imported.
 8. **Narrow pull.** Paste copy **C** and import. The red banner shows all three lines, with nothing cut off at the top or bottom: "Narrow pull: … Copy again." and "(This copy looks ahead 16 days, not 180.)". The import still runs, and the tiles show Added 0, Ship moves 0.
-9. **Real copy (go-live).** In CASMFG, click **Copy jobs for White Board**, paste it here and tap **Import**. A fresh copy asks nothing. The first time, this can take a minute or two; stay on the screen (the header buttons are dimmed until it finishes). Check that Added matches the new jobs shipping within 16 days, and that nothing is in Failed. Then **paste the same copy again**: **Added 0, Ship moves 0**.
+9. **Real copy (go-live).** In CASMFG, click the **clipboard icon** in the top bar, paste it here and tap **Import**. A fresh copy asks nothing. The first time, this can take a minute or two; stay on the screen (the header buttons are dimmed until it finishes). Check that Added matches the new jobs shipping within 16 days, and that nothing is in Failed. Then **paste the same copy again**: **Added 0, Ship moves 0**.
 10. **Clean up.** On Punch, type `TEST` in **Find job #** and tap **Find**. For each TEST row (TEST-1, TEST-2 and TEST-3), tap **Open**, then tap **Dismiss job** twice; you return to the Find list each time. An Owner can delete the TEST rows later (list-design step 20).
 
 The failure paths (a SharePoint read or write failing part-way through a run, Retry, Restore with no connection) can't be triggered on purpose in Preview. They were checked offline (see "How this was checked offline").
